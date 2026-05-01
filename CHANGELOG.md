@@ -4,7 +4,8 @@
 - 🔧Better Compatibility
 - 🛡️ Improved Strong Integrity
 - ⚡ Better Performance
-- 
+- Enjoy :)
+ 
 ## v1.4
 - 🔄 Performance improvements
 - 🔧 Bug fixes
