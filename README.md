@@ -19,4 +19,4 @@ JerryManager is a powerful Android module built to achieve Strong Device Integri
 4. Done ✅
 
 ## Developer
-**WajahatNaeem056**
+**Telegram Channel: @JerryChatt And @Jerry Module**
