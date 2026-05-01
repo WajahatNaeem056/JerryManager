@@ -55,6 +55,8 @@ If you face any issues or have suggestions:
 **WajahatNaeem056**
 - GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
 
+- Telegram: [@Kinghere056]
+
 ---
 
 > *Built for the community, by the community.* ❤️
