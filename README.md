@@ -18,5 +18,7 @@ JerryManager is a powerful Android module built to achieve Strong Device Integri
 3. Reboot device
 4. Done ✅
 
+5. And Follow My Telegram Channel @JerryChatt And @JerryModule
+
 ## Developer
-**Telegram Channel: @JerryChatt And @Jerry Module**
+** WajahatNaeem**
