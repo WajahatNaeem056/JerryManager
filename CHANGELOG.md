@@ -1,4 +1,11 @@
 # Changelog
+
+## v3.0
+- 📱 Introduce New UI
+- 🔧Better Compatibility
+- ⚡ Better Performance
+- 🔧 Bug fixes
+  
 ## v2.0
 - 📱 Introduce New UI
 - 🔧Better Compatibility
