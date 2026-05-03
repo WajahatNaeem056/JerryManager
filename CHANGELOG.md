@@ -1,4 +1,11 @@
 # Changelog
+
+## What's New in v1.0
+
+- ⚡ Fix Dark Mode
+- 🔧 Bug Fixes
+- 🔄 Enhanced Stability
+
 ## What's New in v2.5
 - 📱 Introduce New UI
 - 🛡️ Improved Strong Integrity
