@@ -1,4 +1,8 @@
 # Changelog
+## What's New in v2.5
+- 📱 Introduce New UI
+- 🛡️ Improved Strong Integrity
+- ⚡ Better Performance
 
 ## v2.0
 - 📱 Introduce New UI
