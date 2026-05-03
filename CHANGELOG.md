@@ -1,6 +1,6 @@
 # Changelog
 
-## What's New in v1.0
+## What's New in v2.6
 
 - ⚡ Fix Dark Mode
 - 🔧 Bug Fixes
