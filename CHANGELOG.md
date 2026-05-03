@@ -3,6 +3,7 @@
 - 📱 Introduce New UI
 - 🛡️ Improved Strong Integrity
 - ⚡ Better Performance
+-  Introduce New Theme Page
 
 ## v2.0
 - 📱 Introduce New UI
