@@ -29,8 +29,19 @@ A Magisk/KernelSU module for passing Strong Integrity checks.
 - Magisk or KernelSU
 - Android 8+
 
-## Credits
-- Developer: WajahatNaeem056
+
+## 👨‍💻 Developer
+
+**WajahatNaeem056**
+- GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
+
+- Telegram: [@JerryChatt](https://t.me/JerryChatt)
+
+- Telegram: [@JerryModule](https://t.me/JerryModule)
+
+---
+
+> *Built for the community, by the community.* ❤️
 
 ## License
 GPL-3.0
