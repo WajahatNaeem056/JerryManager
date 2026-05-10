@@ -11,21 +11,6 @@
 
 
 
-A Magisk/KernelSU module for passing S
-cat > ~/JerryManager/README.md << 'EOF'
-# Jerry Manager
-
-
-
-![VERSION](https://img.shields.io/badge/VERSION-v3.2-purple)
-
-
-
-
-![PLATFORM](https://img.shields.io/badge/PLATFORM-MAGISK%20|%20KERNELSU-blue)
-
-
-
 A Magisk/KernelSU module for passing Strong Integrity checks.
 
 ## Features
