@@ -1,0 +1,47 @@
+# Changelog
+## What's New in v3.2
+
+- 📱 Introduce new control bar for fix detections
+ 
+- ➖ Introduce new Jerry assistant they will help you a lot
+ 
+-  🔄 Add Integrity Checker In Manager 
+
+
+## What's New in v3.0
+
+- 📱 Fix Integrity Issue
+- 🔧 Bug Fixes
+- 🔄 Enhanced Stability
+ 
+  
+Now I Added online offline Button both buttons for easy to install keybox
+
+
+The module now tells you:
+
+1. Generic → keybox not by Jerry
+2. Outdated → Jerry keybox, newer version available (beats revoked)
+3. Revoked → Jerry keybox Is revoked
+4. Up to Date → Use latest Jerry keybox, not revoked
+
+## What's New in v2.6
+
+- ⚡ Fix Dark Mode
+- 🔧 Bug Fixes
+- 🔄 Enhanced Stability
+
+## What's New in v2.5
+
+- 🛡️ Improved Strong Integrity
+- ⚡ Better Performance
+- 📱 Introduce New Theme Page
+
+## v2.0
+- 📱 Introduce New UI
+- 🔧Better Compatibility
+- ⚡ Better Performance
+- 🔧 Bug fixes
+  
+## v1.0
+- 🎉 First release
