@@ -13,6 +13,10 @@
 
 A Magisk/KernelSU module for passing Strong Integrity checks.
 
+## 📌 About
+
+**JerryManager** is a powerful Android module built to help users achieve and maintain **Strong Device Integrity**. Whether you're dealing with banking apps, payment systems, or security-sensitive applications — JerryManager has you covered.
+
 ## Features
 - ✅ Play Integrity Fix (PIF)
 - ✅ Keybox Management
