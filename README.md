@@ -2,14 +2,9 @@
 
 
 
-![VERSION](https://img.shields.io/badge/VERSION-v3.2-purple)
+![PLATFORM](https://img.shields.io/badge/PLATFORM-Apatch%20|%20KERNELSU-blue)
 
-
-
-
-![PLATFORM](https://img.shields.io/badge/PLATFORM-MAGISK%20|%20KERNELSU-blue)
-
-![Version](https://img.shields.io/badge/Version-3.0-brightgreen)
+![Version](https://img.shields.io/badge/VERSION-v3.2-purple)
 ![Platform](https://img.shields.io/badge/Platform-Android-blue)
 ![License](https://img.shields.io/badge/License-GPL--3.0-orange)
 ![Status](https://img.shields.io/badge/Status-Active-success)
