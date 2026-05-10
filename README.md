@@ -9,6 +9,11 @@
 
 ![PLATFORM](https://img.shields.io/badge/PLATFORM-MAGISK%20|%20KERNELSU-blue)
 
+![Version](https://img.shields.io/badge/Version-3.0-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-Android-blue)
+![License](https://img.shields.io/badge/License-GPL--3.0-orange)
+![Status](https://img.shields.io/badge/Status-Active-success)
+
 
 
 A Magisk/KernelSU module for passing Strong Integrity checks.
