@@ -1,4 +1,10 @@
 # Changelog
+## What's New in v3.4
+New Features:
+. New Keybox availability checker
+. App Targeting added
+. Banking Mode added
+
 ## What's New in v3.2
 
 - 📱 Introduce new control bar for fix detections
