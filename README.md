@@ -11,7 +11,7 @@
 
 
 
-A Magisk/KernelSU module for passing Strong Integrity checks.
+A KernelSU/Apatch module for passing Strong Integrity checks.
 
 ## 📌 About
 
