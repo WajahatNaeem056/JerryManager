@@ -2,7 +2,7 @@
 
 
 
-![PLATFORM](https://img.shields.io/badge/PLATFORM-Apatch%20|%20KERNELSU-blue)
+![PLATFORM](https://img.shields.io/badge/PLATFORM-Apatch%20|%20KERNELSU-KernelSu-Next%20blue)
 
 ![Version](https://img.shields.io/badge/VERSION-v3.2-purple)
 ![Platform](https://img.shields.io/badge/Platform-Android-blue)
