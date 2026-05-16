@@ -1,4 +1,10 @@
 # Changelog
+## What's New in v3.6
+ . Improve Banking Script 
+ . Improve Other Options 
+ . Add Too Much Things 
+
+ 
 ## What's New in v3.4
 New Features:
 . New Keybox availability checker
