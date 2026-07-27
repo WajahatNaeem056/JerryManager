@@ -43,6 +43,9 @@ A KernelSU/Apatch module for passing Strong Integrity checks.
 
 - Telegram: [@JerryModule](https://t.me/JerryTweaks)
 
+- Thanks Buddy For Helping 👍
+- 
+(https://github.com/dpejoh)
 ---
 
 > *Built for the community, by the community.* ❤️
