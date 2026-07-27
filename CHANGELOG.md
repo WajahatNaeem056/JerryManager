@@ -1,4 +1,13 @@
 # Changelog
+## What's New in v3.8
+.Completely redesigned Home UI with a cleaner and more modern look.
+.Added new toggles for a better and more convenient user experience.
+🛠️ Improvements
+.Improved overall UI responsiveness and usability.
+🐞 Bug Fixes
+.Fixed various bugs and stability issues.
+.General performance optimizations.
+
 ## What's New in v3.6
  . Improve Banking Script 
  . Improve Other Options 
