@@ -1,5 +1,16 @@
 # Changelog
 
+## 🚀 What's New in v3.8.2
+
+- ✨ Added swipe gesture navigation between tabs.
+- ⚡ Keybox verification now runs in the background, keeping the UI responsive.
+- 🛠️ Fixed tab switching being blocked during Keybox verification.
+- 🌙 Fixed App Targeting visibility in Dark Mode.
+- 🎨 Improved Dark Mode colors and overall UI consistency.
+- 💨 Improved navigation smoothness and overall responsiveness.
+- 🐞 Fixed minor UI issues and general bugs.
+- 🔧 Performance optimizations for a smoother experience.
+
 ## 🚀 What's New in v3.8
 
 ### ✨ New
