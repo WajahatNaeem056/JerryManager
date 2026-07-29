@@ -1,6 +1,6 @@
 # Changelog
 
-## 🚀 What's New in v3.8.2
+## 🚀 What's New in v3.9
 
 - ✨ Added swipe gesture navigation between tabs.
 - ⚡ Keybox verification now runs in the background, keeping the UI responsive.
