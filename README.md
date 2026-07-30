@@ -1,52 +1,71 @@
-# Jerry Manager
+<div align="center">
 
+# JerryManager
 
+**A KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.**
 
-![PLATFORM](https://img.shields.io/badge/PLATFORM-Apatch%20|%20KERNELSU-Nblue)
-
-![Version](https://img.shields.io/badge/VERSION-v3.2-purple)
-![Platform](https://img.shields.io/badge/Platform-Android-blue)
+![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
+![Version](https://img.shields.io/badge/Version-v3.9-purple)
+![OS](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL--3.0-orange)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
+</div>
 
-
-A KernelSU/Apatch module for passing Strong Integrity checks.
-
-## 📌 About
-
-**JerryManager** is a powerful Android module built to help users achieve and maintain **Strong Device Integrity**. Whether you're dealing with banking apps, payment systems, or security-sensitive applications — JerryManager has you covered.
-
-## Features
-- ✅ Play Integrity Fix (PIF)
-- ✅ Keybox Management
-- ✅ Widevine Support
-- ✅ Hide Mock Accounts (HMA)
-- ✅ Web UI
-
-## Installation
-1. Download latest zip from Releases
-2. Flash via Magisk / KernelSU
-3. Reboot
-
-## Requirements
-- Magisk or KernelSU
-- Android 8+
-
-
-## 👨‍💻 Developer
-
-**WajahatNaeem056**
-- GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
-
-- Telegram: [@JerryChatt](https://t.me/JerryChatt)
-
-- Telegram: [@JerryTweaks](https://t.me/JerryTweaks)
-
-- Thanks Buddy For Helping ❤️ [@dpejoh](https://github.com/dpejoh)
 ---
 
-> *Built for the community, by the community.* ❤️
+## About
+
+**JerryManager** is a root module for KernelSU and APatch focused on one job: getting devices to pass **Basic**, **Device**, and **Strong** Play Integrity checks, and keeping them passing across reboots and updates. It ships with a full Web UI for configuration instead of raw config files.
+
+Built for people who need integrity to actually hold — banking apps, payment systems, and other attestation-sensitive apps that break the moment a device is flagged.
+
+## Features
+
+- **Play Integrity Fix** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
+- **Keybox Management** — supply your own keybox or pull one automatically; both online and offline (bundled) modes supported
+- **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
+- **Banking Mode** — deep-clean and cache-clean routines aimed at passing banking-app checks, with dedicated fixes for common Pakistani banking apps
+- **Widevine Support** — DRM level patching for streaming apps
+- **Hide Mock Accounts (HMA)** — including variant handling for stricter detection methods
+- **Web UI** — Material Design 3 interface for every toggle; no manual file editing required
+- **Persistent Config** — toggle states survive module updates and reboots
+
+## Installation
+
+1. Download the latest ZIP from [Releases](https://github.com/WajahatNaeem056)
+2. Flash via KernelSU or APatch (Magisk is not the primary target — verify support before flashing)
+3. Reboot
+4. Open the module's Web UI from your manager app to configure
+
+## Requirements
+
+- KernelSU or APatch
+- Android 8.0+
+
+## Known Limitations
+
+- Web UI is currently light-mode only; dark mode is not yet supported
+- ROM identification is limited to devices with known, verified filesystem markers — new/uncommon ROMs will show as `Unknown` until markers are added
+
+## Developer
+
+**WajahatNaeem056**
+
+- GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
+- Telegram: [@JerryChatt](https://t.me/JerryChatt)
+- Telegram: [@JerryTweaks](https://t.me/JerryTweaks)
+
+Thanks to [@dpejoh](https://github.com/dpejoh) for help along the way.
 
 ## License
-GPL-3.0
+
+GPL-3.0 — see [LICENSE](LICENSE) for full terms.
+
+---
+
+<div align="center">
+
+*Built for the community, by the community.*
+
+</div>
