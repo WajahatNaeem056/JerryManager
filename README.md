@@ -33,7 +33,7 @@ Built for people who need integrity to actually hold — banking apps, payment s
 
 ## Installation
 
-1. Download the latest ZIP from [Releases](https://github.com/WajahatNaeem056)
+1. Download the latest ZIP 
 2. Flash via KernelSU or APatch (Magisk is not the primary target — verify support before flashing)
 3. Reboot
 4. Open the module's Web UI from your manager app to configure
@@ -42,11 +42,6 @@ Built for people who need integrity to actually hold — banking apps, payment s
 
 - KernelSU or APatch
 - Android 8.0+
-
-## Known Limitations
-
-- Web UI is currently light-mode only; dark mode is not yet supported
-- ROM identification is limited to devices with known, verified filesystem markers — new/uncommon ROMs will show as `Unknown` until markers are added
 
 ## Developer
 
