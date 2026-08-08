@@ -1,4 +1,17 @@
 # Changelog
+## What's New in v4.0
+
+✨ New Features
+- Added PIF Status for quick and convenient status monitoring.
+- Added Custom Options for improved flexibility and customization.
+
+🎨 UI Improvements
+- Improved and refined the Black Theme for a cleaner and more consistent appearance.
+- Enhanced overall UI consistency and user experience.
+
+🛠️ Fixes & Improvements
+- Fixed various minor UI and functionality issues.
+- Improved overall stability, performance, and reliability.
 
 ## 🚀 What's New in v3.9
 
