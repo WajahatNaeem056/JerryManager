@@ -51,8 +51,6 @@ Built for people who need integrity to actually hold — banking apps, payment s
 - Telegram: [@JerryChatt](https://t.me/JerryChatt)
 - Telegram: [@JerryTweaks](https://t.me/JerryTweaks)
 
-Thanks to [@dpejoh](https://github.com/dpejoh) for help along the way.
-
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE) for full terms.
