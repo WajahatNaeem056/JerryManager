@@ -1,3 +1,4 @@
+#!/system/bin/sh
 # Toggle default seeding — single source of truth for every toggle's default.
 #
 # WHY THIS EXISTS:
