@@ -1,0 +1,3074 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <style>md-icon:not(:defined){display:none}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <title data-i18n="app_title">JerryManager</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        onerror="this.onerror=null;this.href='assets/material-icons.css'" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
+        onerror="this.onerror=null;this.href='assets/material-icons-outlined.css'" />
+
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('themeMode'); } catch(e) {}
+      // First install: if no saved preference, default to light theme
+      // After user changes, remember their choice
+      var isFirstInstall = (saved === null || saved === undefined);
+      var mode = isFirstInstall ? 'light' : saved;
+      if (isFirstInstall) {
+        try { localStorage.setItem('themeMode', 'light'); } catch(e) {}
+      }
+      var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var resolved = mode === 'auto' ? (systemDark ? 'dark' : 'light') : mode;
+      document.documentElement.setAttribute('data-theme', mode);
+      document.documentElement.setAttribute('data-theme-resolved', resolved);
+      document.documentElement.style.colorScheme = resolved;
+      // Listen for system theme changes when mode is 'auto'
+      if (mode === 'auto') {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+          var currentMode = 'auto';
+          try { currentMode = localStorage.getItem('themeMode') || 'auto'; } catch(e) {}
+          if (currentMode === 'auto') {
+            var newResolved = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme-resolved', newResolved);
+            document.documentElement.style.colorScheme = newResolved;
+          }
+        });
+      }
+    })();
+  </script>
+  <script>
+  window.__setTheme = function(mode) {
+    // Update active button
+    ['dark','auto','light'].forEach(function(m) {
+      var btn = document.getElementById('theme-btn-' + m);
+      if (btn) btn.classList.toggle('active', m === mode);
+    });
+    document.documentElement.setAttribute('data-theme', mode);
+    var resolved = mode === 'auto'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : mode;
+    document.documentElement.setAttribute('data-theme-resolved', resolved);
+    document.documentElement.style.colorScheme = resolved;
+    try { localStorage.setItem('themeMode', mode); } catch(e) {}
+    // When switching to auto, immediately re-attach system listener
+    if (mode === 'auto') {
+      var mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (!window.__autoThemeListener) {
+        window.__autoThemeListener = function(e) {
+          try { var m = localStorage.getItem('themeMode') || 'auto'; } catch(ex) { var m = 'auto'; }
+          if (m === 'auto') {
+            var r = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme-resolved', r);
+            document.documentElement.style.colorScheme = r;
+          }
+        };
+        mq.addEventListener('change', window.__autoThemeListener);
+      }
+    }
+  };
+  // On load, read saved theme and highlight active button
+  document.addEventListener('DOMContentLoaded', function() {
+    var saved = 'light';
+    try { saved = localStorage.getItem('themeMode') || 'light'; } catch(e) {}
+    setTimeout(function() {
+      ['dark','auto','light'].forEach(function(m) {
+        var btn = document.getElementById('theme-btn-' + m);
+        if (btn) btn.classList.toggle('active', m === saved);
+      });
+    }, 300);
+  });
+  </script>
+  <script type="module" crossorigin src="./assets/index-ChjuGUlr.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-lhHHWwHU.js">
+  <link rel="modulepreload" crossorigin href="./assets/bridge-BHYUl5TK.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-DfNBIdZK.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <header class="app-top-bar" id="top-bar">
+      <span class="md-typescale-headline-medium app-title" data-i18n="app_title">JerryManager</span>
+      <div style="flex: 1"></div>
+      <!-- Hidden network chip — required by JS bridge for online/offline detection -->
+      <span id="network-chip" class="network-chip" style="display:none">
+        <md-icon>wifi</md-icon>
+        <span id="network-label">Online</span>
+      </span>
+    </header>
+
+    <main>
+      <div id="pages">
+
+        <section id="home-page">
+
+          <!-- Hidden refresh button for compatibility -->
+          <button id="refresh-btn" style="display:none"></button>
+
+          <!-- Keybox Hero Card -->
+          <md-filled-card id="keybox-card" class="hero-card">
+            <div class="keybox-inner">
+              <!-- Icon kept in DOM (bundle JS updates it) but visually hidden — redesign drops the big circular icon -->
+              <md-icon id="keybox-icon" style="display:none">verified_user</md-icon>
+              <div class="keybox-text">
+                <p class="keybox-label" data-i18n="home_keybox_status" id="keybox-label">KEYBOX STATUS</p>
+                <p class="keybox-value" id="keybox-value">Checking... <span id="keybox-num"></span></p>
+              </div>
+            </div>
+          </md-filled-card>
+
+          <!-- Info Row List (redesigned — replaces old 2x2 grid) -->
+          <div class="jf-combined-card">
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#e6faf3">
+                <svg width="24" height="24" fill="#00b96b" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl">Status</span>
+              <span class="jf-row-val green" id="status-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#fff4e0">
+                <svg width="24" height="24" fill="#ff9500" viewBox="0 0 24 24">
+                  <path d="M17.523 15.341a.85.85 0 1 1 0-1.7.85.85 0 0 1 0 1.7zm-11.046 0a.85.85 0 1 1 0-1.7.85.85 0 0 1 0 1.7zm11.4-5.765l1.604-2.778a.334.334 0 0 0-.122-.456.334.334 0 0 0-.456.122l-1.625 2.815A9.265 9.265 0 0 0 12 8.545a9.265 9.265 0 0 0-3.878.734L6.497 6.464a.334.334 0 0 0-.456-.122.334.334 0 0 0-.122.456l1.604 2.778C4.91 10.79 3.25 13.1 3 15.82h18c-.25-2.72-1.91-5.03-4.123-6.244z"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_android">Android</span>
+              <span class="jf-row-val" id="android-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#f0eeff">
+                <svg width="24" height="24" fill="none" stroke="#7c5cfc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <circle cx="8" cy="12" r="3.5"/>
+                  <line x1="11.5" y1="12" x2="21" y2="12"/>
+                  <line x1="19" y1="12" x2="19" y2="14.5"/>
+                  <line x1="16.5" y1="12" x2="16.5" y2="14.5"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_root">Root</span>
+              <span class="jf-row-val" id="root-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#fff0f6">
+                <svg width="24" height="24" fill="none" stroke="#e91e8c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <polyline points="8 21 12 17 16 21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl">ROM</span>
+              <span class="jf-row-val" id="rom-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#e6f0ff">
+                <svg width="24" height="24" fill="none" stroke="#3478f6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <rect x="5" y="2" width="14" height="20" rx="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_pif_status">PIF Status</span>
+              <span class="jf-row-val" id="pif-status-value">Unknown</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#eeecff">
+                <svg width="24" height="24" fill="none" stroke="#7c5cfc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <rect x="7" y="7" width="10" height="10" rx="1"/>
+                  <rect x="9" y="9" width="6" height="6" rx="0.5"/>
+                  <line x1="9" y1="7" x2="9" y2="4"/><line x1="12" y1="7" x2="12" y2="4"/><line x1="15" y1="7" x2="15" y2="4"/>
+                  <line x1="9" y1="20" x2="9" y2="17"/><line x1="12" y1="20" x2="12" y2="17"/><line x1="15" y1="20" x2="15" y2="17"/>
+                  <line x1="7" y1="9" x2="4" y2="9"/><line x1="7" y1="12" x2="4" y2="12"/><line x1="7" y1="15" x2="4" y2="15"/>
+                  <line x1="20" y1="9" x2="17" y2="9"/><line x1="20" y1="12" x2="17" y2="12"/><line x1="20" y1="15" x2="17" y2="15"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_kernel">Kernel</span>
+              <span class="jf-row-val kernel-val" id="kernel-value">—</span>
+            </div>
+
+          </div><!-- /.jf-combined-card -->
+
+        </section>
+
+        <section id="actions-page" hidden>
+
+          <div class="list-title" data-i18n="menu_keybox">Keybox</div>
+          <div class="list-container">
+            <div class="list-item" data-script="keybox.sh">
+              <md-icon>cloud_download</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_import_keybox">Install Jerry Keybox (Online)</div>
+                <span class="supporting-text" data-i18n="menu_import_keybox_desc">Downloads and installs remote keybox to Tricky Store</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+            <div class="list-item" id="custom-keybox-btn" style="cursor:pointer">
+              <md-icon>settings</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text">Set Custom Keybox</div>
+                <span class="supporting-text">Use your own keybox file, URL, or device path</span>
+              </div>
+              <div class="spacer"></div>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="menu_google_services">Google Services</div>
+          <div class="list-container">
+            <div class="list-item" data-script="gms.sh">
+              <md-icon>block</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_force_clear">Force Stop & Clear Play Store</div>
+                <span class="supporting-text" data-i18n="menu_force_clear_desc">Force-stops Play Store and wipes its data cache</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+            <div class="list-item" data-script="banking_mode.sh">
+              <md-icon>account_balance</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text">Banking Mode</div>
+                <span class="supporting-text">Clears GMS cache, fixes banking & payment app detection</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="menu_tricky_store">Tricky Store</div>
+          <div class="list-container">
+            <div class="list-item" data-script="target.sh">
+              <md-icon>list_alt</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_target">Set target.txt</div>
+                <span class="supporting-text" data-i18n="menu_target_desc">Generates Tricky Store target.txt with all installed apps</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" id="app-targeting-btn" onclick="openAppTargeting()">
+              <md-icon>manage_search</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text">App Targeting</div>
+                <span class="supporting-text">Manage per-app targeting states interactively</span>
+              </div>
+              <div class="spacer"></div>
+              <md-icon style="opacity:0.4;font-size:20px;">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" data-script="security_patch.sh">
+              <md-icon>security_update_good</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_patch">Set Security Patch</div>
+                <span class="supporting-text" data-i18n="menu_patch_desc">Writes spoofed security patch date to Tricky Store</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" data-script="boot_hash.sh">
+              <md-icon>verified</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_set_verified_boot">Set Verified Boot Hash</div>
+                <span class="supporting-text" data-i18n="advance_set_verified_boot_desc">Reads and writes verified boot hash for attestation</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+        </section>
+
+        <section id="advanced-page" hidden>
+
+          <div class="list-title" data-i18n="advance_menu_title_extended">Detection Fixes</div>
+          <div class="list-container">
+            <div class="list-item" data-script="cleanup.sh" data-destructive>
+              <md-icon>delete_sweep</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_clear_all_detection_traces">Clear All Detection Traces</div>
+                <span class="supporting-text" data-i18n="advance_clear_all_detection_traces_desc">Deletes detector app data, temp files, resets props, removes ODEX</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+
+            <div class="list-item" data-script="pif2.sh">
+              <md-icon>bug_report</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_fix_detect_pif">Fix PIF Detection</div>
+                <span class="supporting-text" data-i18n="advance_fix_pif_desc">Removes PIF-related properties via resetprop</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+
+            <div class="list-item" data-script="kill_all.sh" data-destructive>
+              <md-icon>cancel</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_kill_all">Kill All Processes</div>
+                <span class="supporting-text" data-i18n="advance_kill_all_desc">Force-stops and clears data for all known detector apps</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="advance_menu_title_config">Module Configs</div>
+          <div class="list-container">
+
+
+            <div class="list-item" data-script="zygisk_next.sh">
+              <md-icon>tune</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_set_zygisk_next_configs">Set Zygisk Next Configs</div>
+                <span class="supporting-text" data-i18n="advance_set_zygisk_desc">Configures enforce-denylist, memory-type, linker settings</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" data-script="pif.sh">
+              <md-icon>fingerprint</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_set_pif">Set Fingerprint (PIF)</div>
+                <span class="supporting-text" data-i18n="advance_set_pif_desc">Runs Play Integrity Fix auto-update scripts</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+
+          </div>
+
+          <div class="list-title" data-i18n="advance_tee_section">Fix TEE: OnePlus, RedMagic, Realme, Oppo…</div>
+          <div class="list-container">
+            <div class="list-item" data-script="widevine.sh">
+              <md-icon>layers</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_wdevinel1">Fix Widevine L1</div>
+                <span class="supporting-text" data-i18n="advance_wdevinel1_desc">Copies FixWidevineL1 files and runs KmInstallKeybox vendor binary</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Theme / Settings Page -->
+        <section id="control-page" hidden>
+
+          <div class="list-title" data-i18n="control_boot_title">Boot Behavior</div>
+          <div class="list-container">
+            <div class="ctrl-card" id="ctrl-card-boot" data-group="boot">
+              <md-icon>security</md-icon>
+              <div class="ctrl-card-content">
+                <div class="ctrl-card-title">Boot Behavior</div>
+                <span class="ctrl-card-desc">Recovery hiding, hardening, ROM spoof &amp; fingerprint cleanup, LSPosed traces</span>
+              </div>
+              <div class="spacer"></div>
+              <span class="ctrl-badge" id="ctrl-badge-boot">–</span>
+              <md-icon class="ctrl-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="control_custom_rom_title">Custom Rom</div>
+          <div class="list-container">
+            <div class="ctrl-card" id="ctrl-card-custom_rom" data-group="custom_rom">
+              <md-icon>android</md-icon>
+              <div class="ctrl-card-content">
+                <div class="ctrl-card-title">Custom Rom</div>
+                <span class="ctrl-card-desc">Hide/Nuke Lineage identity, GApps-install trace cleanup</span>
+              </div>
+              <div class="spacer"></div>
+              <span class="ctrl-badge" id="ctrl-badge-custom_rom">–</span>
+              <md-icon class="ctrl-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="control_automation_title">Automation</div>
+          <div class="list-container">
+            <div class="ctrl-card" id="ctrl-card-automation" data-group="automation">
+              <md-icon>radar</md-icon>
+              <div class="ctrl-card-content">
+                <div class="ctrl-card-title">Automation</div>
+                <span class="ctrl-card-desc">Auto-detect newly installed apps and add them to target.txt</span>
+              </div>
+              <div class="spacer"></div>
+              <span class="ctrl-badge" id="ctrl-badge-automation">–</span>
+              <md-icon class="ctrl-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="control_adb_title">ADB &amp; Debug Disabler</div>
+          <div class="list-container">
+            <div class="ctrl-card" id="ctrl-card-adb" data-group="adb">
+              <md-icon>usb_off</md-icon>
+              <div class="ctrl-card-content">
+                <div class="ctrl-card-title">ADB &amp; Debug Disabler</div>
+                <span class="ctrl-card-desc">Hide USB debugging, developer options, and OEM unlock at boot</span>
+              </div>
+              <div class="spacer"></div>
+              <span class="ctrl-badge" id="ctrl-badge-adb">–</span>
+              <md-icon class="ctrl-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="control_action_title">Action Pipeline</div>
+          <div class="list-container">
+            <div class="ctrl-card" id="ctrl-card-action" data-group="action">
+              <md-icon>list_alt</md-icon>
+              <div class="ctrl-card-content">
+                <div class="ctrl-card-title">Action Pipeline</div>
+                <span class="ctrl-card-desc">Kill Play Store, regenerate target, security patch, boot hash, PIF</span>
+              </div>
+              <div class="spacer"></div>
+              <span class="ctrl-badge" id="ctrl-badge-action">–</span>
+              <md-icon class="ctrl-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+        </section>
+
+        <section id="settings-page" hidden>
+
+          <div class="list-title">Theme</div>
+          <div class="theme-toggle-card" id="theme-toggle-card">
+            <button class="theme-btn" id="theme-btn-dark" onclick="window.__setTheme('dark')">
+              <span class="theme-btn-icon">🌙</span>
+              <span class="theme-btn-label">Dark</span>
+            </button>
+            <button class="theme-btn" id="theme-btn-auto" onclick="window.__setTheme('auto')">
+              <span class="theme-btn-icon">⚙️</span>
+              <span class="theme-btn-label">Auto</span>
+            </button>
+            <button class="theme-btn" id="theme-btn-light" onclick="window.__setTheme('light')">
+              <span class="theme-btn-icon">☀️</span>
+              <span class="theme-btn-label">Light</span>
+            </button>
+          </div>
+
+        </section>
+
+      </div>
+
+    <!-- ===== APP TARGETING PANEL ===== -->
+    <div id="app-targeting-panel" style="display:none;position:fixed;inset:0;z-index:200;flex-direction:column;overflow:hidden;" class="at-panel">
+      <!-- Header -->
+      <div class="at-header">
+        <button onclick="closeAppTargeting()" class="at-back-btn">
+          <md-icon style="font-family:'Material Icons';font-size:20px;">arrow_back</md-icon>
+        </button>
+        <span class="at-title" id="at-title">App Targeting</span>
+        <div id="at-saving-indicator" style="display:none;font-size:12px;" class="at-saving">Saving…</div>
+        <div style="position:relative;">
+          <button onclick="atToggleMenu(event)" class="at-back-btn" aria-label="More options">
+            <md-icon style="font-family:'Material Icons';font-size:20px;pointer-events:none;">more_vert</md-icon>
+          </button>
+          <div id="at-menu" class="at-menu-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:210;width:207px;background:var(--at-menu-bg);border:1px solid var(--at-border);border-radius:18px;box-shadow:0 4px 12px var(--at-shadow);padding:6px;overflow:hidden;">
+            <button class="at-menu-item" id="at-menu-selectall-btn" onclick="atSelectAll()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              <span>Select All</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-deselectall-btn" onclick="atDeselectAll()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+              <span>Deselect All</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-deselectunnecessary-btn" onclick="atDeselectUnnecessary()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+              <span>Deselect Unnecessary</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-togglesystem-btn" onclick="atToggleSystemApps()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+              <span id="at-menu-togglesystem-label">Show system apps</span>
+            </button>
+          </div>
+        </div>
+
+        <style>
+          .at-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            min-height: 42px;
+            box-sizing: border-box;
+            text-align: left;
+            padding: 0 10px;
+            margin: 0 0 3px 0;
+            border: 1px solid var(--at-menu-item-border);
+            border-radius: 16px;
+            background: var(--at-menu-item-bg);
+            color: var(--at-text);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .at-menu-item:last-child { margin-bottom: 0; }
+          .at-menu-item svg {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+            position: relative;
+            z-index: 1;
+            transition: opacity 0.1s ease;
+          }
+          .at-menu-item span { display: flex; align-items: center; position: relative; z-index: 1; }
+          /* JS-driven ripple: a neutral on-surface circle spawned at the tap
+             point that expands and fades. More reliable than relying on
+             :active alone in a WebView, where the active state can be too
+             brief to register before the click handler fires and the menu
+             closes. Uses --at-text (on-surface white/black), not the
+             purple accent — this is temporary press feedback, not a
+             selection state, so it stays neutral like a standard Android
+             ripple. */
+          .at-menu-item .at-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--at-text);
+            opacity: 0.10;
+            transform: scale(0);
+            animation: at-ripple-expand 0.45s ease-out forwards;
+            pointer-events: none;
+            z-index: 0;
+          }
+          @keyframes at-ripple-expand {
+            to { transform: scale(1); opacity: 0; }
+          }
+          .at-menu-item.at-pressed {
+            background: var(--at-menu-item-press-bg);
+            border-color: var(--at-menu-item-border);
+            transform: scale(0.98);
+          }
+          .at-menu-item.at-pressed svg { opacity: 1; }
+          @media (hover: hover) {
+            .at-menu-item:hover { background: var(--at-menu-item-hover-bg); }
+          }
+          .at-menu-dropdown {
+            transform-origin: top right;
+            animation: at-menu-pop 0.14s ease-out;
+            backdrop-filter: blur(16px) saturate(1.4);
+            -webkit-backdrop-filter: blur(16px) saturate(1.4);
+          }
+          @keyframes at-menu-pop {
+            from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        </style>
+      </div>
+      <!-- Search -->
+      <div class="at-search-wrap">
+        <div class="at-search-box">
+          <md-icon style="font-family:'Material Icons';font-size:20px;opacity:0.5;flex-shrink:0;">search</md-icon>
+          <input id="at-search" type="text" placeholder="Search apps" oninput="atFilter()" class="at-search-input">
+        </div>
+      </div>
+      <!-- Filter chips -->
+      <div class="at-chips-row">
+        <button class="at-chip at-chip-active" id="at-chip-all" onclick="atSetFilter('all')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="margin-right:4px;flex-shrink:0;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>All
+        </button>
+        <button class="at-chip" id="at-chip-selected" onclick="atSetFilter('selected')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5"/></svg>Selected
+        </button>
+        <button class="at-chip" id="at-chip-not-selected" onclick="atSetFilter('not-selected')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9"/></svg>Not Selected
+        </button>
+      </div>
+      <!-- Loading state -->
+      <div id="at-loading" style="display:flex;align-items:center;justify-content:center;flex:1;gap:12px;">
+        <md-circular-progress indeterminate></md-circular-progress>
+        <span style="opacity:0.6;">Loading apps…</span>
+      </div>
+      <!-- App list -->
+      <div id="at-list" style="display:none;flex:1;overflow-y:auto;padding:0 8px 100px;"></div>
+      <!-- Apply FAB -->
+      <div class="at-fab-wrap">
+        <button id="at-apply-btn" onclick="atApply()" class="at-apply-fab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          Apply
+        </button>
+      </div>
+    </div>
+
+    <style>
+    .at-panel {
+      background: var(--at-bg) !important;
+      color: var(--at-text);
+    }
+    /* Local theme variables for this panel — dark values (default) */
+    .at-panel {
+      --at-bg: #121212;
+      --at-card: #1E1E1E;
+      --at-search: #252525;
+      --at-border: #2A2A2A;
+      --at-purple: #7C4DFF;
+      --at-text: #F5F5F5;
+      --at-text-secondary: #A0A0A0;
+      --at-shadow: rgba(0,0,0,0.35);
+      --at-chip-hover: rgba(124,77,255,0.10);
+      --at-chip-active-press: rgba(124,77,255,0.16);
+      --at-menu-bg: #1C1C1E;
+      /* Menu-item surfaces: a neutral dark card, one step lighter than
+         --at-menu-bg (popup background) so each option reads as its own
+         surface. Border stays subtle/neutral. Hover/press use a neutral
+         on-surface tint (white-on-dark), not the purple accent — purple
+         is reserved for actual selection/action elements elsewhere in
+         this screen (filter chips, checkboxes, Apply button). */
+      --at-menu-item-bg: rgba(255,255,255,0.05);
+      --at-menu-item-border: rgba(255,255,255,0.10);
+      --at-menu-item-hover-bg: rgba(255,255,255,0.07);
+      --at-menu-item-press-bg: rgba(255,255,255,0.11);
+    }
+    /* Light theme values — Jerry's original translucent gradient look */
+    :root[data-theme-resolved=light] .at-panel,
+    :root[data-theme=light] .at-panel {
+      --at-bg: linear-gradient(145deg,#dce8ff 0%,#efe0ff 35%,#d8f5e8 65%,#fff0dc 100%);
+      --at-card: rgba(255,255,255,0.75);
+      --at-search: rgba(255,255,255,0.75);
+      --at-border: rgba(255,255,255,0.90);
+      --at-purple: #5533bb;
+      --at-text: #111133;
+      --at-text-secondary: #44447a;
+      --at-shadow: rgba(80,50,200,0.30);
+      --at-chip-hover: rgba(100,70,240,0.10);
+      --at-chip-active-press: rgba(100,70,240,0.18);
+      --at-menu-bg: #FFFFFF;
+      --at-menu-item-bg: rgba(85,51,187,0.045);
+      --at-menu-item-border: rgba(17,17,51,0.12);
+      --at-menu-item-hover-bg: rgba(17,17,51,0.06);
+      --at-menu-item-press-bg: rgba(17,17,51,0.10);
+    }
+    :root[data-theme-resolved=light] .at-header,
+    :root[data-theme=light] .at-header {
+      --at-header-bg: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px) saturate(1.4);
+      -webkit-backdrop-filter: blur(10px) saturate(1.4);
+    }
+    :root[data-theme-resolved=light] .at-search-box,
+    :root[data-theme=light] .at-search-box,
+    :root[data-theme-resolved=light] .at-chip,
+    :root[data-theme=light] .at-chip,
+    :root[data-theme-resolved=light] .at-app-row,
+    :root[data-theme=light] .at-app-row {
+      border-width: 1.5px;
+    }
+    :root[data-theme-resolved=light] .at-chip:not(.at-chip-active),
+    :root[data-theme=light] .at-chip:not(.at-chip-active) {
+      border-color: rgba(80,50,200,0.25) !important;
+    }
+
+    .at-header {
+      display:flex;align-items:center;gap:8px;
+      padding:16px 12px 12px;
+      background: var(--at-header-bg, var(--at-bg));
+      border-bottom:1px solid var(--at-border);
+      flex-shrink:0;
+    }
+
+    .at-back-btn {
+      background: var(--at-card);
+      color: var(--at-text);
+      border:1px solid var(--at-border);border-radius:50%;width:40px;height:40px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.12s ease;
+    }
+    .at-back-btn:active {
+      background: var(--at-chip-active-press);
+    }
+    @media (hover: hover) {
+      .at-back-btn:hover { background: var(--at-chip-hover); }
+    }
+    .at-title {
+      font-size:20px;font-weight:600;flex:1;
+      color: var(--at-text);
+    }
+
+    .at-saving { color: var(--at-purple); }
+
+    .at-search-wrap { padding:12px 16px 8px; flex-shrink:0; }
+    .at-search-box {
+      display:flex;align-items:center;gap:8px;
+      background: var(--at-search);
+      border: 1px solid var(--at-border);
+      border-radius:16px;padding:0 16px;height:48px;
+    }
+    .at-search-input {
+      border:none;background:transparent;flex:1;font-size:15px;
+      outline:none;color: var(--at-text);
+      font-family:inherit;
+    }
+    .at-search-input::placeholder { color: var(--at-text-secondary); }
+
+    .at-chips-row {
+      display:flex;gap:8px;padding:4px 16px 10px;
+      overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+    }
+    .at-chip {
+      display:flex;align-items:center;white-space:nowrap;
+      border-radius:20px;padding:8px 14px;font-size:14px;font-weight:500;
+      cursor:pointer;
+      border:1px solid var(--at-border);
+      background: var(--at-search);
+      color: var(--at-text);
+      transition:background 0.15s,border-color 0.15s;
+      font-family:inherit;
+    }
+    .at-chip.at-chip-active {
+      background: var(--at-purple) !important;
+      border-color: var(--at-purple) !important;
+      color: #ffffff !important;
+    }
+
+    .at-app-row {
+      display:flex;align-items:center;gap:12px;
+      padding:14px 12px;border-radius:16px;margin-bottom:8px;
+      background: var(--at-card);
+      border: 1px solid var(--at-border);
+      color: var(--at-text);
+      cursor:pointer;transition:background 0.12s;
+    }
+    .at-app-sub {
+      font-size:12px;
+      color: var(--at-text-secondary);
+    }
+    .at-app-name {
+      font-size:16px;font-weight:500;
+      color: var(--at-text);
+    }
+    /* Icon: no extra container/background — show the app's own icon only.
+       If the source image has transparent corners, they now show the
+       panel/card color instead of an injected white/gray placeholder box. */
+    .at-app-icon {
+      width:36px;height:36px;border-radius:10px;flex-shrink:0;
+      object-fit:cover;background:transparent;
+    }
+
+    .at-checkbox {
+      width:24px;height:24px;border-radius:50%;
+      border:1.5px solid var(--at-border);
+      background:transparent;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:background 0.15s,border-color 0.15s;
+    }
+    .at-checkbox.at-checked {
+      background: var(--at-purple) !important;
+      border-color: var(--at-purple) !important;
+    }
+
+    /* Floating Apply button — compact pill, doesn't block list content */
+    .at-fab-wrap {
+      position:fixed;right:20px;
+      bottom:calc(24px + env(safe-area-inset-bottom));
+      z-index:201;
+    }
+    .at-apply-fab {
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      background: var(--at-purple);
+      color: #ffffff;
+      border:none;border-radius:16px;padding:0 24px;height:52px;
+      font-size:16px;font-weight:600;cursor:pointer;
+      box-shadow:0 4px 16px var(--at-shadow);
+      font-family:inherit;
+    }
+    </style>
+    </main>
+
+    <!-- Custom Navbar — Flat White/Dark Pill, Solid Filled Icons, No Indicator -->
+    <nav id="nav-bar" class="jerry-nav">
+      <div class="jerry-nav-inner">
+      <button class="jerry-nav-tab active" data-index="0" onclick="jerryNavSwitch(0)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label" data-i18n="nav_home">Home</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="1" onclick="jerryNavSwitch(1)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2 4 5v6c0 5.06 3.41 9.79 8 11 4.59-1.21 8-5.94 8-11V5l-8-3z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label">Action</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="2" onclick="jerryNavSwitch(2)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M4 6h9v2H4V6zm0 5h6v2H4v-2zm0 5h9v2H4v-2zM16 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm0 6.5A2.5 2.5 0 1 1 16 17a2.5 2.5 0 0 1 0-5.5z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label" data-i18n="nav_advancemenu">Advanced</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="3" onclick="jerryNavSwitch(3)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 6h10v1.5H3V6zm0 5.25h7v1.5H3v-1.5zM3 16.5h10V18H3v-1.5z"/>
+            <path d="M15.5 10.5l1.9 1.9 3.6-3.6-1.06-1.06-2.54 2.54-.84-.84z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label" data-i18n="nav_control">Control</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="4" onclick="jerryNavSwitch(4)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.01 7.01 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 0 0-.59.22L2.74 8.87a.47.47 0 0 0 .12.61l2.03 1.58a7.2 7.2 0 0 0-.07.94c0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.04.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label">Other</span>
+      </button>
+      </div>
+    </nav>
+
+  </div>
+
+  <md-dialog id="progress-dialog">
+    <div slot="content" class="simple-progress">
+      <md-circular-progress indeterminate></md-circular-progress>
+      <p class="md-typescale-body-medium" id="progress-label"></p>
+      <p class="simple-progress__text" id="progress-text"></p>
+    </div>
+  </md-dialog>
+
+  <style>
+       ======================================== */
+
+    /* Keybox Hero Card */
+    .keybox-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 22px;
+    }
+    .keybox-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .keybox-label {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .keybox-value {
+      margin: 0;
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--md-sys-color-on-surface-variant); /* default/unknown */
+      transition: color 0.25s ease;
+    }
+    /* Light theme: also cover the brief loading state before any status
+       class (keybox-ok/revoked/outdated/unknown/none) has been applied —
+       otherwise the label+value are near-invisible light grey while the
+       keybox check is still running. */
+    :root[data-theme-resolved=light] .keybox-label,
+    :root[data-theme-resolved=light] .keybox-value { color: #000000 !important; }
+    :root[data-theme-resolved=light] .keybox-label { opacity: 0.6 !important; }
+    /* Dark theme: same loading-state fix as above — on-surface-variant
+       renders too close to the dark card background, making "Checking…"
+       barely visible until a status class takes over. !important since
+       this must win regardless of any other rule's specificity/order. */
+    :root[data-theme-resolved=dark] .keybox-label,
+    :root[data-theme-resolved=dark] .keybox-value { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .keybox-label { opacity: 0.7 !important; }
+    /* Dynamic status colors — each uses the same on-* token the bundle's own
+       CSS pairs with that state's background, so text always has correct
+       contrast against the card fill in both light and dark themes. */
+    #keybox-card.keybox-ok .keybox-value,
+    #keybox-card.keybox-ok .keybox-label { color: var(--md-sys-color-on-primary); }
+    #keybox-card.keybox-revoked .keybox-value,
+    #keybox-card.keybox-revoked .keybox-label { color: var(--md-sys-color-on-error-container); }
+    #keybox-card.keybox-outdated .keybox-value,
+    #keybox-card.keybox-outdated .keybox-label { color: var(--md-sys-color-on-tertiary-container); }
+    #keybox-card.keybox-unknown .keybox-value,
+    #keybox-card.keybox-unknown .keybox-label { color: var(--md-sys-color-on-surface); }
+    #keybox-card.keybox-none .keybox-value,
+    #keybox-card.keybox-none .keybox-label { color: var(--md-sys-color-on-surface-variant); }
+    /* Light theme: force black text for every keybox status state — the
+       theme tokens above (on-tertiary-container, on-error-container, etc.)
+       render as low-contrast pastel text against the light card background.
+       Dark theme keeps the original tokens above untouched. */
+    :root[data-theme-resolved=light] #keybox-card.keybox-ok .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-ok .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-revoked .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-revoked .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-outdated .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-outdated .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-unknown .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-unknown .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-none .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-none .keybox-label { color: #000000; }
+
+    /* Info grid emoji style */
+    .info-card__emoji {
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 4px;
+      display: block;
+      color: #5533bb;
+    }
+    #version-info-card .info-card__emoji { color: #4422aa; }
+    :root[data-theme-resolved=dark] .info-card__emoji,
+    :root[data-theme=dark] .info-card__emoji { color: #9977ee; }
+    :root[data-theme-resolved=dark] #version-info-card .info-card__emoji,
+    :root[data-theme=dark] #version-info-card .info-card__emoji { color: #ccaaff; }
+    .info-card__label {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+    .info-card__value {
+      margin: 4px 0 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      word-break: break-all;
+    }
+    .status-online { color: #2ecc71 !important; }
+
+    /* ═══ Home page zoom ═══ */
+    #home-page {
+      zoom: 0.78;
+    }
+
+    /* ═══ Redesigned home info section — row-list card (replaces 2x2 grid) ═══ */
+    .jf-combined-card {
+      margin: 0 2px;
+      background: #ffffff;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(91,110,245,0.12);
+      box-sizing: border-box;
+    }
+    .jf-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      min-height: 72px;
+      border-bottom: 0.8px solid rgba(18,19,43,0.06);
+      box-sizing: border-box;
+      width: 100%;
+      overflow: hidden;
+    }
+    .jf-row:last-child {
+      border-bottom: none;
+      padding-bottom: 26px;
+    }
+    .jf-row-icon {
+      width: 48px; height: 48px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    /* Dark theme — dim the pastel icon backgrounds (not the icon itself) via overlay */
+    :root[data-theme-resolved=dark] .jf-row-icon,
+    :root[data-theme=dark] .jf-row-icon {
+      background: rgba(255,255,255,0.06) !important;
+    }
+    .jf-row-lbl {
+      font-size: 15.5px;
+      color: rgba(18,19,43,0.80);
+      font-weight: 400;
+      flex: 1;
+      white-space: nowrap;
+    }
+    .jf-row-val {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #12132b;
+      text-align: right;
+    }
+    .jf-row-val.green  { color: #00b96b; }
+    .jf-row-val.purple { color: #5b6ef5; }
+    .jf-row-val.kernel-val {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0d0e22;
+      text-align: right;
+      max-width: 58%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      flex-shrink: 1;
+    }
+    .jf-chip {
+      font-size: 12px; font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(91,110,245,0.08);
+      color: #5b6ef5;
+      border: 1px solid rgba(91,110,245,0.15);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* Dark theme — jf-combined-card */
+    :root[data-theme-resolved=dark] .jf-combined-card,
+    :root[data-theme=dark] .jf-combined-card {
+      background: #1E1E1E !important;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.30) !important;
+    }
+    :root[data-theme-resolved=dark] .jf-row,
+    :root[data-theme=dark] .jf-row {
+      border-bottom-color: rgba(255,255,255,0.06) !important;
+    }
+    :root[data-theme-resolved=dark] .jf-row-lbl,
+    :root[data-theme=dark] .jf-row-lbl { color: #A0A0A0 !important; }
+    :root[data-theme-resolved=dark] .jf-row-val,
+    :root[data-theme=dark] .jf-row-val { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .jf-row-val.kernel-val,
+    :root[data-theme=dark] .jf-row-val.kernel-val { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .jf-chip,
+    :root[data-theme=dark] .jf-chip {
+      background: rgba(91,110,245,0.22) !important;
+      color: #b3bcfb !important;
+      border-color: rgba(91,110,245,0.35) !important;
+    }
+
+    /* ═══ Page background — flat light-lavender to match target screenshot ═══ */
+    html, body {
+      background: #eef0f8;
+    }
+    :root[data-theme-resolved=light] body,
+    :root[data-theme=light] body,
+    :root[data-theme-resolved=light] html,
+    :root[data-theme=light] html {
+      background: #eef0f8 !important;
+      background-attachment: initial !important;
+    }
+    .app-layout {
+      background: #eef0f8 !important;
+    }
+    :root[data-theme-resolved=dark] .app-layout,
+    :root[data-theme=dark] .app-layout {
+      background: #121212 !important;
+    }
+    :root[data-theme-resolved=dark] html,
+    :root[data-theme=dark] html,
+    :root[data-theme-resolved=dark] body,
+    :root[data-theme=dark] body {
+      background: #121212 !important;
+    }
+
+    /* Light theme overrides for new elements */
+    :root[data-theme-resolved=light] .info-card__label,
+    :root[data-theme=light] .info-card__label { color: #44447a !important; }
+    :root[data-theme-resolved=light] .info-card__value,
+    :root[data-theme=light] .info-card__value { color: #111133 !important; }
+
+    /* Dark theme overrides for new elements */
+    :root[data-theme-resolved=dark] .info-card__label,
+    :root[data-theme=dark] .info-card__label { color: #A0A0A0 !important; }
+    :root[data-theme-resolved=dark] .info-card__value,
+    :root[data-theme=dark] .info-card__value { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .status-online,
+    :root[data-theme=dark] .status-online { color: #4cde8a !important; }
+
+    @keyframes glass-slide-in {
+      0%   { opacity: 0; transform: translateY(8px) scale(0.99); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes glass-slide-out {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-5px) scale(0.99); }
+    }
+    section:not([hidden]) {
+      animation: glass-slide-in 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) both !important;
+      /* will-change intentionally omitted: this selector matches every
+         visible page section permanently, so declaring will-change here
+         would keep a GPU compositor layer allocated for the whole session,
+         not just during the brief 0.18s entrance animation. The animation
+         is short/cheap enough to not need it. */
+    }
+    /* Nav bar — instant feel */
+    md-navigation-bar {
+      transition: box-shadow 0.15s ease !important;
+    }
+    /* Instant tap response on list items */
+    .list-item {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+
+    /* Remove the browser/WebView's default blue/teal tap-highlight flash on every
+       clickable surface. This is purely the platform's built-in touch feedback
+       overlay (separate from the existing <md-ripple> effect and the purple
+       accent) — it was only ever suppressed on .list-item, so any other
+       clickable container (control-group cards, chips, rows, buttons) still
+       showed the browser's default highlight color on tap. No colors, layout,
+       or the existing ripple/press behavior are changed by this. */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-card,
+    .ctrl-badge,
+    .at-menu-item,
+    .at-chip,
+    .at-app-row,
+    .at-app-sub,
+    .at-back-btn,
+    .fb-row,
+    #fb-show-all-btn,
+    .jerry-nav-tab,
+    .theme-btn,
+    [style*="cursor:pointer"],
+    [style*="cursor: pointer"] {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       BALANCED PREMIUM DARK THEME — Material surface token overrides
+       ══════════════════════════════════════════════════════════════════
+       The Material Web components (.list-item, .app-layout, .info-card,
+       .theme-toggle-card, md-elevated-card, md-dialog, etc.) all read
+       their background/text colors from --md-sys-color-* custom
+       properties. Those tokens were never defined anywhere in this
+       project, so every one of them was silently falling back to the
+       library's built-in Material 3 baseline defaults — which are a
+       light, purple-tinted palette (#fef7ff, #ece6f0, #e6e0e9, ...) —
+       even in dark mode. That fallback is the actual source of the
+       leftover blue/purple dark surfaces (Home hero/nav included).
+
+       Scoped strictly to :root[data-theme-resolved=dark]: light theme
+       never references this block and keeps using the same fallback
+       values it always has, so it is completely unaffected.
+
+       Only the *surface* family and on-surface text tokens are
+       redefined here — primary/secondary/tertiary/error and their
+       "on-*"/container counterparts are left alone so every existing
+       accent color (green keybox-valid, purple headings/icons, pink
+       ROM icon, orange Android icon, blue selected Home tab, etc.)
+       renders exactly as before. */
+    :root[data-theme-resolved=dark] {
+      --md-sys-color-surface: #121212;                  /* page background */
+      --md-sys-color-surface-container-low: #1E1E1E;    /* secondary surfaces */
+      --md-sys-color-surface-container: #1E1E1E;        /* secondary surfaces */
+      --md-sys-color-surface-container-high: #1E1E1E;   /* cards / list-items / bottom nav / theme toggle */
+      --md-sys-color-surface-container-highest: #252525;/* icon containers / info-card */
+      --md-sys-color-surface-variant: #1E1E1E;           /* keybox "none" card, avatar bg */
+      --md-sys-color-on-surface: #F5F5F5;                /* primary text */
+      --md-sys-color-on-surface-variant: #A0A0A0;        /* secondary/body text */
+      --md-sys-color-outline: #2A2A2A;                   /* subtle borders */
+      --md-sys-color-outline-variant: #2A2A2A;           /* dividers */
+    }
+  </style>
+
+  <script>
+    // Sync hidden network-chip status → visible STATUS card
+    (function() {
+      function syncNetworkStatus() {
+        var chip = document.getElementById('network-chip');
+        var statusEl = document.getElementById('status-value');
+        if (!chip || !statusEl) return;
+        var label = chip.querySelector('#network-label');
+        var isOffline = chip.classList.contains('offline');
+        if (label) {
+          statusEl.textContent = label.textContent || '—';
+        }
+        statusEl.style.color = isOffline ? '#ff5252' : '#2ecc71';
+
+        // Safety net: the bundle's offline-toast swipe-gesture handler
+        // clears its own auto-close timer on pointerdown (to support
+        // drag-to-dismiss). If the matching pointerup/pointercancel
+        // never fires — e.g. a stray touch while scrolling — the timer
+        // is gone and the toast is stuck forever. Once we're back
+        // online, force-remove any leftover "Offline" toast directly;
+        // it's clearly stale if connectivity has already recovered.
+        if (!isOffline) {
+          document.querySelectorAll('.md-toast').forEach(function(t) {
+            if (/offline/i.test(t.textContent || '')) {
+              t.parentNode && t.parentNode.removeChild(t);
+            }
+          });
+        }
+      }
+      // Observe changes to network-chip
+      var observer = new MutationObserver(syncNetworkStatus);
+      document.addEventListener('DOMContentLoaded', function() {
+        var chip = document.getElementById('network-chip');
+        if (chip) {
+          observer.observe(chip, { attributes: true, subtree: true, childList: true, characterData: true });
+          syncNetworkStatus();
+        }
+        // MutationObserver kaafi hai — polling ki zaroorat nahi
+      });
+    })();
+  </script>
+
+  <script>
+    // ROM row — reads the "rom" key from info.json (added by device-info.sh).
+    // Not handled by the bundled JS, so wired up here like the status-value sync above.
+    (function() {
+      function setRomValue(v) {
+        var el = document.getElementById('rom-value');
+        if (el) el.textContent = v || '—';
+      }
+      function fetchRom() {
+        fetch('json/info.json?ts=' + Date.now())
+          .then(function(r) { return r.json(); })
+          .then(function(e) { if (e && e.rom) setRomValue(e.rom); })
+          .catch(function() {});
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        fetchRom();
+        var hiddenBtn = document.getElementById('refresh-btn');
+        if (hiddenBtn) {
+          // device-info.sh re-runs on refresh-btn click; give it a moment to write info.json
+          hiddenBtn.addEventListener('click', function() {
+            setTimeout(fetchRom, 900);
+          });
+        }
+      });
+    })();
+  </script>
+
+  <script type="module">
+    // PIF Status pill — polls pif-status.sh directly via the KSU/MMRL bridge
+    // PIF Status — polls pif-status.sh directly via the KSU/MMRL bridge
+    // (same bridge module the bundle uses) rather than reading a cached JSON
+    // file, so a PIF change made anywhere else updates here without an app
+    // restart or manual refresh. Runs on a 5s interval; only touches the DOM
+    // when the detected value actually changes, so it won't flicker/reflow
+    // the row every cycle. Only runs while the Home page is visible —
+    // no reason to poll a script in the background when the tab is hidden.
+    // Styled as plain .jf-row-val, same as android/root/rom rows — no
+    // special color/pill, so it doesn't stand out from the rest of the card.
+    (function() {
+      var POLL_MS = 5000;
+      var lastValue = null;
+      var timerId = null;
+
+      function setPifStatusValue(v) {
+        var el = document.getElementById('pif-status-value');
+        if (!el) return;
+        var display = (v && v.trim()) ? v.trim() : 'Unknown';
+        if (display === lastValue) return;
+        lastValue = display;
+        el.textContent = display;
+      }
+
+      async function pollOnce() {
+        try {
+          var mod = await import('./assets/bridge-BHYUl5TK.js');
+          var bridge = mod.t; // full {exec, getModuleDir, initBridge, runScript, runScriptRaw, spawnScript} object — real names, stable across rebuilds unlike the individual renamed exports
+          await bridge.initBridge(); // idempotent, safe to call every cycle
+          var result = await bridge.runScript('pif-status.sh', 'common');
+          if (!result || result.success === false) { setPifStatusValue(null); return; }
+          var parsed = null;
+          try { parsed = JSON.parse(result.output || result.rawOutput || ''); } catch (e) {}
+          setPifStatusValue(parsed && parsed.pif_status);
+        } catch (e) {
+          // no-bridge / timeout / not-installed — fall back to Unknown, don't throw
+          setPifStatusValue(null);
+        }
+      }
+
+      function startPolling() {
+        if (timerId) return;
+        pollOnce();
+        timerId = setInterval(pollOnce, POLL_MS);
+      }
+      function stopPolling() {
+        if (!timerId) return;
+        clearInterval(timerId);
+        timerId = null;
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('pif-status-value')) startPolling();
+        document.addEventListener('visibilitychange', function() {
+          if (document.hidden) stopPolling(); else startPolling();
+        });
+      });
+    })();
+  </script>
+
+  <style>
+    /* === UI POLISH: More blur, subtle neon, tight spacing === */
+
+    /* Tighter spacing on hero card */
+    .keybox-inner {
+      padding: 16px 18px !important;
+      gap: 12px !important;
+    }
+
+    /* Info grid tighter */
+    .info-grid {
+      gap: 8px !important;
+    }
+    .info-card__emoji {
+      font-size: 24px !important;
+      margin-bottom: 2px !important;
+    }
+    .info-card__label {
+      font-size: 0.68rem !important;
+      letter-spacing: 0.09em !important;
+    }
+    .info-card__value {
+      margin: 2px 0 0 !important;
+      font-size: 1.0rem !important;
+    }
+
+    /* Glass effect — scoped to the hero keybox card only (was applying to
+       EVERY md-filled-card app-wide via !important, multiplying GPU
+       compositing cost on every screen that has multiple cards). Blur
+       radius also reduced from 12px to 8px — visually near-identical but
+       meaningfully cheaper to render every frame during scroll. */
+    #keybox-card.hero-card {
+      backdrop-filter: blur(8px) saturate(1.3) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(1.3) !important;
+    }
+
+    /* App top bar — subtle glass. Blur reduced from 14px to 8px: this bar is
+       fixed and sits over scrolling content, so every scroll frame pays this
+       blur's compositing cost. Lower radius = same glass look, less GPU work. */
+    .app-top-bar {
+      backdrop-filter: blur(8px) saturate(1.3) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(1.3) !important;
+    }
+
+    .jerry-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+      contain: layout style;
+    }
+
+    /* ── Outer flat pill — light (default, matches screenshot) ── */
+    .jerry-nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 9999px;
+      border: none;
+      padding: 12px 8px;
+      overflow: hidden;
+      box-shadow:
+        0 6px 24px rgba(0,0,0,0.10),
+        0 1px 4px rgba(0,0,0,0.06);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    /* ── Outer flat pill — dark theme (semi-transparent, matches screenshot) ── */
+    :root[data-theme-resolved=dark] .jerry-nav-inner,
+    :root[data-theme=dark] .jerry-nav-inner {
+      background: rgba(30,30,30,0.85);
+      backdrop-filter: blur(8px) saturate(1.2);
+      -webkit-backdrop-filter: blur(8px) saturate(1.2);
+      border: 1px solid #2A2A2A;
+      box-shadow:
+        0 6px 24px rgba(0,0,0,0.40),
+        0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .jerry-nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      position: relative;
+      z-index: 1;
+    }
+
+    .jerry-nav-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ── Inactive icons/labels — light theme: solid gray ── */
+    .jerry-nav-icon {
+      width: 24px;
+      height: 24px;
+      fill: #9aa1ac;
+      transition: fill 0.2s ease, transform 0.2s ease;
+    }
+    .jerry-nav-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #9aa1ac;
+      transition: color 0.2s ease, font-weight 0.15s ease;
+      letter-spacing: 0;
+    }
+
+    /* ── Inactive icons/labels — dark theme: light gray ── */
+    :root[data-theme-resolved=dark] .jerry-nav-icon,
+    :root[data-theme=dark] .jerry-nav-icon { fill: rgba(255,255,255,0.38); }
+    :root[data-theme-resolved=dark] .jerry-nav-label,
+    :root[data-theme=dark] .jerry-nav-label { color: rgba(255,255,255,0.38); }
+
+    /* Hide any legacy sliding indicator element */
+    .jerry-indicator { display: none !important; }
+
+    /* ── Active tab — app's real accent color #5b6ef5 (matches cards/chips) ── */
+    .jerry-nav-tab.active .jerry-nav-icon  { fill: #5b6ef5; transform: scale(1.08); }
+    .jerry-nav-tab.active .jerry-nav-label { color: #5b6ef5; font-weight: 700; }
+
+    :root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-icon,
+    :root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-icon { fill: #5b6ef5; }
+    :root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-label,
+    :root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-label { color: #5b6ef5; }
+
+    /* Press feedback */
+    .jerry-nav-tab:active .jerry-nav-icon { transform: scale(0.90); opacity: 0.75; }
+
+    /* Tighter page padding */
+    main {
+      padding: 0 !important;
+    }
+    #pages > section {
+      padding: 10px 12px 10px !important;
+    }
+
+    /* List items tighter */
+    .list-item {
+      padding: 10px 14px !important;
+      min-height: 48px !important;
+    }
+    .list-title {
+      padding: 8px 14px 4px !important;
+      font-size: 0.70rem !important;
+      letter-spacing: 0.09em !important;
+    }
+
+    /* ===== Control tab summary cards (Jerry-style, open a modal) ===== */
+    .ctrl-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px !important;
+      min-height: 48px;
+      border-radius: 16px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .ctrl-card-content { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .ctrl-card-title { font-size: 0.92rem; font-weight: 600; }
+    .ctrl-card-desc {
+      font-size: 0.72rem;
+      opacity: 0.65;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .ctrl-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(124,58,237,0.16);
+      color: #b39ddb;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    :root[data-theme-resolved=light] .ctrl-badge,
+    :root[data-theme=light] .ctrl-badge {
+      background: rgba(94,53,177,0.12);
+      color: #5e35b1;
+    }
+    .ctrl-chevron { opacity: 0.45; flex-shrink: 0; }
+
+    /* Light theme — white glass, dark readable text (matches .list-item) */
+    :root[data-theme-resolved=light] .ctrl-card,
+    :root[data-theme=light] .ctrl-card {
+      background: rgba(255,255,255,0.75) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      color: #111133 !important;
+      font-weight: 500 !important;
+    }
+    :root[data-theme-resolved=light] .ctrl-card md-icon:first-child,
+    :root[data-theme=light] .ctrl-card md-icon:first-child { color: #5533bb !important; }
+    :root[data-theme-resolved=light] .ctrl-card-desc,
+    :root[data-theme=light] .ctrl-card-desc { color: #44447a !important; font-weight: 500 !important; }
+
+    /* Dark theme — matches .list-item */
+    :root[data-theme-resolved=dark] .ctrl-card,
+    :root[data-theme=dark] .ctrl-card {
+      background: #1E1E1E !important;
+      border-bottom: 1px solid #2A2A2A !important;
+      color: #F5F5F5 !important;
+      font-weight: 600 !important;
+    }
+    :root[data-theme-resolved=dark] .ctrl-card md-icon:first-child,
+    :root[data-theme=dark] .ctrl-card md-icon:first-child { color: #8B5CF6 !important; opacity: 0.85 !important; }
+    :root[data-theme-resolved=dark] .ctrl-card-title,
+    :root[data-theme=dark] .ctrl-card-title { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .ctrl-card-desc,
+    :root[data-theme=dark] .ctrl-card-desc { color: #A0A0A0 !important; }
+
+    /* Rows rendered inside the dynamic control-group dialog */
+    .ctrl-dialog-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 4px;
+      border-bottom: 1px solid rgba(128,128,128,0.14);
+    }
+    .ctrl-dialog-row:last-child { border-bottom: none; }
+    .ctrl-dialog-row-text { flex: 1; min-width: 0; }
+    .ctrl-dialog-row-title { font-size: 0.85rem; font-weight: 500; }
+    .ctrl-dialog-row-desc { font-size: 0.70rem; opacity: 0.62; margin-top: 2px; }
+  </style>
+
+  <!-- ===== CONTROL TAB TOGGLES (Jerry-style grouped modal cards) ===== -->
+  <script>
+  /* window.ka(key, default) reads config, window.Aa(key, value) writes it.
+     Same behavior/keys as before — only the UI (flat list -> card + modal) changed. */
+  (function() {
+    var ctrlGroups = {
+      boot: {
+        title: 'Boot Behavior',
+        icon: 'security',
+        desc: 'Choose which boot-time hardening and cleanup steps to apply.',
+        toggles: [
+          { key: 'toggle_recovery',           icon: 'folder_off',          def: '1', title: 'Auto-Hide Recovery Folders',  desc: 'Hide TWRP, OrangeFox, FOX recovery folders from /sdcard at boot' },
+          { key: 'toggle_boot_hardening',     icon: 'security',            def: '1', title: 'Boot Hardening',              desc: 'Apply security prop hardening (ro.secure, ro.debuggable, etc.) at boot' },
+          { key: 'toggle_bootloader_spoofer', icon: 'lock',                def: '1', title: 'Bootloader Spoofer Block',    desc: 'Remove conflicting bootloader spoofer packages at boot' },
+          { key: 'toggle_rom_spoof',          icon: 'smartphone',          def: '1', title: 'Block ROM Spoof Engines',     desc: 'Disable ROM-level spoof engines (PixelProps, PIHooks, etc.)' },
+          { key: 'toggle_rom_fingerprint',    icon: 'fingerprint',         def: '1', title: 'Clean ROM Fingerprint',       desc: 'Strip custom ROM identity (LineageOS, crDroid, PixelOS, etc.) from build props at boot' },
+          { key: 'toggle_suspicious_props',   icon: 'visibility_off',      def: '1', title: 'Clean Suspicious Props',      desc: 'Scan for and clear known root/emulator/tamper-indicating system properties, at boot and hourly' },
+          { key: 'toggle_lsposed',            icon: 'code',                def: '1', title: 'LSPosed ODEX Clean',          desc: 'Delete base.odex files from /data/app at boot (LSPosed trace clean)' }
+        ]
+      },
+      custom_rom: {
+        title: 'Custom Rom',
+        icon: 'android',
+        desc: 'LineageOS / custom-ROM identity spoofing and GApps-install trace cleanup.',
+        toggles: [
+          /* NOTE: no auto-detect gating here on purpose — stays manual/opt-in
+             like source. cached_rom_status (set at boot by lib/rom_detect.sh,
+             read via cfg_get) is available if a future UI pass wants to show
+             "you're on <ROM>, this won't do anything" next to these — informational
+             only, never auto-flips the toggle. */
+          { key: 'toggle_hide_lineage',       icon: 'android',             def: '1', title: 'Hide Lineage',                desc: 'Spoofs LineageOS-specific properties (from hide_lineage.prop) so apps cannot detect a LineageOS-based custom ROM' },
+          { key: 'toggle_nuke_lineage',       icon: 'delete_forever',      def: '0', title: 'Nuke Lineage',                desc: 'Medium risk: aggressively DELETES any prop whose value contains "lineage" at boot, instead of overriding it. Off by default — only enable if Hide Lineage is not enough.' },
+          { key: 'toggle_hide_custom_rom',    icon: 'delete_sweep',        def: '1', title: 'Hide Custom ROM',             desc: 'Deletes leftover NikGapps/BitGApps/LiteGApps installer log files at boot. Does not hide root or affect Play Integrity — only removes GApps-install forensic traces. Irreversible delete, no backup.' },
+          { key: 'toggle_remove_custom_rom_props', icon: 'delete_forever',  def: '1', title: 'Remove Custom ROM Properties', desc: 'Medium risk: deletes any prop whose key or value matches one of 24 known custom-ROM names (LineageOS, crDroid, PixelOS, GrapheneOS, Havoc, CalyxOS, and more), plus ro.modversion. Broader than Nuke Lineage, same collateral-deletion risk.' }
+        ]
+      },
+      automation: {
+        title: 'Automation',
+        icon: 'radar',
+        desc: 'Background automation for Tricky Store targeting.',
+        toggles: [
+          { key: 'toggle_auto_target', icon: 'radar', def: '1', title: 'Auto Target New Apps', desc: 'Automatically detect newly installed apps and add them to target.txt' }
+        ]
+      },
+      adb: {
+        title: 'ADB & Debug Disabler',
+        icon: 'usb_off',
+        desc: 'Master switch plus fine-grained control over what gets hidden at boot.',
+        toggles: [
+          { key: 'toggle_adb_disabler',             icon: 'usb_off',        def: '0', title: 'Disable ADB & Debugging',    desc: 'Master switch for hiding USB debugging, developer options, and OEM unlock' },
+          { key: 'toggle_adb_disabler_dev_options', icon: 'developer_mode', def: '0', title: 'Hide Developer Options',     desc: 'Disable development_settings_enabled at boot' },
+          { key: 'toggle_adb_disabler_usb_debug',   icon: 'usb',            def: '0', title: 'Hide USB Debugging',         desc: 'Reset ro.debuggable, adb.secure and related debug props at boot' },
+          { key: 'toggle_adb_disabler_oem_unlock',  icon: 'lock_person',    def: '0', title: 'Hide OEM Unlock Support',    desc: 'Report OEM unlock as unsupported at boot' }
+        ]
+      },
+      action: {
+        title: 'Action Pipeline',
+        icon: 'list_alt',
+        desc: 'Steps run automatically at boot after the core module init.',
+        toggles: [
+          { key: 'toggle_action_gms',            icon: 'block',                 def: '0', title: 'Kill Play Store',        desc: 'Force-stop and clear Play Store, GMS, and DroidGuard processes' },
+          { key: 'toggle_action_target',         icon: 'list_alt',              def: '1', title: 'Regenerate Target',      desc: 'Regenerate Tricky Store target.txt with all installed apps' },
+          { key: 'toggle_action_security_patch', icon: 'security_update_good',  def: '1', title: 'Set Security Patch',     desc: 'Write spoofed security patch date to Tricky Store' },
+          { key: 'toggle_action_boot_hash',       icon: 'verified',              def: '1', title: 'Set Verified Boot Hash', desc: 'Read and write verified boot hash for attestation' },
+          { key: 'toggle_action_pif',             icon: 'fingerprint',           def: '1', title: 'Set Fingerprint (PIF)',  desc: 'Run Play Integrity Fix auto-update scripts' }
+        ]
+      }
+    };
+
+    function readKa(key, def) {
+      try { return window.ka(key, def); } catch (e) { return Promise.resolve(def); }
+    }
+    function writeAa(key, val) {
+      try { window.Aa(key, val); } catch (e) {}
+    }
+
+    // Load all values for a group, return { key: '0'|'1' }
+    function loadGroupValues(group) {
+      return Promise.all(group.toggles.map(function(t) {
+        return Promise.resolve(readKa(t.key, t.def)).then(function(v) {
+          return { key: t.key, val: v === '1' ? '1' : '0' };
+        }).catch(function() {
+          return { key: t.key, val: t.def };
+        });
+      })).then(function(results) {
+        var map = {};
+        results.forEach(function(r) { map[r.key] = r.val; });
+        return map;
+      });
+    }
+
+    function updateBadge(groupId, group) {
+      var badge = document.getElementById('ctrl-badge-' + groupId);
+      if (!badge) return;
+      loadGroupValues(group).then(function(vals) {
+        var on = group.toggles.filter(function(t) { return vals[t.key] === '1'; }).length;
+        badge.textContent = on + '/' + group.toggles.length + ' On';
+      });
+    }
+
+    function refreshAllBadges() {
+      Object.keys(ctrlGroups).forEach(function(id) { updateBadge(id, ctrlGroups[id]); });
+    }
+
+    function openGroupDialog(groupId) {
+      var group = ctrlGroups[groupId];
+      if (!group) return;
+
+      var _isDark = document.documentElement.getAttribute('data-theme-resolved') === 'dark'
+        || document.documentElement.getAttribute('data-theme') === 'dark';
+
+      var dialog = document.createElement('md-dialog');
+      dialog.style.setProperty('--md-dialog-container-color', _isDark ? '#1E1E1E' : '#ffffff');
+      dialog.style.setProperty('--md-dialog-headline-color', _isDark ? '#F5F5F5' : '#252525');
+      dialog.style.setProperty('--md-dialog-supporting-text-color', _isDark ? '#A0A0A0' : '#444444');
+
+      var rowsHtml = group.toggles.map(function(t) {
+        return '<div class="ctrl-dialog-row" data-key="' + t.key + '">' +
+          '<md-icon style="font-size:22px;opacity:0.85">' + t.icon + '</md-icon>' +
+          '<div class="ctrl-dialog-row-text">' +
+            '<div class="ctrl-dialog-row-title">' + t.title + '</div>' +
+            '<div class="ctrl-dialog-row-desc">' + t.desc + '</div>' +
+          '</div>' +
+          '<md-switch icons class="ctrl-dialog-switch" data-key="' + t.key + '"></md-switch>' +
+        '</div>';
+      }).join('');
+
+      dialog.innerHTML =
+        '<div slot="headline" style="padding:20px 24px 4px;display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:600;color:' + (_isDark ? '#ffffff' : '#252525') + '">' +
+          '<md-icon>' + group.icon + '</md-icon>' + group.title +
+        '</div>' +
+        '<div slot="content" style="padding:4px 24px">' +
+          '<p style="margin:0 0 10px;font-size:0.78rem;opacity:0.65">' + group.desc + '</p>' +
+          rowsHtml +
+        '</div>' +
+        '<div slot="actions" style="padding:4px 24px 20px;display:flex;align-items:center">' +
+          '<div style="flex:1"></div>' +
+          '<md-text-button id="ctrl-cancel-btn" style="--md-text-button-label-text-color:' + (_isDark ? '#b39ddb' : '#4a148c') + '">Cancel</md-text-button>' +
+          '<md-filled-tonal-button id="ctrl-save-btn">Save</md-filled-tonal-button>' +
+        '</div>';
+
+      document.body.appendChild(dialog);
+
+      var switches = dialog.querySelectorAll('.ctrl-dialog-switch');
+
+      // Populate current saved state into each switch
+      loadGroupValues(group).then(function(vals) {
+        switches.forEach(function(sw) {
+          sw.selected = vals[sw.getAttribute('data-key')] === '1';
+        });
+      });
+
+      function closeDialog() {
+        dialog.close();
+        if (document.body.contains(dialog)) document.body.removeChild(dialog);
+      }
+
+      dialog.querySelector('#ctrl-cancel-btn').addEventListener('click', closeDialog);
+
+      dialog.querySelector('#ctrl-save-btn').addEventListener('click', function() {
+        switches.forEach(function(sw) {
+          writeAa(sw.getAttribute('data-key'), sw.selected ? '1' : '0');
+        });
+        closeDialog();
+        updateBadge(groupId, group);
+      });
+
+      dialog.addEventListener('close', function() {
+        if (document.body.contains(dialog)) document.body.removeChild(dialog);
+      });
+
+      dialog.show();
+    }
+
+    function initCards() {
+      Object.keys(ctrlGroups).forEach(function(groupId) {
+        var card = document.getElementById('ctrl-card-' + groupId);
+        if (card) card.addEventListener('click', function() { openGroupDialog(groupId); });
+      });
+      refreshAllBadges();
+    }
+
+    // Poll until window.ka is ready (ES module exposes it after its own DOMContentLoaded)
+    var _pollCount = 0;
+    var _pollMax = 60; // 60 x 50ms = 3 seconds max wait
+    function pollAndInit() {
+      if (typeof window.ka === 'function' && typeof window.Aa === 'function') {
+        initCards();
+      } else if (_pollCount < _pollMax) {
+        _pollCount++;
+        setTimeout(pollAndInit, 50);
+      } else {
+        console.warn('Jerry: window.ka/Aa not ready after 3s — control cards may not persist');
+        initCards();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', pollAndInit);
+    } else {
+      pollAndInit();
+    }
+  })();
+  </script>
+
+  <!-- ===== JERRY NAV SCRIPT ===== -->
+  <script>
+  var _jerryPages = ['home-page','actions-page','advanced-page','control-page','settings-page'];
+  var _jerryCurrentIndex = 0;
+
+  /* ── Spring state for X axis only (left) ──
+     NOTE: the visual "jerry-indicator" pill was removed (display:none) when
+     the navbar was redesigned to a flat style. This spring/rAF loop used to
+     drive that element every frame (~60x/sec) via a DOM query + forced-reflow
+     offsetLeft walk, even though there is nothing left to animate. Disabled
+     below to remove that per-frame main-thread cost entirely. */
+  var _spring = {
+    pos: 0, vel: 0, target: 0,
+    stiffness: 280, damping: 24,
+    rafId: null, lastT: null
+  };
+  var _indicatorTopPx = null;
+  var _JERRY_INDICATOR_ENABLED = false; /* flat navbar has no moving indicator */
+
+  /* Get pill position relative to jerry-nav-inner */
+  function _getPillRect(index) {
+    var tabs = document.querySelectorAll('.jerry-nav-tab');
+    var tab  = tabs[index];
+    if (!tab) return null;
+    var pill = tab.querySelector('.jerry-nav-pill');
+    if (!pill) return null;
+    var inner = document.querySelector('.jerry-nav-inner');
+    if (!inner) return null;
+
+    var ind = document.getElementById('jerry-indicator');
+    var indW = ind ? ind.offsetWidth  : 42;
+    var indH = ind ? ind.offsetHeight : 42;
+
+    /* offsetLeft/offsetTop are relative to offsetParent.
+       Walk up until we reach inner to accumulate offset. */
+    var el = pill, offsetLeft = 0, offsetTop = 0;
+    while (el && el !== inner) {
+      offsetLeft += el.offsetLeft;
+      offsetTop  += el.offsetTop;
+      el = el.offsetParent;
+    }
+
+    return {
+      /* center indicator over pill horizontally and vertically */
+      left: offsetLeft + (pill.offsetWidth  - indW) / 2,
+      top:  offsetTop  + (pill.offsetHeight - indH) / 2
+    };
+  }
+
+  function _springTick(ts) {
+    if (_spring.lastT === null) _spring.lastT = ts;
+    var dt = Math.min((ts - _spring.lastT) / 1000, 0.064);
+    _spring.lastT = ts;
+
+    var force = (_spring.target - _spring.pos) * _spring.stiffness
+                - _spring.vel * _spring.damping;
+    _spring.vel += force * dt;
+    _spring.pos += _spring.vel * dt;
+
+    var ind = document.getElementById('jerry-indicator');
+    if (ind) ind.style.left = _spring.pos.toFixed(2) + 'px';
+
+    var settled = Math.abs(_spring.target - _spring.pos) < 0.15
+               && Math.abs(_spring.vel) < 0.15;
+    if (settled) {
+      _spring.pos = _spring.target;
+      if (ind) ind.style.left = _spring.pos + 'px';
+      _spring.rafId = null;
+      _spring.lastT = null;
+    } else {
+      _spring.rafId = requestAnimationFrame(_springTick);
+    }
+  }
+
+  function _jerryMoveIndicator(index, animate) {
+    if (!_JERRY_INDICATOR_ENABLED) return; /* no-op: nothing to animate, skip DOM work entirely */
+    var rect = _getPillRect(index);
+    if (!rect) return;
+
+    var ind = document.getElementById('jerry-indicator');
+
+    /* Set Y once (pill top never changes) */
+    if (ind && (_indicatorTopPx === null || !animate)) {
+      _indicatorTopPx = rect.top;
+      ind.style.top = _indicatorTopPx + 'px';
+    }
+
+    _spring.target = rect.left;
+
+    if (!animate) {
+      if (_spring.rafId) { cancelAnimationFrame(_spring.rafId); _spring.rafId = null; }
+      _spring.pos = rect.left;
+      _spring.vel = 0;
+      _spring.lastT = null;
+      if (ind) {
+        ind.style.left = rect.left + 'px';
+        ind.style.top  = rect.top  + 'px';
+      }
+      return;
+    }
+
+    if (!_spring.rafId) {
+      _spring.lastT = null;
+      _spring.rafId = requestAnimationFrame(_springTick);
+    }
+  }
+
+  function jerryNavSwitch(index) {
+    if (index === _jerryCurrentIndex) return;
+    _jerryCurrentIndex = index;
+    _jerryPages.forEach(function(id, i) {
+      var page = document.getElementById(id);
+      if (page) page.hidden = (i !== index);
+    });
+    document.querySelectorAll('.jerry-nav-tab').forEach(function(tab, i) {
+      tab.classList.toggle('active', i === index);
+    });
+    _jerryMoveIndicator(index, true);
+    var main = document.querySelector('main');
+    if (main) main.scrollTop = 0;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    /* Wait one extra frame so layout is fully painted */
+    requestAnimationFrame(function() {
+      _jerryMoveIndicator(0, false);
+    });
+    window.addEventListener('resize', function() {
+      _indicatorTopPx = null; /* recalculate Y on resize */
+      _jerryMoveIndicator(_jerryCurrentIndex, false);
+    });
+  });
+  </script>
+
+  <script>
+  /* Keybox "Checking..." indicator.
+     The bundle (index-*.js) owns the real async check — it runs
+     keybox_info.sh in the background and, once done, adds one of
+     keybox-ok / keybox-revoked / keybox-outdated / keybox-unknown / keybox-none
+     to #keybox-card. We never touch that flow or re-trigger the script;
+     we only watch for it to finish and show a spinner state until it does.
+     A MutationObserver (not a fixed timeout) is used deliberately — a
+     timed delay was tried before and removed because it just guessed at
+     a duration instead of reacting to the real result. */
+  (function() {
+    var RESULT_CLASSES = ['keybox-ok', 'keybox-revoked', 'keybox-outdated', 'keybox-unknown', 'keybox-none'];
+
+    function hasResult(card) {
+      return RESULT_CLASSES.some(function(c) { return card.classList.contains(c); });
+    }
+
+    function init() {
+      var card = document.getElementById('keybox-card');
+      if (!card) return;
+
+      if (hasResult(card)) return; /* bundle already resolved before we attached */
+
+      card.classList.add('keybox-checking');
+
+      var valueEl = document.getElementById('keybox-value');
+      var prevText = valueEl ? valueEl.textContent : null;
+      if (valueEl) valueEl.textContent = 'Checking...';
+
+      var observer = new MutationObserver(function() {
+        if (hasResult(card)) {
+          card.classList.remove('keybox-checking');
+          observer.disconnect();
+        }
+      });
+      observer.observe(card, { attributes: true, attributeFilter: ['class'] });
+
+      /* Safety net: if the bundle's own polling window expires without
+         ever adding a result class (e.g. the script crashed), don't leave
+         the card stuck on "Checking..." forever. */
+      setTimeout(function() {
+        if (!hasResult(card)) {
+          card.classList.remove('keybox-checking');
+          observer.disconnect();
+          if (valueEl && valueEl.textContent === 'Checking...') {
+            valueEl.textContent = prevText || '—';
+          }
+        }
+      }, 8000);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+
+  <style>
+    /* Keybox checking state — spinner replaces the static icon slot */
+    #keybox-card.keybox-checking::after {
+      content: "";
+      position: absolute;
+      top: 20px; right: 20px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      opacity: 0.6;
+      animation: jerry-kb-spin 0.8s linear infinite;
+    }
+    #keybox-card.hero-card { position: relative; }
+    @keyframes jerry-kb-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+  /* Swipe gesture navigation between tabs.
+     Reuses jerryNavSwitch()/_jerryPages/_jerryCurrentIndex directly — swipe
+     is just another caller of the same function the nav bar buttons use,
+     so active state, indicator position, and scroll reset all stay in sync
+     automatically. No separate page-switch logic is introduced. */
+  (function() {
+    var main = document.querySelector('main');
+    if (!main) return;
+
+    var startX = 0, startY = 0, tracking = false;
+    var THRESHOLD = 50;      /* min horizontal px to count as a swipe */
+    var MAX_OFF_AXIS = 60;   /* max vertical drift allowed before we bail (was a scroll, not a swipe) */
+
+    function isInsideHorizontalScroller(target) {
+      return !!(target.closest && target.closest('.at-chips-row'));
+    }
+
+    main.addEventListener('touchstart', function(e) {
+      if (e.touches.length !== 1) { tracking = false; return; }
+      if (isInsideHorizontalScroller(e.target)) { tracking = false; return; }
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      tracking = true;
+    }, { passive: true });
+
+    main.addEventListener('touchend', function(e) {
+      if (!tracking) return;
+      tracking = false;
+
+      var touch = e.changedTouches[0];
+      var dx = touch.clientX - startX;
+      var dy = touch.clientY - startY;
+
+      if (Math.abs(dy) > MAX_OFF_AXIS) return;      /* vertical scroll, not a swipe */
+      if (Math.abs(dx) < THRESHOLD) return;         /* too small to count */
+
+      if (dx < 0) {
+        if (_jerryCurrentIndex < _jerryPages.length - 1) {
+          jerryNavSwitch(_jerryCurrentIndex + 1);
+        }
+      } else {
+        if (_jerryCurrentIndex > 0) {
+          jerryNavSwitch(_jerryCurrentIndex - 1);
+        }
+      }
+    }, { passive: true });
+  })();
+  </script>
+
+  <!-- KEYBOX CARD CHECKING STATE OVERRIDE removed —
+       bundle's real keybox result now shows immediately, no artificial delay -->
+
+
+<style>
+    /* ── Custom Keybox Dialog — Dark theme purple buttons ── */
+    :root[data-theme-resolved=dark] #kb-file-btn,
+    :root[data-theme=dark] #kb-file-btn {
+      --md-filled-tonal-button-container-color: #7C3AED;
+      --md-filled-tonal-button-label-text-color: #ffffff;
+      --md-filled-tonal-button-hover-state-layer-color: #ffffff;
+      --md-filled-tonal-button-pressed-container-color: #6D28D9;
+    }
+    :root[data-theme-resolved=dark] #kb-apply-btn,
+    :root[data-theme=dark] #kb-apply-btn {
+      --md-filled-tonal-button-container-color: #7C3AED;
+      --md-filled-tonal-button-label-text-color: #ffffff;
+      --md-filled-tonal-button-hover-state-layer-color: #ffffff;
+      --md-filled-tonal-button-pressed-container-color: #6D28D9;
+    }
+    :root[data-theme-resolved=dark] #fb-select,
+    :root[data-theme=dark] #fb-select {
+      --md-filled-button-container-color: #7C3AED;
+      --md-filled-button-label-text-color: #ffffff;
+      --md-filled-button-pressed-container-color: #6D28D9;
+    }
+  </style>
+
+  <style>
+    /* ── Light theme: All md-dialog ── */
+    :root[data-theme-resolved=light] md-dialog,
+    :root[data-theme=light] md-dialog {
+      --md-dialog-container-color: #ffffff;
+      --md-dialog-headline-color: #252525;
+      --md-dialog-supporting-text-color: #444444;
+      --md-text-button-label-text-color: #5b21b6;
+    }
+    /* ── Light theme: Activity cards ── */
+    :root[data-theme-resolved=light] .activity-card,
+    :root[data-theme=light] .activity-card {
+      --md-elevated-card-container-color: #f5f3ff;
+      --md-elevated-card-container-elevation: 1;
+      border: 1px solid rgba(91,33,182,0.10);
+    }
+    :root[data-theme-resolved=light] .activity-card__name,
+    :root[data-theme=light] .activity-card__name {
+      color: #1a1a2e !important;
+      font-weight: 600 !important;
+    }
+    :root[data-theme-resolved=light] .activity-card__time,
+    :root[data-theme=light] .activity-card__time {
+      color: #6b7280 !important;
+    }
+    /* Success icon circle — light purple */
+    :root[data-theme-resolved=light] .activity-card--success .activity-card__leading,
+    :root[data-theme=light] .activity-card--success .activity-card__leading {
+      background: #ede9fe !important;
+    }
+    :root[data-theme-resolved=light] .activity-card--success .activity-card__icon,
+    :root[data-theme=light] .activity-card--success .activity-card__icon {
+      color: #5b21b6 !important;
+    }
+    /* Error icon circle */
+    :root[data-theme-resolved=light] .activity-card--error .activity-card__leading,
+    :root[data-theme=light] .activity-card--error .activity-card__leading {
+      background: #fee2e2 !important;
+    }
+    :root[data-theme-resolved=light] .activity-card--error .activity-card__icon,
+    :root[data-theme=light] .activity-card--error .activity-card__icon {
+      color: #b91c1c !important;
+    }
+    /* Activity list headline */
+    :root[data-theme-resolved=light] .activity-empty p,
+    :root[data-theme=light] .activity-empty p {
+      color: #6b7280 !important;
+    }
+  </style>
+
+    <!-- ===== CUSTOM KEYBOX DIALOG ===== -->
+  <script>
+  (function() {
+
+    // Escape HTML helper
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Shell exec wrapper (sync for legacy, async via shAsync)
+    function sh(cmd) {
+      try {
+        if (window.ksu && window.ksu.exec) return window.ksu.exec(cmd);
+        return { code: -1, stdout: '', stderr: 'no exec' };
+      } catch(e) { return { code: -1, stdout: '', stderr: e.message }; }
+    }
+
+    // Async shell wrapper — global so all script blocks can use it
+    window.shAsync = function shAsync(cmd) {
+      return new Promise(function(resolve) {
+        try {
+          // KSU / MMRL callback style
+          var cb = 'cb_sh_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+          window[cb] = function(code, stdout, stderr) {
+            delete window[cb];
+            if (typeof code === 'number') {
+              resolve({ code: code, stdout: stdout || '', stderr: stderr || '' });
+            } else {
+              // some bridges pass JSON as first arg
+              try {
+                var obj = JSON.parse(code);
+                resolve({ code: 0, stdout: obj.result || obj.stdout || obj.output || '', stderr: '' });
+              } catch(_) {
+                resolve({ code: 0, stdout: code || '', stderr: '' });
+              }
+            }
+          };
+          if (window.ksu && typeof window.ksu.exec === 'function') {
+            window.ksu.exec(cmd, '{}', cb);
+          } else if (window.YuriKeyHost && typeof window.YuriKeyHost.execScript === 'function') {
+            window.YuriKeyHost.execScript(cmd, '{}', cb);
+          } else if (typeof window.execYurikeyScript === 'function') {
+            window.execYurikeyScript(cmd, cb);
+          } else {
+            delete window[cb];
+            resolve({ code: -1, stdout: '', stderr: 'no bridge' });
+          }
+        } catch(e) {
+          resolve({ code: -1, stdout: '', stderr: e.message });
+        }
+      });
+    }
+
+    // File browser - Jerry style
+    function openFileBrowser(callback) {
+      var currentPath = '/sdcard';
+      var selectedPath = null;
+      var showAll = false;
+      var entries = [];
+
+      var fbDialog = document.createElement('md-dialog');
+      fbDialog.className = 'fb-dialog';
+
+      function buildRow(path, icon, name, isFolder, isSelected) {
+        var cls = 'fb-row' + (isFolder ? '' : ' fb-row--file') + (isSelected ? ' fb-row--selected' : '');
+        return '<div class="' + cls + '" data-path="' + escHtml(path) + '">' +
+          '<span class="fb-row-icon' + (isFolder ? ' fb-row-icon--folder' : ' fb-row-icon--file') + '">' +
+          '<md-icon class="fb-row-icon-inner">' + icon + '</md-icon></span>' +
+          '<span class="fb-row-name">' + escHtml(name) + '</span>' +
+          (isFolder ? '<md-icon class="fb-chevron">chevron_right</md-icon>' : '') +
+          '</div>';
+      }
+
+      function renderBrowser() {
+        var folders = entries.filter(function(e) { return e.isFolder; });
+        var files = entries.filter(function(e) {
+          return !e.isFolder && (showAll || e.name.endsWith('.xml') || e.name.endsWith('.bak'));
+        });
+
+        fbDialog.innerHTML =
+          '<div slot="headline" class="fb-headline">' +
+            (currentPath !== '/sdcard' ? '<md-icon-button id="fb-back"><md-icon>arrow_back</md-icon></md-icon-button>' : '') +
+            '<span class="fb-path">' + escHtml(currentPath) + '</span>' +
+          '</div>' +
+          '<div slot="content" class="fb-content">' +
+            (currentPath !== '/' && currentPath !== '/sdcard' ? buildRow('..', 'folder_open', '..', true, false) : '') +
+            folders.map(function(e) { return buildRow(e.path, 'folder', e.name, true, false); }).join('') +
+            (files.length === 0 && folders.length === 0 ? '<div class="fb-empty">No XML files found</div>' : files.length === 0 ? '<div class="fb-empty" style="font-size:0.8rem;padding:16px">No XML files here — open a subfolder or tap Show all files</div>' : '') +
+            files.map(function(e) { return buildRow(e.path, 'description', e.name, false, selectedPath === e.path); }).join('') +
+            (!showAll && files.length < entries.filter(function(e){return !e.isFolder;}).length ?
+              '<div class="fb-show-all"><span id="fb-show-all-btn">Show all files</span></div>' : '') +
+          '</div>' +
+          '<div slot="actions" class="fb-actions">' +
+            '<md-text-button id="fb-cancel">Close</md-text-button>' +
+            '<div style="flex:1"></div>' +
+            '<md-filled-button id="fb-select"' + (selectedPath ? '' : ' disabled') + '>Select</md-filled-button>' +
+          '</div>';
+
+        // Back button
+        var backBtn = fbDialog.querySelector('#fb-back');
+        if (backBtn) backBtn.addEventListener('click', function() {
+          var parent = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+          currentPath = parent || '/sdcard';
+          loadDir(currentPath);
+        });
+
+        // Show all
+        var showAllBtn = fbDialog.querySelector('#fb-show-all-btn');
+        if (showAllBtn) showAllBtn.addEventListener('click', function() { showAll = true; renderBrowser(); });
+
+        // Row clicks
+        fbDialog.querySelectorAll('.fb-row').forEach(function(row) {
+          row.addEventListener('click', function() {
+            var path = row.getAttribute('data-path');
+            if (!path) return;
+            if (path === '..') {
+              var parent = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/sdcard';
+              currentPath = parent;
+              loadDir(currentPath);
+              return;
+            }
+            var entry = entries.find(function(e) { return e.path === path; });
+            if (entry && entry.isFolder) {
+              currentPath = path;
+              loadDir(currentPath);
+            } else {
+              selectedPath = path;
+              renderBrowser();
+            }
+          });
+        });
+
+        fbDialog.querySelector('#fb-cancel').addEventListener('click', function() { fbDialog.close(); });
+        fbDialog.querySelector('#fb-select').addEventListener('click', function() {
+          if (selectedPath) { callback(selectedPath); fbDialog.close(); }
+        });
+
+        if (!document.body.contains(fbDialog)) {
+          document.body.appendChild(fbDialog);
+          fbDialog.addEventListener('close', function() {
+            if (document.body.contains(fbDialog)) document.body.removeChild(fbDialog);
+          });
+          fbDialog.show();
+        }
+      }
+
+      function loadDir(path) {
+        fbDialog.innerHTML =
+          '<div slot="headline" class="fb-headline"><span class="fb-path">' + escHtml(path) + '</span></div>' +
+          '<div slot="content" class="fb-loading"><md-circular-progress indeterminate></md-circular-progress></div>';
+
+        if (!document.body.contains(fbDialog)) {
+          document.body.appendChild(fbDialog);
+          fbDialog.addEventListener('close', function() {
+            if (document.body.contains(fbDialog)) document.body.removeChild(fbDialog);
+          });
+          fbDialog.show();
+        }
+
+        shAsync('ls -1p ' + path + ' 2>/dev/null | head -200').then(function(result) {
+          var lines = (result.stdout || '').split('\n').filter(Boolean);
+          entries = lines.map(function(line) {
+            var isFolder = line.endsWith('/');
+            var name = line.replace(/\/$/, '');
+            return { name: name, isFolder: isFolder, path: path + '/' + name };
+          }).filter(function(e) { return e.name !== '.' && e.name !== '..'; });
+          selectedPath = null;
+          showAll = false;
+          renderBrowser();
+        }).catch(function() {
+          entries = [];
+          renderBrowser();
+        });
+      }
+
+      loadDir(currentPath);
+    }
+
+    // Main custom keybox dialog
+    function openCustomKeyboxDialog() {
+      var modDir = '/data/adb/modules/Jerrykey';
+      try { var _mp = JSON.parse(window.__jerry_module_paths||'{}'); if(_mp&&_mp.MODDIR) modDir=_mp.MODDIR; } catch(_){}
+      if (window.__jerry_moddir) modDir = window.__jerry_moddir;
+      var selectedFilePath = '';
+
+      var dialog = document.createElement('md-dialog');
+
+      // Light/dark theme detect karke correct background set karo
+      var _isDark = document.documentElement.getAttribute('data-theme-resolved') === 'dark'
+        || document.documentElement.getAttribute('data-theme') === 'dark';
+      dialog.style.setProperty('--md-dialog-container-color', _isDark ? '#1E1E1E' : '#ffffff');
+      dialog.style.setProperty('--md-dialog-headline-color', _isDark ? '#F5F5F5' : '#252525');
+      dialog.style.setProperty('--md-dialog-supporting-text-color', _isDark ? '#A0A0A0' : '#444444');
+
+      dialog.innerHTML =
+        '<div slot="headline" style="padding:20px 24px 4px;font-size:1.1rem;font-weight:600;color:' + (_isDark ? '#F5F5F5' : '#252525') + '">Custom Keybox</div>' +
+        '<div slot="content" style="padding:4px 24px">' +
+
+        '<div style="background:' + (_isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)') + ';border-radius:14px;padding:14px;margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+            '<md-icon style="font-size:22px">upload_file</md-icon>' +
+            '<span style="font-size:0.9rem;font-weight:500">Import File</span>' +
+          '</div>' +
+          '<p style="margin:0 0 10px;font-size:0.75rem;opacity:0.65">Select a keybox XML file from your device</p>' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<div id="kb-file-chip" style="font-size:0.75rem;opacity:0.55;padding:6px 12px;border:1px solid rgba(128,128,128,0.3);border-radius:20px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No file selected</div>' +
+            '<md-filled-tonal-button id="kb-file-btn">Browse Files</md-filled-tonal-button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="background:' + (_isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)') + ';border-radius:14px;padding:14px">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+            '<md-icon style="font-size:22px">link</md-icon>' +
+            '<span style="font-size:0.9rem;font-weight:500">URL or Path</span>' +
+          '</div>' +
+          '<p style="margin:0 0 10px;font-size:0.75rem;opacity:0.65">Paste a download URL or enter a device path</p>' +
+          '<md-outlined-text-field id="kb-url-input" style="width:100%;border-radius:14px" placeholder="https://example.com/keybox.xml or /sdcard/keybox.xml">' +
+            '<md-icon-button slot="trailing-icon" id="kb-paste-btn"><md-icon>content_paste</md-icon></md-icon-button>' +
+          '</md-outlined-text-field>' +
+        '</div>' +
+
+        '</div>' +
+        '<div slot="actions" style="padding:4px 24px 20px;display:flex;align-items:center">' +
+          '<md-text-button id="kb-clear-btn" style="--md-text-button-label-text-color:' + (_isDark ? '#cf6679' : '#b00020') + '"><md-icon slot="icon">delete</md-icon>Clear</md-text-button>' +
+          '<div style="flex:1"></div>' +
+          '<md-text-button id="kb-cancel-btn" style="--md-text-button-label-text-color:' + (_isDark ? '#b39ddb' : '#4a148c') + '">Cancel</md-text-button>' +
+          '<md-filled-tonal-button id="kb-apply-btn">Apply & Install</md-filled-tonal-button>' +
+        '</div>';
+
+      document.body.appendChild(dialog);
+
+      var fileChip = dialog.querySelector('#kb-file-chip');
+      var urlInput = dialog.querySelector('#kb-url-input');
+      var fileBtn = dialog.querySelector('#kb-file-btn');
+      var pasteBtn = dialog.querySelector('#kb-paste-btn');
+      var clearBtn = dialog.querySelector('#kb-clear-btn');
+      var cancelBtn = dialog.querySelector('#kb-cancel-btn');
+      var applyBtn = dialog.querySelector('#kb-apply-btn');
+
+      // Browse Files — Jerry style file browser
+      fileBtn.addEventListener('click', function() {
+        openFileBrowser(function(path) {
+          selectedFilePath = path;
+          fileChip.textContent = path.split('/').pop();
+          fileChip.style.opacity = '1';
+          urlInput.value = '';
+        });
+      });
+
+      // Paste
+      pasteBtn.addEventListener('click', function() {
+        navigator.clipboard && navigator.clipboard.readText().then(function(text) {
+          urlInput.value = text.trim();
+          selectedFilePath = '';
+          fileChip.textContent = 'No file selected';
+          fileChip.style.opacity = '0.55';
+        }).catch(function() {});
+      });
+
+      // Clear
+      clearBtn.addEventListener('click', function() {
+        var clearCmd = [
+          'MODDIR="' + modDir + '"',
+          '. "' + modDir + '/lib/paths.sh"',
+          '. "' + modDir + '/lib/config_env.sh"',
+          'cfg_delete kb_custom_type',
+          'cfg_delete kb_custom_value'
+        ].join(' && ');
+        shAsync(clearCmd);
+        selectedFilePath = '';
+        urlInput.value = '';
+        fileChip.textContent = 'No file selected';
+        fileChip.style.opacity = '0.55';
+        dialog.close();
+        if (document.body.contains(dialog)) document.body.removeChild(dialog);
+      });
+
+      // Cancel
+      cancelBtn.addEventListener('click', function() {
+        dialog.close();
+        if (document.body.contains(dialog)) document.body.removeChild(dialog);
+      });
+
+      // Apply & Install
+      applyBtn.addEventListener('click', function() {
+        var value = selectedFilePath || (urlInput.value ? urlInput.value.trim() : '');
+        if (!value) { alert('Please select a file or enter a URL/path'); return; }
+        var type = selectedFilePath ? 'path' : (value.startsWith('http') ? 'url' : 'path');
+        var safeValue = value.replace(/'/g, "'\\''");
+
+        applyBtn.disabled = true;
+        applyBtn.textContent = 'Installing...';
+
+        // Inline: set config + run keybox.sh in one single shell call
+        var saveCmd = [
+          'MODDIR="' + modDir + '"',
+          '. "' + modDir + '/lib/paths.sh"',
+          '. "' + modDir + '/lib/config_env.sh"',
+          'cfg_set kb_custom_type "' + type + '"',
+          'cfg_set kb_custom_value \'' + safeValue + '\'',
+          'sh \'' + modDir + '/features/keybox.sh\''
+        ].join(' && ');
+
+        // Close dialog immediately — don't wait for shell
+        dialog.close();
+        if (document.body.contains(dialog)) document.body.removeChild(dialog);
+
+        shAsync(saveCmd)
+          .then(function(result) {
+            if (result && result.code === 0) {
+              alert('\u2705 Custom keybox installed successfully!');
+            } else {
+              var msg = result ? (result.stderr || result.stdout || 'code=' + result.code) : 'no result';
+              alert('\u274c Install failed: ' + msg);
+            }
+          })
+          .catch(function(e) {
+            alert('\u274c Error: ' + (e && e.message ? e.message : String(e)));
+          })
+          .finally(function() {
+            applyBtn.disabled = false;
+            applyBtn.textContent = 'Apply & Install';
+          });
+      });
+
+      dialog.addEventListener('close', function() {
+        if (document.body.contains(dialog)) document.body.removeChild(dialog);
+      });
+
+      dialog.show();
+    }
+
+    // File browser CSS
+    var fbStyle = document.createElement('style');
+    fbStyle.textContent = [
+      '.fb-dialog { --md-dialog-container-max-height: 80vh; }',
+      '.fb-headline { display:flex; align-items:center; gap:8px; padding:16px 24px 8px; }',
+      '.fb-path { font-size:0.85rem; opacity:0.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }',
+      '.fb-content { padding:0; min-height:200px; }',
+      '.fb-loading { display:flex; justify-content:center; align-items:center; padding:40px; }',
+      '.fb-row { display:flex; align-items:center; gap:12px; padding:12px 16px; cursor:pointer; border-radius:8px; margin:2px 8px; transition:background 0s; }',
+      '.fb-row:hover, .fb-row--selected { background:rgba(255,255,255,0.08); }',
+      '.fb-row--selected { background:rgba(124,58,237,0.15) !important; }',
+      '.fb-row-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; }',
+      '.fb-row-icon--folder { background:rgba(59,130,246,0.2); color:#3B82F6; }',
+      '.fb-row-icon--file { background:rgba(124,58,237,0.15); color:#A78BFA; }',
+      '.fb-row-name { flex:1; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }',
+      '.fb-chevron { opacity:0.4; font-size:18px !important; }',
+      '.fb-empty { padding:32px; text-align:center; opacity:0.5; font-size:0.85rem; }',
+      '.fb-show-all { padding:8px 16px; text-align:center; }',
+      '#fb-show-all-btn { font-size:0.8rem; color:var(--md-sys-color-primary,#A78BFA); cursor:pointer; }',
+      '.fb-actions { display:flex; align-items:center; padding:8px 16px; }',
+    ].join('\n');
+    document.head.appendChild(fbStyle);
+
+    // Init
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('custom-keybox-btn');
+      if (btn) {
+        btn.addEventListener('click', openCustomKeyboxDialog);
+        btn.addEventListener('touchstart', function(e) {
+          e.preventDefault();
+          openCustomKeyboxDialog();
+        }, { passive: false });
+      }
+    });
+
+  })();
+  </script>
+
+
+  <!-- Dialog button theming MutationObserver removed — .dialog-action-clear/close
+       classes were never assigned to any element, so this observed the entire
+       body on every dialog creation for a no-op. -->
+
+
+  <!-- ===== APP TARGETING JS ===== -->
+  <script>
+  (function() {
+    var _atApps = [];          // {name, pkg, selected} — user-installed apps, shown by default
+    var _atSystemApps = [];    // {name, pkg, selected} — system apps, only surfaced while searching
+    var _atFilter = 'all';
+    var _atSearch = '';
+    var _atApplyTimer = null;
+    var _atSystemPkgSet = new Set(); // all known system package names, set by _atLoad
+    var _atSystemAppsVisible = false; // whether system apps are folded into the visible list
+
+    // Mirrors Addon's default-visible-system-apps list (their `vc` array):
+    // these specific system packages are always surfaced in the main list
+    // even when "Show system apps" is off, and are auto-promoted out of
+    // _atSystemApps in _atLoad below — same as Addon's ensureBoothConfig()
+    // auto-adding any target.txt system app into its "additional apps" set.
+    var AT_ALWAYS_VISIBLE_SYSTEM_PKGS = [
+      'com.google.android.gms', 'com.android.vending', 'com.oplus.deepthinker',
+      'com.heytap.speechassist', 'com.coloros.sceneservice'
+    ];
+
+    window.atToggleMenu = function(e) {
+      if (e) e.stopPropagation();
+      var menu = document.getElementById('at-menu');
+      if (!menu) return;
+      menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+    };
+
+    // Press/ripple feedback for the four .at-menu-item cards only — purely
+    // visual, does not touch or wrap the existing onclick handlers
+    // (atSelectAll/atDeselectAll/atDeselectUnnecessary/atToggleSystemApps),
+    // which keep firing exactly as before via the button's native onclick.
+    (function() {
+      function spawnRipple(btn, x, y) {
+        var rect = btn.getBoundingClientRect();
+        var size = Math.max(rect.width, rect.height) * 1.6;
+        var ripple = document.createElement('span');
+        ripple.className = 'at-ripple';
+        ripple.style.width = size + 'px';
+        ripple.style.height = size + 'px';
+        ripple.style.left = (x - rect.left - size / 2) + 'px';
+        ripple.style.top = (y - rect.top - size / 2) + 'px';
+        btn.appendChild(ripple);
+        ripple.addEventListener('animationend', function() { ripple.remove(); });
+      }
+      function wire(btn) {
+        var press = function(e) {
+          btn.classList.add('at-pressed');
+          var pt = (e.touches && e.touches[0]) || e;
+          spawnRipple(btn, pt.clientX, pt.clientY);
+        };
+        var release = function() { btn.classList.remove('at-pressed'); };
+        btn.addEventListener('pointerdown', press);
+        btn.addEventListener('pointerup', release);
+        btn.addEventListener('pointerleave', release);
+        btn.addEventListener('pointercancel', release);
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('#at-menu .at-menu-item').forEach(wire);
+      });
+      // Panel/menu can be shown before DOMContentLoaded already fired
+      // (inline scripts run top-to-bottom on a static page), so also wire
+      // immediately in case the elements already exist.
+      document.querySelectorAll('#at-menu .at-menu-item').forEach(wire);
+    })();
+
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('at-menu');
+      if (!menu || menu.style.display === 'none') return;
+      if (!menu.contains(e.target) && e.target.getAttribute('aria-label') !== 'More options') {
+        menu.style.display = 'none';
+      }
+    });
+
+    window.openAppTargeting = async function() {
+      var panel = document.getElementById('app-targeting-panel');
+      panel.style.display = 'flex';
+      document.querySelector('main').style.overflow = 'hidden';
+      _atSystemAppsVisible = false;
+      document.getElementById('at-title').textContent = 'App Targeting';
+      var sysLabel = document.getElementById('at-menu-togglesystem-label');
+      if (sysLabel) sysLabel.textContent = 'Show system apps';
+      _atFilter = 'all';
+      _atSearch = '';
+      document.getElementById('at-search').value = '';
+      atSetFilter('all');
+      await _atLoad();
+    };
+
+    window.closeAppTargeting = function() {
+      var panel = document.getElementById('app-targeting-panel');
+      panel.style.display = 'none';
+      document.querySelector('main').style.overflow = '';
+    };
+
+    window.atSetFilter = function(f) {
+      _atFilter = f;
+      ['all','selected','not-selected'].forEach(function(id) {
+        var el = document.getElementById('at-chip-' + id);
+        if (el) el.classList.toggle('at-chip-active', id === f);
+      });
+      _atRender();
+    };
+
+    var _atFilterDebounceTimer = null;
+    window.atFilter = function() {
+      /* Debounced: typing quickly used to rebuild the entire (potentially
+         hundreds-of-apps) filtered list + innerHTML on every keystroke,
+         which visibly stutters. Wait for a short pause in typing instead. */
+      var val = document.getElementById('at-search').value.toLowerCase();
+      if (_atFilterDebounceTimer) clearTimeout(_atFilterDebounceTimer);
+      _atFilterDebounceTimer = setTimeout(function() {
+        _atSearch = val;
+        _atRender();
+      }, 150);
+    };
+
+    window.atApply = async function() {
+      var btn = document.getElementById('at-apply-btn');
+      var sav = document.getElementById('at-saving-indicator');
+      btn.disabled = true;
+      if (sav) sav.style.display = 'block';
+
+      try {
+        var selected = _atApps.filter(function(a) { return a.selected; }).map(function(a) { return a.pkg; });
+        // Raw sync with target.txt: user's manual selection IS the
+        // target-mode entries. FIXED_TARGETS are handled separately by
+        // target.sh's merge-only pass (see target.sh) and are never
+        // shown or touched here. No suffix (!/?) is applied by this UI —
+        // that's target.sh/TEE-simulator territory for the fixed set only.
+        var writeCmd2 = selected.length === 0
+          ? 'true > /data/adb/tricky_store/target.txt'
+          : 'printf "%s\n" ' + selected.map(function(p){ return "'" + p.replace(/'/g,"'\''") + "'"; }).join(' ') + ' > /data/adb/tricky_store/target.txt';
+        var fullCmd = 'mkdir -p /data/adb/tricky_store 2>/dev/null; ' + writeCmd2 + '; echo done';
+        await window.shAsync(fullCmd);
+        if (sav) { sav.textContent = 'Saved ✓'; sav.style.color = 'green'; }
+        setTimeout(function() { if (sav) { sav.style.display = 'none'; sav.textContent = 'Saving…'; sav.style.color = ''; } }, 1800);
+      } catch(e) {
+        if (sav) { sav.textContent = 'Error!'; sav.style.color = 'red'; }
+        setTimeout(function() { if (sav) { sav.style.display = 'none'; sav.textContent = 'Saving…'; sav.style.color = ''; } }, 2000);
+        console.error('atApply error:', e);
+      }
+      btn.disabled = false;
+    };
+
+
+    async function _atLoad() {
+      var loading = document.getElementById('at-loading');
+      var list = document.getElementById('at-list');
+      loading.style.display = 'flex';
+      list.style.display = 'none';
+      _atApps = [];
+
+      try {
+        // Use shAsync - already defined in this page, works with KSU/MMRL
+        // User-installed apps (shown by default) and system apps (only
+        // surfaced when the user searches) are fetched and kept separate.
+        var r1u = await window.shAsync('pm list packages -3 2>/dev/null');
+        var r1s = await window.shAsync('pm list packages -s 2>/dev/null');
+        var toPkgList = function(stdout) {
+          return (stdout || '').trim().split('\n').filter(Boolean)
+            .map(function(l) { return l.replace(/^package:/, '').trim(); })
+            .filter(Boolean);
+        };
+        var userPkgs = [...new Set(toPkgList(r1u.stdout))].sort();
+        var systemPkgs = [...new Set(toPkgList(r1s.stdout))].sort();
+        var userPkgSet = new Set(userPkgs);
+        systemPkgs = systemPkgs.filter(function(p) { return !userPkgSet.has(p); });
+        var allPkgs = userPkgs.concat(systemPkgs);
+        _atSystemPkgSet = new Set(systemPkgs);
+
+        // Read current target.txt
+        var readPath = '/data/adb/tricky_store/target.txt';
+        var r2 = await window.shAsync('cat ' + readPath + ' 2>/dev/null || true');
+        var currentTargets = new Set((r2.stdout || '').trim().split('\n').map(function(l) {
+          return l.replace(/[!?]$/, '').trim();
+        }).filter(Boolean));
+
+        // Fetch real app display names (labels) via the ksu bridge's
+        // getPackagesInfo, same mechanism used by other TrickyStore-style
+        // WebUIs. Falls back to the package name itself if the bridge
+        // isn't available or a specific package has no resolvable label.
+        var labelMap = {};
+        try {
+          var ksuBridge = globalThis.ksu;
+          if (ksuBridge && typeof ksuBridge.getPackagesInfo === 'function') {
+            var infoArr = JSON.parse(ksuBridge.getPackagesInfo(JSON.stringify(allPkgs)));
+            for (var li = 0; li < allPkgs.length && li < infoArr.length; li++) {
+              var lbl = infoArr[li] && infoArr[li].appLabel;
+              labelMap[allPkgs[li]] = (lbl && lbl !== allPkgs[li]) ? lbl : allPkgs[li];
+            }
+          }
+        } catch (_) { /* labelMap stays empty, falls back below */ }
+
+        if (_atSystemAppsVisible) {
+          // System apps folded into the main visible pool — the user
+          // toggled "Show system apps" on.
+          _atApps = allPkgs.map(function(pkg) {
+            return { name: labelMap[pkg] || pkg, pkg: pkg, selected: currentTargets.has(pkg) };
+          }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+          _atSystemApps = [];
+        } else {
+          // Same-to-same with Addon's ensureBoothConfig(): a system app is
+          // promoted into the main visible list — instead of staying folded
+          // into _atSystemApps — if it's in the always-visible set (Addon's
+          // `vc` list) OR it's already selected in target.txt. Otherwise
+          // Select All / Deselect Unnecessary would silently skip it since
+          // both only operate on _atApps + _atSystemApps as currently split,
+          // and a selected-but-hidden system app would never get touched.
+          var alwaysVisibleSet = new Set(AT_ALWAYS_VISIBLE_SYSTEM_PKGS);
+          var promoted = [];
+          var stillSystemPkgs = [];
+          systemPkgs.forEach(function(pkg) {
+            if (alwaysVisibleSet.has(pkg) || currentTargets.has(pkg)) {
+              promoted.push(pkg);
+            } else {
+              stillSystemPkgs.push(pkg);
+            }
+          });
+          _atApps = userPkgs.concat(promoted).map(function(pkg) {
+            return { name: labelMap[pkg] || pkg, pkg: pkg, selected: currentTargets.has(pkg) };
+          }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+          _atSystemApps = stillSystemPkgs.map(function(pkg) {
+            return { name: labelMap[pkg] || pkg, pkg: pkg, selected: currentTargets.has(pkg) };
+          }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+        }
+
+        loading.style.display = 'none';
+        list.style.display = 'block';
+        _atRender();
+      } catch(e) {
+        loading.innerHTML = '<span style="opacity:0.5;">Failed to load apps: ' + e.message + '</span>';
+        console.error('atLoad error:', e);
+      }
+    }
+
+
+    window.atSelectAll = function() {
+      // Matches Addon's selectAll(): only operates on currently rendered/
+      // visible cards. System apps stay in _atSystemApps (hidden unless
+      // "Show system apps" is on or a package was promoted in _atLoad) and
+      // are deliberately left untouched — same as Addon, which only ever
+      // selects system apps via explicit "Add System App", never via
+      // Select All.
+      _atApps.forEach(function(a, i) {
+        a.selected = true;
+        var chk = document.getElementById('at-chk-' + i);
+        if (chk) chk.classList.add('at-checked');
+      });
+      var menu = document.getElementById('at-menu');
+      if (menu) menu.style.display = 'none';
+      _atRender();
+    }
+
+    window.atDeselectAll = function() {
+      // Matches Addon's deselectAll(): it clears the *entire* target store
+      // (not just visible cards), so hidden system-app selections get
+      // cleared too — unlike Select All, which only ever adds, never wipes
+      // existing state outside what's visible.
+      _atApps.forEach(function(a, i) {
+        a.selected = false;
+        var chk = document.getElementById('at-chk-' + i);
+        if (chk) chk.classList.remove('at-checked');
+      });
+      _atSystemApps.forEach(function(a) { a.selected = false; });
+      var menu = document.getElementById('at-menu');
+      if (menu) menu.style.display = 'none';
+      _atRender();
+    }
+
+    // Local fallback list — mirrors TrickyStore's on-device getXposedList()
+    // role, but pulled from JerryManager's own package_list.sh so it stays
+    // in sync with what the backend (target.sh) already treats as
+    // detector/tool/root-manager noise. Combined with the remote
+    // more-exclude.json below, not a replacement for it.
+    var AT_LOCAL_UNNECESSARY_PKGS = [
+      // Root managers / Xposed-adjacent tools (matches TrickyStore's set)
+      'com.topjohnwu.magisk', 'io.github.vvb2060.magisk', 'io.github.huskydg.magisk',
+      'me.weishu.kernelsu', 'com.rifsxd.ksunext', 'com.sukisu.ultra',
+      'me.bmax.apatch', 'me.garfieldhan.apatch.next',
+      'org.lsposed.manager', 'com.termux', 'bin.mt.plus', 'bin.mt.plus.canary',
+      'xzr.konabess', 'io.github.a13e300.ksuwebui', 'moe.shizuku.privileged.api',
+      'com.dergoogler.mmrl', 'com.dergoogler.mmrl.wx',
+      // DETECTOR_APPS from package_list.sh
+      'com.zhenxi.hunter', 'icu.nullptr.nativetest', 'icu.nullptr.applistdetector',
+      'com.byxiaorun.detector', 'io.github.huskydg.memorydetector', 'com.OrangeEnvironment.Detector',
+      'com.Longze.detector.pro2', 'rikka.safetynetchecker', 'io.github.vvb2060.keyattestation',
+      'io.github.vvb2060.mahoshojo', 'com.lingqing.detector', 'aidepro.top',
+      'com.junge.algorithmAidePro', 'chunqiu.safe', 'luna.safe.luna',
+      'io.liankong.riskdetector', 'com.studio.duckdetector', 'com.android.nativetest',
+      'com.byyoung.setting', 'com.scottyab.rootbeer', 'com.scottyab.rootbeer.sample',
+      'com.topjohnwu.magisk.detector', 'com.devadvance.rootcloak', 'com.fde.xposed.detector',
+      'com.zhenxi.checker', 'com.example.nativelibtest', 'com.example.memcheck',
+      'com.example.syscallchecker', 'com.jrummyapps.rootchecker', 'com.kimchangyoun.magiskdetector',
+      'com.reveny.nativechecker', 'com.reveny.environmentchecker', 'com.reveny.rootchecker',
+      'com.guardian.detect', 'com.security.environmentchecker', 'com.integrity.checker',
+      'com.integrity.attestation', 'com.lody.virtual', 'com.lody.virtual.client',
+      'com.lody.virtual.server', 'com.lody.whale', 'com.kimchangyoun.rootbeerfresh',
+      'com.didikee.rootcheck', 'com.joeykrim.rootcheck', 'com.freeandroidtools.rootchecker',
+      'com.bluestacks.rootchecker', 'com.moonshine.checker', 'com.ramdroid.appdetector',
+      'com.smlj.rootcheck', 'com.devadvance.rootcloakplus', 'com.formyhm.hideroot',
+      'com.example.emulatordetector', 'com.vmcheck.detector', 'com.virtual.checker',
+      'com.antivm.detector', 'com.xposed.checker', 'com.google.snet.test',
+      'com.attestation.checker', 'com.integrity.check', 'com.native.checker',
+      'com.syscall.detector', 'com.memory.scan', 'me.garfieldhan.holmes',
+      // TOOL_APPS from package_list.sh
+      'com.omarea.vtools', 'com.estrongs.android.pop', 'com.coolapk.market',
+      'com.sevtinge.hyperceiler', 'com.coderstory.toolkit',
+      // BLACKLIST_EXTRA from package_list.sh
+      'com.android.chrome', 'com.google.android.apps.photos', 'com.google.android.youtube', 'mmrl',
+      // Additional Xposed/LSPosed modules seen in the wild that Addon's
+      // remote more-exclude.json / local Xposed scan also catches
+      'io.github.lsposed.disableflagsecure', 'io.github.a13e300.fusefixer',
+      'io.github.chsbuffer.revancedxposed', 'ps.reso.instaeclipse',
+      'com.treatangus.elbowhitcolor', 'com.my.televip'
+    ];
+
+    // Packages that must NEVER be deselected by "Deselect Unnecessary" —
+    // these are FIXED_TARGETS from package_list.sh (GMS core + keybox/
+    // attestation apps required for Tricky Store integrity itself). Even
+    // if a package name collides with something in the remote
+    // more-exclude.json or the local list above, this guard wins — mirrors
+    // how Addon's own target.txt keeps these untouched.
+    var AT_PROTECTED_PKGS = new Set([
+      'android', 'com.android.vending', 'com.google.android.gsf',
+      'com.google.android.gms', 'com.google.android.ims',
+      'com.google.android.contactkeys', 'com.google.android.safetycore',
+      'com.google.android.apps.walletnfcrel', 'com.google.android.apps.nbu.paisa.user',
+      'io.github.vvb2060.keyattestation', 'io.github.vvb2060.mahoshojo',
+      'io.github.qwq233.keyattestation'
+    ]);
+
+    // Same-to-same port of TrickyStore's deselectUnnecessary(): fetches the
+    // community-maintained more-exclude.json (root managers, Xposed-adjacent
+    // tools, and general apps known not to trip bootloader detection), falls
+    // back to a mirror if raw.githubusercontent.com is blocked, and — unlike
+    // the old atDeselectSystemApps — filters purely by package identity, not
+    // by system/user classification. GMS/system-critical apps are untouched
+    // simply because they never appear in this exclude set.
+    window.atDeselectUnnecessary = async function() {
+      var menu = document.getElementById('at-menu');
+      if (menu) menu.style.display = 'none';
+
+      var excludeSet = new Set(AT_LOCAL_UNNECESSARY_PKGS);
+      var url = 'https://raw.githubusercontent.com/KOWX712/Tricky-Addon-Update-Target-List/main/more-exclude.json';
+      var resp = null;
+      try { resp = await fetch(url); } catch (e) {}
+      if (!resp || !resp.ok) {
+        try { resp = await fetch('https://gh.sevencdn.com/' + url); } catch (e) {}
+      }
+      if (resp && resp.ok) {
+        try {
+          var json = await resp.json();
+          json.data.forEach(function(group) {
+            group.apps.forEach(function(app) {
+              excludeSet.add(app['package-name']);
+            });
+          });
+        } catch (e) {
+          console.warn('Failed to parse online unnecessary apps list, using local list only');
+        }
+      } else {
+        console.warn('Failed to fetch online unnecessary apps list, using local list only');
+      }
+
+      // Live Xposed-module scan — same-to-same with Addon's
+      // getXposedList(): runs get_xposed.sh via the KSU/MMRL bridge, which
+      // unzips each installed app's APK and checks for Xposed markers, so
+      // modules that aren't in any hardcoded or remote list still get
+      // caught. Best-effort: if the bridge isn't available (e.g. WebUI
+      // opened outside KernelSU/Magisk manager) or the script errors out,
+      // deselect still proceeds with just the remote + local lists.
+      try {
+        var mod = await import('./assets/bridge-BHYUl5TK.js');
+        var bridge = mod.t;
+        await bridge.initBridge();
+        var xposedResult = await bridge.runScript('get_xposed.sh', 'common');
+        (xposedResult.output || '').split('\n').forEach(function(pkg) {
+          pkg = pkg.trim();
+          if (pkg) excludeSet.add(pkg);
+        });
+      } catch (e) {
+        console.warn('Live Xposed scan unavailable, using remote + local lists only');
+      }
+
+      function deselectIfUnnecessary(a, i, chkPrefix) {
+        if (excludeSet.has(a.pkg) && !AT_PROTECTED_PKGS.has(a.pkg)) {
+          a.selected = false;
+          if (chkPrefix) {
+            var chk = document.getElementById(chkPrefix + i);
+            if (chk) chk.classList.remove('at-checked');
+          }
+        }
+      }
+
+      _atApps.forEach(function(a, i) { deselectIfUnnecessary(a, i, 'at-chk-'); });
+      _atSystemApps.forEach(function(a) { deselectIfUnnecessary(a); });
+
+      _atRender();
+    }
+
+    // Explicit Show/Hide system apps toggle (3-dot menu). Independent of
+    // search — this surfaces the full system app pool the same way
+    // searching does.
+    window.atToggleSystemApps = function() {
+      var menu = document.getElementById('at-menu');
+      var btn = document.getElementById('at-menu-togglesystem-label');
+      _atSystemAppsVisible = !_atSystemAppsVisible;
+      if (_atSystemAppsVisible) {
+        _atApps = _atApps.concat(_atSystemApps);
+        _atSystemApps = [];
+      } else {
+        var kept = [];
+        var moved = [];
+        _atApps.forEach(function(a) {
+          (_atSystemPkgSet && _atSystemPkgSet.has(a.pkg)) ? moved.push(a) : kept.push(a);
+        });
+        _atApps = kept;
+        _atSystemApps = moved;
+      }
+      if (btn) btn.textContent = _atSystemAppsVisible ? 'Hide system apps' : 'Show system apps';
+      if (menu) menu.style.display = 'none';
+      _atRender();
+    };
+
+    function _atRender() {
+      var list = document.getElementById('at-list');
+      if (!list) return;
+
+      // System apps are only ever considered while actively searching —
+      // outside of a search, only _atApps (user-installed) is shown.
+      var searchActive = !!_atSearch;
+      if (searchActive) {
+        // Any system app the user has selected while searching gets
+        // permanently folded into _atApps, so it stays visible under the
+        // "Selected" filter later and keeps a single stable array for
+        // index-based toggling. Only unselected system apps remain in the
+        // separate pool.
+        var stillSystem = [];
+        _atSystemApps.forEach(function(a) {
+          if (a.selected) { _atApps.push(a); } else { stillSystem.push(a); }
+        });
+        _atSystemApps = stillSystem;
+      }
+
+      var pool = searchActive ? _atApps.concat(_atSystemApps) : _atApps;
+
+      var filtered = pool.filter(function(a) {
+        if (_atFilter === 'selected' && !a.selected) return false;
+        if (_atFilter === 'not-selected' && a.selected) return false;
+        if (_atSearch && a.pkg.toLowerCase().indexOf(_atSearch) === -1 && (a.name || '').toLowerCase().indexOf(_atSearch) === -1) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;opacity:0.5;">No apps found</div>';
+        return;
+      }
+
+      var html = filtered.map(function(a, i) {
+        var idx = _atApps.indexOf(a);
+        var sysIdx = idx === -1 ? _atSystemApps.indexOf(a) : -1;
+        var chkSvg = '<svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+        var clickAttr = idx !== -1
+          ? 'onclick="_atToggle(' + idx + ')" data-idx="' + idx + '"'
+          : 'onclick="_atToggleSystem(' + sysIdx + ')" data-sys-idx="' + sysIdx + '"';
+        var chkId = idx !== -1 ? 'at-chk-' + idx : 'at-chk-sys-' + sysIdx;
+        return '<div class="at-app-row" ' + clickAttr + '>' +
+          '<img class="at-app-icon" data-pkg="' + _escHtml(a.pkg) + '" alt="" loading="lazy" />' +
+          '<div style="flex:1;min-width:0;">' +
+          '<div class="at-app-name" style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _escHtml(a.name) + '</div>' +
+          '<div class="at-app-sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _escHtml(a.pkg) + '</div>' +
+          '</div>' +
+          '<div class="at-checkbox' + (a.selected ? ' at-checked' : '') + '" id="' + chkId + '">' +
+          (a.selected ? chkSvg : '') +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      list.innerHTML = html;
+      _atLoadIcons(list);
+    }
+
+    // Default placeholder icon (generic Android app icon, inline SVG data-URI)
+    // shown when neither the packageManager bridge nor the ksu:// scheme
+    // can resolve a real icon for a package.
+    var _atDefaultIcon = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="#9999aa">' +
+      '<path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>' +
+      '</svg>'
+    );
+
+    // Lazy icon loader — try the packageManager bridge
+    // first (native, no HTTP round-trip), fall back to the ksu://icon/
+    // scheme some hosts expose, and fall back again to a generic placeholder
+    // if neither resolves. IntersectionObserver ensures only rows actually
+    // scrolled into view fetch an icon, so a long app list doesn't try to
+    // fetch hundreds of icons at once.
+    var _atIconObserver = null;
+    function _atLoadIcons(container) {
+      if (_atIconObserver) { _atIconObserver.disconnect(); }
+      var imgs = container.querySelectorAll('.at-app-icon[data-pkg]');
+      _atIconObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+          var img = entry.target;
+          _atIconObserver.unobserve(img);
+          _atResolveIcon(img, img.dataset.pkg);
+        });
+      }, { root: container.closest('.at-list, #at-list') || null, rootMargin: '200px' });
+      imgs.forEach(function(img) { _atIconObserver.observe(img); });
+    }
+
+    function _atResolveIcon(img, pkg) {
+      img.onerror = function() { img.onerror = null; img.src = _atDefaultIcon; };
+      try {
+        var pm = globalThis.$packageManager;
+        if (pm && typeof pm.getApplicationIcon === 'function') {
+          var uri = pm.getApplicationIcon(pkg, 0, 0);
+          if (uri) {
+            fetch(uri).then(function(r) { return r.arrayBuffer(); }).then(function(buf) {
+              var bytes = new Uint8Array(buf), bin = '';
+              for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+              img.src = 'data:image/png;base64,' + btoa(bin);
+            }).catch(function() { img.src = 'ksu://icon/' + pkg; });
+            return;
+          }
+        }
+      } catch (e) {}
+      img.src = 'ksu://icon/' + pkg;
+    }
+
+    window._atToggle = function(idx) {
+      if (!_atApps[idx]) return;
+      _atApps[idx].selected = !_atApps[idx].selected;
+      // Update just this row's checkbox
+      var chk = document.getElementById('at-chk-' + idx);
+      if (chk) {
+        chk.classList.toggle('at-checked', _atApps[idx].selected);
+        chk.innerHTML = _atApps[idx].selected
+          ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>'
+          : '';
+      }
+    };
+
+    window._atToggleSystem = function(sysIdx) {
+      if (!_atSystemApps[sysIdx]) return;
+      var app = _atSystemApps[sysIdx];
+      app.selected = !app.selected;
+      if (app.selected) {
+        // Selecting a system app moves it into _atApps right away, so it
+        // gets a stable, permanent index for all future toggling/rendering
+        // and shows up under the "Selected" filter even outside search.
+        _atSystemApps.splice(sysIdx, 1);
+        _atApps.push(app);
+        _atRender();
+        return;
+      }
+      var chk = document.getElementById('at-chk-sys-' + sysIdx);
+      if (chk) {
+        chk.classList.remove('at-checked');
+        chk.innerHTML = '';
+      }
+    };
+
+    function _escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  })();
+  </script>
+</body>
+</html>

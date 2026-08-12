@@ -1,0 +1,13 @@
+# Hide Lineage — prop overrides applied by features/hide_lineage.sh
+# Format: key=value, one per line. Lines starting with # are ignored.
+#
+# (ro.crypto.state, ro.build.tags, ro.build.type) — those are skipped or
+# already covered elsewhere in JerryManager's own apply_boot_props(). Left
+# empty deliberately rather than guessing actual ro.lineage.* values, since
+# a wrong prop value here fails silently at boot. Populate with real
+# ro.lineage.* / ro.build.* overrides for your device's actual props if you
+# want this feature to do anything.
+#
+# Example (do not uncomment blindly — verify against `getprop` on YOUR device):
+# ro.lineage.version=
+# ro.lineage.build.version=

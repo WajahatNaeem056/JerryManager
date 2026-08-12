@@ -1,98 +1,112 @@
 # Changelog
+
+All notable changes to JerryManager are documented in this file.
+
 ## What's New in v4.0
 
-✨ New Features
-- Added PIF Status for quick and convenient status monitoring.
-- Added Custom Options for improved flexibility and customization.
+### Added
+- PIF Status indicator for quick, at-a-glance status monitoring.
+- Custom Options for greater flexibility and configuration.
 
-🎨 UI Improvements
-- Improved and refined the Black Theme for a cleaner and more consistent appearance.
-- Enhanced overall UI consistency and user experience.
+### Changed
+- Refined the Black Theme for a cleaner, more consistent appearance.
+- General UI consistency and usability improvements.
 
-🛠️ Fixes & Improvements
-- Fixed various minor UI and functionality issues.
-- Improved overall stability, performance, and reliability.
+### Fixed
+- Various minor UI and functionality issues.
+- Overall stability, performance, and reliability improvements.
 
-## 🚀 What's New in v3.9
+## What's New in v3.9
 
-- ✨ Added swipe gesture navigation between tabs.
-- ⚡ Keybox verification now runs in the background, keeping the UI responsive.
-- 🛠️ Fixed tab switching being blocked during Keybox verification.
-- 🌙 Fixed App Targeting visibility in Dark Mode.
-- 🎨 Improved Dark Mode colors and overall UI consistency.
-- 💨 Improved navigation smoothness and overall responsiveness.
-- 🐞 Fixed minor UI issues and general bugs.
-- 🔧 Performance optimizations for a smoother experience.
+### Added
+- Swipe gesture navigation between tabs.
 
-## 🚀 What's New in v3.8
+### Changed
+- Keybox verification now runs in the background, keeping the UI responsive.
+- Improved Dark Mode colors and overall UI consistency.
+- Smoother navigation and improved general responsiveness.
+- General performance optimizations.
 
-### ✨ New
-- Redesigned Home UI with a modern and cleaner interface.
-- Added new toggles for quick access and better usability.
+### Fixed
+- Tab switching no longer blocked during Keybox verification.
+- App Targeting visibility issue in Dark Mode.
+- Minor UI issues and general bug fixes.
 
-### 🛠 Improvements
-- Enhanced UI responsiveness.
-- Improved overall user experience.
+## What's New in v3.8
 
-### 🐞 Fixes
-- Fixed various bugs.
+### Added
+- New toggles for quicker access and better usability.
+
+### Changed
+- Redesigned Home UI with a cleaner, more modern layout.
+- Improved UI responsiveness and overall user experience.
+
+### Fixed
+- Various bug fixes.
 - Improved stability and performance.
 
 ## What's New in v3.6
- . Improve Banking Script 
- . Improve Other Options 
- . Add Too Much Things 
 
- 
+### Changed
+- Improved the Banking Mode script.
+- Improved other configuration options.
+- General feature additions and refinements.
+
 ## What's New in v3.4
-New Features:
-. New Keybox availability checker
-. App Targeting added
-. Banking Mode added
+
+### Added
+- Keybox availability checker.
+- App Targeting.
+- Banking Mode.
 
 ## What's New in v3.2
 
-- 📱 Introduce new control bar for fix detections
- 
-- ➖ Introduce new Jerry assistant they will help you a lot
- 
--  🔄 Add Integrity Checker In Manager 
-
+### Added
+- New control bar for fixing detection issues.
+- Jerry Assistant, an in-app helper.
+- Integrity Checker built into the manager.
 
 ## What's New in v3.0
 
-- 📱 Fix Integrity Issue
-- 🔧 Bug Fixes
-- 🔄 Enhanced Stability
- 
-  
-Now I Added online offline Button both buttons for easy to install keybox
+### Added
+- Online and offline buttons for easier keybox installation.
+- Keybox status reporting, now surfacing one of four states:
+  1. **Generic** — keybox not issued by Jerry.
+  2. **Outdated** — a Jerry keybox is installed, but a newer version is available.
+  3. **Revoked** — the installed Jerry keybox has been revoked.
+  4. **Up to Date** — the latest Jerry keybox is installed and not revoked.
 
-
-The module now tells you:
-
-1. Generic → keybox not by Jerry
-2. Outdated → Jerry keybox, newer version available (beats revoked)
-3. Revoked → Jerry keybox Is revoked
-4. Up to Date → Use latest Jerry keybox, not revoked
+### Fixed
+- Integrity detection issue.
+- General bug fixes and stability improvements.
 
 ## What's New in v2.6
 
-- ⚡ Fix Dark Mode
-- 🔧 Bug Fixes
-- 🔄 Enhanced Stability
+### Fixed
+- Dark Mode rendering issue.
+- General bug fixes and stability improvements.
 
 ## What's New in v2.5
 
-- 🛡️ Improved Strong Integrity
-- ⚡ Better Performance
-- 📱 Introduce New Theme Page
+### Added
+- New Theme page.
 
-## v2.0
-- 📱 Introduce New UI
-- 🔧Better Compatibility
-- ⚡ Better Performance
-- 🔧 Bug fixes
-  
-## v1.0
-- 🎉 First release
+### Changed
+- Improved Strong Integrity handling.
+- Better overall performance.
+
+## What's New in v2.0
+
+### Added
+- New UI.
+
+### Changed
+- Better device compatibility.
+- Improved performance.
+
+### Fixed
+- General bug fixes.
+
+## What's New in v1.0
+
+- First release.

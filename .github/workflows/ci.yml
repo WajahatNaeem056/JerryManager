@@ -1,0 +1,60 @@
+name: Jerry CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Lint & Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: ShellCheck (module scripts)
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: module
+          severity: warning
+
+      - name: Run test suite
+        run: bash tests/run.sh
+
+      - name: Verify required module files exist
+        run: |
+          set -e
+          test -f module/module.prop
+          test -f module/system.prop
+          test -f module/META-INF/com/google/android/updater-script
+          test -f module/META-INF/com/google/android/update-binary
+          test -f module/webroot/index.html
+          test -f module/lib/common.sh
+          test -f module/lib/paths.sh
+          echo "OK: required files present"
+
+      - name: Reject hardcoded module install path
+        run: |
+          set -e
+          if grep -rn "/data/adb/modules/Jerrykey" module/lib/ module/features/ module/pipelines/ --include="*.sh"; then
+            echo "::error::Found a hardcoded module path — use \$MODDIR / paths.sh instead"
+            exit 1
+          fi
+          echo "OK: no hardcoded module paths"
+
+      - name: Reject raw 'su -c' in feature scripts
+        run: |
+          set -e
+          if grep -rn "su -c" module/features/ --include="*.sh"; then
+            echo "::error::Found raw 'su -c' in features/ — scripts here already run as root"
+            exit 1
+          fi
+          echo "OK: no stray su -c calls"
+
+      - name: Check module.prop version fields are in sync
+        run: |
+          set -e
+          bash tests/check_version_sync.sh
