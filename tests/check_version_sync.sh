@@ -1,10 +1,10 @@
 #!/bin/sh
-# Sanity-checks module/module.prop: required fields present, versionCode is
+# Sanity-checks Jerry/module.prop: required fields present, versionCode is
 # numeric, and version/versionCode look like they belong together
 # (e.g. version=v4.0 -> versionCode should start with "40").
 set -u
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-PROP="$SCRIPT_DIR/../module/module.prop"
+PROP="$SCRIPT_DIR/../Jerry/module.prop"
 
 if [ ! -f "$PROP" ]; then
     echo "FAIL: cannot find $PROP"

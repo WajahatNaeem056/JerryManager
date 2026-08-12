@@ -2,7 +2,7 @@
 # Sources lib/common.sh and exercises version_ge() with known cases.
 set -u
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-COMMON="$SCRIPT_DIR/../module/lib/common.sh"
+COMMON="$SCRIPT_DIR/../Jerry/lib/common.sh"
 
 if [ ! -f "$COMMON" ]; then
     echo "FAIL: cannot find $COMMON"

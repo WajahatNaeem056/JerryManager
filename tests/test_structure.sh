@@ -1,5 +1,5 @@
 #!/bin/sh
-# Confirms the module/ directory has the pieces JerryManager actually needs
+# Confirms the Jerry/ directory has the pieces JerryManager actually needs
 # to install and run — catches accidental deletions before they ship.
 set -u
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
