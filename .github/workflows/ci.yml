@@ -18,7 +18,7 @@ jobs:
       - name: ShellCheck (module scripts)
         uses: ludeeus/action-shellcheck@master
         with:
-          scandir: module
+          scandir: Jerry
           severity: warning
 
       - name: Run test suite

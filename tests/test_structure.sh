@@ -3,7 +3,7 @@
 # to install and run — catches accidental deletions before they ship.
 set -u
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-MODULE_DIR="$SCRIPT_DIR/../module"
+MODULE_DIR="$SCRIPT_DIR/../Jerry"
 
 status=0
 check() {
