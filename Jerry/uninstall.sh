@@ -1,3 +1,4 @@
+#!/system/bin/sh
 MODDIR=${0%/*}
 . "$MODDIR/lib/common.sh"
 . "$MODDIR/lib/paths.sh"

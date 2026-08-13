@@ -1,3 +1,4 @@
+#!/system/bin/sh
 . "$MODPATH/lib/common.sh"
 . "$MODPATH/lib/urls.sh"
 . "$MODPATH/lib/paths.sh"

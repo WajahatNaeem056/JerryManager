@@ -1,3 +1,4 @@
+#!/system/bin/sh
 
 seed_toggle_defaults() {
   for _std_pair in \

@@ -1,3 +1,4 @@
+#!/system/bin/sh
 cfg_get() {
     _cg_key="$1" _cg_default="$2"
     _cg_val=$(cat "$JERRYKEY_CONFIG_DIR/$_cg_key.val" 2>/dev/null || true)

@@ -1,3 +1,4 @@
+#!/system/bin/sh
 TRICKY_DIR="/data/adb/tricky_store"
 TARGET_FILE="$TRICKY_DIR/keybox.xml"
 BACKUP_FILE="$TRICKY_DIR/keybox.xml.bak"
