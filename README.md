@@ -5,9 +5,9 @@
 **A KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.**
 
 ![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
-![Version](https://img.shields.io/badge/Version-v4.0-purple)
+![Version](https://img.shields.io/badge/Version-v3.9-purple)
 ![OS](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
-
+![License](https://img.shields.io/badge/License-GPL--3.0-orange)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
 </div>
@@ -50,10 +50,6 @@ Built for people who need integrity to actually hold — banking apps, payment s
 - GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
 - Telegram: [@JerryChatt](https://t.me/JerryChatt)
 - Telegram: [@JerryTweaks](https://t.me/JerryTweaks)
-
-## License
-
-GPL-3.0 — see [LICENSE](LICENSE) for full terms.
 
 ---
 
