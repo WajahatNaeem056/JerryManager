@@ -19,7 +19,7 @@ jobs:
         uses: ludeeus/action-shellcheck@master
         with:
           scandir: Jerry
-          severity: warning
+          severity: error
 
       - name: Run test suite
         run: bash tests/run.sh
