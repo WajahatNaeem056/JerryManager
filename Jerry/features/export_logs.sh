@@ -1,4 +1,3 @@
-#!/system/bin/sh
 MODDIR=${0%/*}
 MODDIR=${MODDIR%/features}
 . "$MODDIR/lib/common.sh"
@@ -12,9 +11,6 @@ _version=$(grep '^version=' "$MODDIR/module.prop" 2>/dev/null | cut -d'=' -f2)
 _version_code=$(grep '^versionCode=' "$MODDIR/module.prop" 2>/dev/null | cut -d'=' -f2)
 _now=$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "unknown")
 
-# Every log tag any script in this module writes with log() (lib/common.sh).
-# Kept as one explicit list (rather than discovered at runtime) so section
-# order is stable across exports and new tags are a deliberate addition here.
 _LOG_TAGS="BOOT SERVICE ACTION ADB AUTO_TARGET BANKING BOOT_HASH \
 CLEANUP CUSTOM_KEYBOX GMS KEYBOX KEYBOX_INFO KILL_ALL LSPOSED PIF \
 ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
@@ -24,8 +20,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   echo "version=$_version ($_version_code) | exported=$_now"
   echo ""
 
-  # ── Device info (reuses device-info.sh's own JSON — no duplicate detection
-  # logic here, so this can never drift out of sync with what the WebUI shows) ──
   echo "=== DEVICE INFO ==="
   _info_json="$MODDIR/webroot/json/info.json"
   if [ -f "$_info_json" ]; then
@@ -38,8 +32,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
     echo "(not available — run the WebUI once to generate webroot/json/info.json)"
   fi
 
-  # ── Pif status — same detection logic as update_description(), so this
-  # can never drift out of sync with what the module description shows ──────
   _pif_dir="/data/adb/modules/playintegrityfix"
   if [ -d "$_pif_dir" ]; then
     _pif="unknown"
@@ -68,7 +60,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   unset _info_json
   echo ""
 
-  # ── Keybox status ──────────────────────────────────────────────────────────
   echo "=== KEYBOX ==="
   if [ -f "$TARGET_FILE" ]; then
     _kb_marker=$(grep -oE 'jerryroot:[0-9]+|JERRY-KEYBOX:[0-9]+' "$TARGET_FILE" 2>/dev/null | head -1)
@@ -83,7 +74,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   [ -f "$BACKUP_FILE" ] && echo "backup_present=true" || echo "backup_present=false"
   echo ""
 
-  # ── Security patch ─────────────────────────────────────────────────────────
   echo "=== SECURITY PATCH ==="
   if [ -f "$SECURITY_PATCH_FILE" ]; then
     cat "$SECURITY_PATCH_FILE" 2>/dev/null
@@ -92,8 +82,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   fi
   echo ""
 
-  # ── App Targeting summary — count only, never the full package list, to
-  # keep this export a reasonable size on devices with hundreds of apps ──────
   echo "=== APP TARGETING ==="
   if [ -f "$TARGET_TXT" ]; then
     _tt_count=$(grep -c . "$TARGET_TXT" 2>/dev/null || echo 0)
@@ -104,7 +92,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   fi
   echo ""
 
-  # ── Toggles (unchanged from the previous export format) ─────────────────────
   echo "# --- Toggles (live config dir: $JERRYKEY_CONFIG_DIR) ---"
   if [ -d "$JERRYKEY_CONFIG_DIR" ]; then
     for _f in "$JERRYKEY_CONFIG_DIR"/*.val; do
@@ -119,7 +106,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   fi
   echo ""
 
-  # ── Key runtime properties (unchanged from the previous export format) ──────
   echo "# --- Key runtime properties (as currently visible via getprop) ---"
   for _p in \
     sys.oem_unlock_allowed \
@@ -143,10 +129,6 @@ ROM_FP SECURITY_PATCH SUSPICIOUS TARGET TWRP WIDEVINE ZYGISK_NEXT"
   unset _f _p
   echo ""
 
-  # ── boot.log split into one section per tag, in the fixed order above.
-  # Everything logged under an unrecognized tag (e.g. a future feature this
-  # list hasn't been updated for) is dumped last under "OTHER", so an export
-  # never silently drops log lines. ──────────────────────────────────────────
   echo "# --- boot.log, split by feature ---"
   if [ -f "$JERRYKEY_LOG_FILE" ]; then
     _seen_tags=" "

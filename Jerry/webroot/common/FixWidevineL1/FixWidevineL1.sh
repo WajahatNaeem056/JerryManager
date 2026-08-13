@@ -1,4 +1,3 @@
-#!/system/bin/sh
 _abi=$(getprop ro.product.cpu.abi 2>/dev/null)
 case "$_abi" in
   arm64|x86_64) _lib="/vendor/lib64/hw" ;;

@@ -3,7 +3,6 @@ set -e
 MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 
-# apply_boot_hardening is defined in Jerry's common.sh
 apply_boot_hardening
 chmod 440 /proc/cmdline       2>/dev/null || true
 chmod 440 /proc/net/unix      2>/dev/null || true

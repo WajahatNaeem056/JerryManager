@@ -1,15 +1,4 @@
 #!/system/bin/sh
-# Live Xposed/LSPosed module detector for the App Targeting "Deselect
-# Unnecessary" action. Same-to-same port of Tricky Addon's
-# common/get_extra.sh --xposed: for every user-installed app, unzip its
-# APK and check for the xposed_init resource or an xposed/module.prop
-# entry — either one marks it as an Xposed module, regardless of package
-# name. This catches modules that aren't in any hardcoded or remote
-# exclude list, unlike the static AT_LOCAL_UNNECESSARY_PKGS list the
-# WebUI also checks against.
-#
-# Output: one package name per line (stdout), matching what the WebUI's
-# atDeselectUnnecessary() expects to merge into its exclude Set.
 MODDIR="${0%/*}"
 MODDIR="${MODDIR%/*}"
 MODDIR="${MODDIR%/*}"

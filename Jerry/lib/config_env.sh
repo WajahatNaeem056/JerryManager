@@ -1,4 +1,3 @@
-#!/system/bin/sh
 cfg_get() {
     _cg_key="$1" _cg_default="$2"
     _cg_val=$(cat "$JERRYKEY_CONFIG_DIR/$_cg_key.val" 2>/dev/null || true)
@@ -15,9 +14,6 @@ cfg_delete() {
     rm -f "$JERRYKEY_CONFIG_DIR/$1.val" 2>/dev/null
 }
 
-# ── Description updater — runs on Action-button press ─────────────────────────
-# "Keybox: Valid   Pif: Yes   Targets: N" — JerryManager's own,
-# no device model, no other module named.
 update_description() {
     _ud_prop="$MODDIR/module.prop"
     [ -f "$_ud_prop" ] || return 0
@@ -55,11 +51,6 @@ update_description() {
 
     [ ! -f "$_ud_prop.bak" ] && cp "$_ud_prop" "$_ud_prop.bak" 2>/dev/null
     sed -i '/^description=/d' "$_ud_prop"
-    # Guarantee a trailing newline before appending — otherwise, if the last
-    # remaining line (e.g. updateJson=...) has no trailing \n, `echo >>`
-    # concatenates straight onto it (updateJson=...description=... on one
-    # line), which the manager app can't parse and the description silently
-    # never shows.
     [ -s "$_ud_prop" ] && [ "$(tail -c1 "$_ud_prop")" != "" ] && echo >> "$_ud_prop"
     echo "description=$_ud_desc" >> "$_ud_prop"
 

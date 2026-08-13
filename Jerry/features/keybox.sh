@@ -10,7 +10,6 @@ log "KEYBOX" "Start"
 DECODE_FILE="$TRICKY_DIR/keybox_decode"
 TEMP_FILE="$TRICKY_DIR/keybox.tmp"
 
-# --- Custom Keybox Support ---
 _custom_type=$(cfg_get kb_custom_type "")
 _custom_value=$(cfg_get kb_custom_value "")
 
@@ -70,7 +69,6 @@ if [ -n "$_custom_type" ] && [ -n "$_custom_value" ]; then
       ;;
   esac
 fi
-# --- End Custom Keybox ---
 
 if [ ! -d "$TRICKY_DIR" ]; then
   log "KEYBOX" "Error: Tricky Store data directory not found"
@@ -99,7 +97,6 @@ if ! base64 -d "$TEMP_FILE" > "$DECODE_FILE" 2>/dev/null; then
   exit 1
 fi
 
-# ── TEESimulator Support ─────────────────────────────────────────────────────
 _install_teesimulator() {
   log "KEYBOX" "TEESimulator detected — generating locked.xml format"
 
@@ -108,13 +105,11 @@ _install_teesimulator() {
   _tee_ecdsa=$(sed -n '/<Key algorithm="ecdsa">/,/<\/Key>/p' "$DECODE_FILE" 2>/dev/null)
   _tee_rsa=$(sed -n '/<Key algorithm="rsa">/,/<\/Key>/p' "$DECODE_FILE" 2>/dev/null)
 
-  # Backup existing locked.xml if not already backed up
   if [ -f "$LOCKED_FILE" ] && [ ! -f "$LOCKED_BACKUP" ]; then
     cp "$LOCKED_FILE" "$LOCKED_BACKUP"
     log "KEYBOX" "Backup created: locked.xml.bak"
   fi
 
-  # TEESimulator needs ECDSA key — write dummy if missing
   if [ -z "$_tee_ecdsa" ]; then
     log "KEYBOX" "Warning: No ECDSA key found — writing placeholder locked.xml"
     {
@@ -131,7 +126,6 @@ _install_teesimulator() {
     return
   fi
 
-  # Write proper locked.xml with ECDSA + RSA keys
   {
     echo '<?xml version="1.0" encoding="UTF-8"?>'
     echo '<AndroidAttestation>'
@@ -155,11 +149,9 @@ if _is_teesimulator; then
   log "KEYBOX" "Finish"
   exit 0
 fi
-# ── End TEESimulator ──────────────────────────────────────────────────────────
 
 mv "$DECODE_FILE" "$TARGET_FILE" || { log "KEYBOX" "Error: Failed to move keybox"; exit 1; }
 
-# ── Revocation check ──────────────────────────────────────────────────────────
 _serial=$(decode_keybox_serial "$TARGET_FILE" 2>/dev/null || echo "")
 if [ -n "$_serial" ]; then
     log "KEYBOX" "Checking Google revocation for serial $_serial"

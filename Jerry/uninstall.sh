@@ -1,4 +1,3 @@
-#!/system/bin/sh
 MODDIR=${0%/*}
 . "$MODDIR/lib/common.sh"
 . "$MODDIR/lib/paths.sh"
@@ -31,5 +30,4 @@ if [ -f "$IDFILE" ]; then
     log "UNINSTALL" "Removed RKA ID file"
 fi
 
-# Clean up RKA config in PassIt app data
 return 0

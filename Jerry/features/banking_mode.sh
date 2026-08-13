@@ -8,26 +8,6 @@ MODDIR=${0%/*}
 
 log "BANKING" "=== Banking Mode Start ==="
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# APPROACH: App list se nahi — root detection ke EVERY SOURCE ko band karo.
-#
-# Root detect hone ke tamam raste:
-#  [A] System props    — ro.debuggable, ro.build.type, ro.build.tags
-#  [B] Filesystem      — /su, /sbin/su, /data/local/tmp/frida, etc.
-#  [C] Running procs   — frida-server, su daemon (/proc/maps leak)
-#  [D] Installed pkgs  — Magisk app, root checker apps
-#  [E] ADB/USB state   — Settings.Global.adb_enabled
-#  [F] Dev Options     — Settings.Global.development_settings_enabled
-#  [G] SELinux state   — permissive = root likely
-#  [H] Play Integrity  — DroidGuard cached bad result
-#  [I] Zygisk traces   — /proc/maps mein zygisk linker dikhta hai
-#  [J] LSPosed traces  — base.odex, lspd socket, odex files
-#  [K] Logcat leaks    — tombstones, dropbox crash logs
-#
-# Yeh script har ek [A-K] route ko band karti hai.
-# Koi banking app hardcode karne ki zaroorat nahi — worldwide works.
-# ═══════════════════════════════════════════════════════════════════════════════
-
 _installed_pkgs=$(pm list packages 2>/dev/null || echo "")
 _is_installed() { echo "$_installed_pkgs" | grep -q "package:$1"; }
 
@@ -42,13 +22,8 @@ _full_wipe() {
     unset _fw_p
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [H] STEP 1 — GMS stack kill + Play Integrity / DroidGuard cache wipe
-# Reason: cached bad integrity result banking app ko fail dikhata hai
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 1: Killing GMS stack & wiping Integrity cache (accounts preserved)"
 
-# NOTE: pm clear GMS se Google accounts wipe hote hain — KABHI pm clear mat karo GMS pe
 for _gms in \
     com.google.android.gms \
     com.google.android.gms.unstable \
@@ -62,11 +37,9 @@ for _gms in \
 done
 am force-stop com.android.vending >/dev/null 2>&1 || true
 
-# Sirf trim-caches — pm clear nahi
 cmd package trim-caches 999999999 com.google.android.gms >/dev/null 2>&1 || true
 cmd package trim-caches 999999999 com.android.vending     >/dev/null 2>&1 || true
 
-# Sirf DroidGuard/integrity cache delete — baaki data safe
 for _pi in com.google.android.gms com.android.vending; do
     rm -rf "/data/data/$_pi/app_dg_cache"    2>/dev/null || true
     rm -rf "/data/data/$_pi/app_droidguard"  2>/dev/null || true
@@ -77,22 +50,14 @@ for _pi in com.google.android.gms com.android.vending; do
 done
 unset _gms _pi
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [D] STEP 2 — Root detector apps full wipe
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 2: Wiping root detector apps"
 for _pkg in $DETECTOR_APPS; do
     _full_wipe "$_pkg"
 done
 unset _pkg
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [B] STEP 3 — Filesystem artifact cleanup
-# Reason: apps use access(), openat(), /proc/maps to find these files
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 3: Removing root filesystem artifacts"
 
-# /data/local/tmp — most commonly checked location
 for _f in \
     frida frida-server frida-inject frida-gadget re.frida.server \
     hluda linjector inject \
@@ -105,13 +70,11 @@ for _f in \
 done
 unset _f
 
-# sdcard root traces
 rm -f  "/storage/emulated/0/meow_detector.log"           2>/dev/null || true
 rm -f  "/storage/emulated/0/keybox_status.json"          2>/dev/null || true
 rm -rf "/storage/emulated/0/.frida"                      2>/dev/null || true
 rm -f  "/storage/emulated/0/frida"                       2>/dev/null || true
 
-# Tool app sdcard data (from cleanup.sh)
 for _tpkg in $TOOL_APPS; do
     rm -rf "/storage/emulated/0/Android/data/$_tpkg" 2>/dev/null || true
 done
@@ -126,7 +89,6 @@ rm -f  "/storage/emulated/0/最新版隐藏配置.json"          2>/dev/null || 
 rm -rf "/storage/emulated/0/rlgg"                        2>/dev/null || true
 unset _tpkg
 
-# Remote control sdcard data
 for _rcpkg in $REMOTE_CONTROL_APPS; do
     rm -rf "/storage/emulated/0/Android/data/$_rcpkg" 2>/dev/null || true
 done
@@ -138,11 +100,9 @@ rm -rf "/storage/emulated/0/.vysor"                      2>/dev/null || true
 rm -rf "/storage/emulated/0/Vysor"                       2>/dev/null || true
 unset _rcpkg
 
-# /dev socket traces — LSPosed daemon
 rm -f  /dev/lspd                                         2>/dev/null || true
 rm -f  /dev/.lspd*                                       2>/dev/null || true
 
-# /data/system — graphicsstats, junge, NoActive, Freezer can leak app info
 rm -rf /data/system/graphicsstats                        2>/dev/null || true
 rm -rf /data/system/package_cache                        2>/dev/null || true
 rm -rf /data/system/NoActive                             2>/dev/null || true
@@ -154,19 +114,11 @@ rm -rf /dev/memcg/scene_active                           2>/dev/null || true
 rm -rf /dev/scene                                        2>/dev/null || true
 rm -rf /dev/cpuset/scene-daemon                          2>/dev/null || true
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [K] STEP 4 — Log/crash leaks
-# Reason: tombstones & dropbox expose root app names to any reading app
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 4: Clearing log & crash leaks"
 rm -f  /data/tombstones/tombstone_0*                     2>/dev/null || true
 rm -f  /data/system/dropbox/data_app_crash*              2>/dev/null || true
 rm -f  /data/system/dropbox/data_app_anr*                2>/dev/null || true
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [J] STEP 5 — LSPosed traces
-# Reason: base.odex files in /data/app expose LSPosed injection to any scanner
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 5: Cleaning LSPosed base.odex traces"
 _odex_count=0
 for _odex in $(find /data/app -type f -name base.odex 2>/dev/null); do
@@ -175,15 +127,10 @@ done
 [ "$_odex_count" -gt 0 ] && log "BANKING" "Deleted $_odex_count base.odex files"
 unset _odex _odex_count
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [A] STEP 6 — System props hardening
-# Reason: JNI getprop() calls, /proc/cmdline, /proc/bootconfig checks
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 6: Hardening system props"
 apply_boot_props
 block_rom_spoof_engines
 
-# Extra root indicator props not covered by apply_boot_props
 for _rp in \
     ro.magisk.version ro.boot.magisk \
     ro.build.fingerprint.original ro.build.fingerprint.backup \
@@ -195,15 +142,10 @@ for _rp in \
 done
 unset _rp
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [G] STEP 7 — SELinux enforce check
-# Reason: permissive SELinux = obvious root flag for any app doing getenforce()
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 7: Checking SELinux state"
 if [ -f "/sys/fs/selinux/enforce" ]; then
     _enforce=$(cat /sys/fs/selinux/enforce 2>/dev/null || echo "1")
     if [ "$_enforce" = "0" ]; then
-        # Cannot re-enforce kernel-level, but at least fix the prop
         resetprop -n ro.boot.selinux enforcing 2>/dev/null || true
         resetprop -n ro.build.selinux 1        2>/dev/null || true
         log "BANKING" "Warning: SELinux is permissive — prop spoofed but kernel-level unfixable"
@@ -215,10 +157,6 @@ if [ -f "/sys/fs/selinux/enforce" ]; then
 fi
 unset _enforce
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [F] [E] STEP 8 — Developer Options + ADB disable
-# Reason: Settings.Global is readable by any app with no special permission
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 8: Disabling Developer Options & ADB"
 for _p in \
     persist.service.adb.enable persist.service.debuggable \
@@ -245,29 +183,21 @@ settings put global oem_unlock_allowed           0 >/dev/null 2>&1 || true
 settings put global adb_wifi_enabled             0 >/dev/null 2>&1 || true
 settings put global adb_wifi_port               -1 >/dev/null 2>&1 || true
 
-# ADB daemon kill
 _adbd=$(getprop init.svc.adbd 2>/dev/null || echo "")
 [ "$_adbd" = "running" ] && setprop ctl.stop adbd 2>/dev/null || true
 unset _adbd
 
-# TCP ADB port clear
 _tcp=$(getprop service.adb.tcp.port 2>/dev/null || echo "")
 [ -n "$_tcp" ] && resetprop service.adb.tcp.port -1 2>/dev/null || true
 unset _tcp
 
-# USB state — force MTP only
 setprop sys.usb.config mtp 2>/dev/null || true
 setprop sys.usb.state  mtp 2>/dev/null || true
 [ -f /sys/class/android_usb/android0/functions ] && \
     echo "mtp" > /sys/class/android_usb/android0/functions 2>/dev/null || true
 
-# Boot hardening (from apply_boot_hardening in common.sh)
 apply_boot_hardening
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [C] STEP 9 — Kill live root processes
-# Reason: /proc/<pid>/maps read karne se banking app frida/su dekh sakti hai
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 9: Killing live root/injection processes"
 for _proc in \
     frida-server frida-inject hluda linjector \
@@ -276,11 +206,6 @@ for _proc in \
 done
 unset _proc
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [I] STEP 10 — Zygisk Next hardening (THE most important step for modern apps)
-# Reason: Zygisk linker namespace dikhta hai /proc/maps mein
-# zygisk_next commands: anonymous memory, builtin linker = invisible
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 10: Zygisk Next hardening"
 _znext=""
 for _zd in /data/adb/modules/zygisksu /data/adb/modules_update/zygisksu; do
@@ -297,10 +222,6 @@ else
 fi
 unset _znext _zd
 
-# ─────────────────────────────────────────────────────────────────────────────
-# [D] STEP 11 — Remote control apps stop + cache wipe
-# Reason: screen sharing app chal raha ho to banking app detect kar sakti hai
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 11: Stopping remote control & tool apps"
 for _rca in $REMOTE_CONTROL_APPS; do
     _is_installed "$_rca" || continue
@@ -310,18 +231,10 @@ for _rca in $REMOTE_CONTROL_APPS; do
 done
 unset _rca
 
-# com.juom — known detection app (from cleanup.sh)
 pm clear com.juom >/dev/null 2>&1 || true
 
-# ─────────────────────────────────────────────────────────────────────────────
-# STEP 12 — Auto-detect & clean ALL installed financial apps
-# No hardcoded country/bank list — pattern match on package name
-# HIGH RISK: deep clean (shared_prefs wipe — login safe hai)
-# OTHERS: cache-only clean (auto-scan from pm list)
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 13: Auto-detect & clean all finance apps"
 
-# Known high-risk apps that store root flags in shared_prefs
 _HIGH_RISK="
 net.one97.paytm com.phonepe.app com.csam.icici.bank.imobile
 com.axis.mobile com.axis.mobile.plus com.snapwork.hdfc com.enstage.wibmo.hdfc
@@ -349,12 +262,8 @@ for _hp in $_HIGH_RISK; do
 done
 unset _hp _HIGH_RISK
 
-# Auto-scan: koi bhi finance-pattern app — worldwide, no country hardcoding
-# Multilingual patterns: banca(IT), banque(FR), sparkasse/volksbank(DE),
-# gcash/paymaya(PH), mpesa(KE/TZ), momo(VN/GH), kasse(Scandinavian)
 echo "$_installed_pkgs" | sed 's/package://g' | while read -r _ap; do
     [ -z "$_ap" ] && continue
-    # Skip system & Google apps
     case "$_ap" in
         com.google.*|com.android.*|android|com.qualcomm.*|com.mediatek.*) continue ;;
     esac
@@ -375,9 +284,6 @@ echo "$_installed_pkgs" | sed 's/package://g' | while read -r _ap; do
 done
 unset _ap
 
-# ─────────────────────────────────────────────────────────────────────────────
-# STEP 13 — GMS fresh restart + fresh DroidGuard token
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 14: GMS fresh restart + DroidGuard token"
 sleep 1
 am startservice \
@@ -390,16 +296,11 @@ am startservice \
 sleep 1
 am force-stop com.android.vending >/dev/null 2>&1 || true
 
-# ─────────────────────────────────────────────────────────────────────────────
-# STEP 14 — Kernel pointer hide + Magisk app hide
-# ─────────────────────────────────────────────────────────────────────────────
 log "BANKING" "Step 15: Kernel pointers hide + Magisk app hide"
 
-# Kernel pointers — /proc/kallsyms se root detect nahi hoga
 echo 2 > /proc/sys/kernel/kptr_restrict      2>/dev/null || true
 echo 1 > /proc/sys/kernel/perf_event_paranoid 2>/dev/null || true
 
-# Magisk app hide — banking apps seedha Magisk nahi dekh payengi
 for _magisk_pkg in \
     com.topjohnwu.magisk \
     io.github.vvb2060.magisk \
@@ -409,9 +310,6 @@ for _magisk_pkg in \
 done
 unset _magisk_pkg
 
-# ─────────────────────────────────────────────────────────────────────────────
-# STEP 15 — Save state & cleanup
-# ─────────────────────────────────────────────────────────────────────────────
 cfg_set banking_mode 1
 log "BANKING" "=== Banking Mode Done — open your banking app now ==="
 

@@ -47,13 +47,6 @@ done
 unset _tee_file
 log "TARGET" "TEE status: teeBroken=$teeBroken"
 
-# Merge-only pass: manual App Targeting selections in target.txt (written
-# directly by the WebUI) are the highest-priority source and are NEVER
-# cleared or replaced here. This only appends whichever FIXED_TARGETS
-# entries (by bare package name, ignoring any existing !/? suffix) are
-# not already present. No auto-add-all-installed-apps step — that used to
-# flood target.txt with every user app on every boot/update and stomp on
-# manual selections.
 ensure_dir "$TRICKY_DIR"
 touch "$TARGET_TXT"
 
@@ -77,11 +70,6 @@ for entry in $FIXED_TARGETS; do
 done
 
 log "TARGET" "Merge pass: added $_count missing FIXED_TARGETS entries (existing manual entries untouched)"
-
-# New-app automation lives in auto_target.sh (toggle_auto_target), which
-# tracks known packages via auto_known_packages.txt. This used to be
-# duplicated here via target_seen.txt/toggle_target — removed to avoid
-# two independent systems doing the same job.
 
 rm -f "$_EXISTING_BARE"
 log "TARGET" "Finish"

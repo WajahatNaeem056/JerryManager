@@ -8,7 +8,6 @@ MODDIR=${0%/*}
 log "ROM_FP" "Start"
 _cleaned=0
 
-# ── Strip custom-ROM identifying props (lineage/crDroid/PixelOS/etc.) ────────
 for _rf_pattern in \
   lineage crDroid PixelExperience PixelOS EvolutionX ArrowOS \
   HavocOS ResurrectionRemix AICP AOSiP AOSPA Bootleggers \
@@ -28,7 +27,6 @@ for _rf_pattern in \
 done
 unset _rf_pattern _rf_props _rf_prop
 
-# ── Strip aosp_/lineage_ prefix from key build props ─────────────────────────
 for _rf_build_prop in ro.build.fingerprint ro.build.display.id ro.build.description ro.build.version.incremental ro.product.vendor.name; do
   _rf_val=$(resetprop "$_rf_build_prop" 2>/dev/null || echo "")
   [ -z "$_rf_val" ] && continue
@@ -44,7 +42,6 @@ for _rf_build_prop in ro.build.fingerprint ro.build.display.id ro.build.descript
 done
 unset _rf_build_prop _rf_val _rf_new_val _rf_pref
 
-# ── LineageOS camera packagelist scrub ────────────────────────────────────────
 _rf_cam=$(resetprop vendor.camera.aux.packagelist 2>/dev/null || echo "")
 case "$_rf_cam" in
   *org.lineageos*)
@@ -63,7 +60,6 @@ case "$_rf_cam_priv" in
 esac
 unset _rf_cam_priv
 
-# ── Stop vendor.lineage_health service if present ─────────────────────────────
 _rf_health=$(resetprop init.svc.vendor.lineage_health 2>/dev/null || echo "")
 if [ -n "$_rf_health" ]; then
   setprop ctl.stop vendor.lineage_health 2>/dev/null

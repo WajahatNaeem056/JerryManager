@@ -5,7 +5,6 @@ log() {
     _log_line="$(date +%Y-%m-%d\ %H:%M:%S) [$1] $2"
     echo "$_log_line"
     mkdir -p "$(dirname "$JERRYKEY_LOG_FILE")" 2>/dev/null
-    # Rotate if log grows past ~1MB, keep one backup
     if [ -f "$JERRYKEY_LOG_FILE" ]; then
         _log_size=$(wc -c < "$JERRYKEY_LOG_FILE" 2>/dev/null || echo 0)
         [ "$_log_size" -gt 1048576 ] 2>/dev/null && mv -f "$JERRYKEY_LOG_FILE" "${JERRYKEY_LOG_FILE}.old" 2>/dev/null
@@ -16,7 +15,6 @@ log() {
 
 die() { log "ERROR" "$1"; exit 1; }
 
-# ── Download (3-retry, wget+curl fallback, all root solutions) ────────────────
 download() {
     _dl_url="$1" _dl_output="$2" _dl_oldpath="$PATH"
     PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:/data/data/com.termux/files/usr/bin:$PATH"
@@ -47,13 +45,6 @@ download() {
     return $_dl_code
 }
 
-# ── Network check (ping-first, faster offline detection) ─────────────────────
-# Capped to a strict ~4s worst case (was up to ~36s) so UI-facing checks like
-# keybox_info.sh don't leave the WebUI blank for a long time on slow/flaky
-# networks. Ping-only, no HTTP fallback — user explicitly accepted the
-# trade-off that networks which block ICMP ping (but still have working
-# internet) will incorrectly report "no network" here, in exchange for a
-# strict ~10s total cap on the keybox status check.
 check_network() {
     _cn_oldpath="$PATH"
     PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:/data/data/com.termux/files/usr/bin:$PATH"
@@ -86,9 +77,6 @@ check_command() {
     return 0
 }
 
-# ── Prop helpers ──────────────────────────────────────────────────────────────
-
-# check_prop: set prop only if current value differs from expected
 check_prop() {
     _cp_name=$1 _cp_expected=$2
     _cp_value=$(resetprop "$_cp_name" 2>/dev/null || echo "")
@@ -96,7 +84,6 @@ check_prop() {
     unset _cp_name _cp_expected _cp_value
 }
 
-# sp_try: 2-arg = check_prop alias; 3-arg = set only if current value *contains* needle
 sp_try() {
     _st_name="$1"
     if [ $# -eq 2 ]; then
@@ -119,7 +106,6 @@ sp_try() {
     return 0
 }
 
-# sp_persist: set prop AND persist with -p, track in restore file
 JERRYKEY_DIR="/data/adb/JerryManager"
 PERSIST_RESTORE_FILE="$JERRYKEY_DIR/persist_backup.txt"
 
@@ -147,10 +133,8 @@ contains_check_prop() {
 
 ensure_dir() { mkdir -p "$1" 2>/dev/null; }
 
-# ── JSON helper ───────────────────────────────────────────────────────────────
 _escape_json() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 
-# ── Version comparison ────────────────────────────────────────────────────────
 version_ge() {
     awk -v a="$1" -v b="$2" 'BEGIN {
         split(a,A,"."); split(b,B,".");
@@ -162,15 +146,11 @@ version_ge() {
     }'
 }
 
-# ── TEESimulator detection ────────────────────────────────────────────────────
 _is_teesimulator() {
     [ -f "/data/adb/modules/TEESimulator/module.prop" ] || \
     [ -f "/data/adb/modules_update/TEESimulator/module.prop" ]
 }
 
-# ── Keybox helpers ────────────────────────────────────────────────────────────
-
-# decode_keybox_blob: base64 decode input file to output file
 decode_keybox_blob() {
     _dkb_in="$1" _dkb_out="$2"
     base64 -d "$_dkb_in" > "$_dkb_out" 2>/dev/null
@@ -179,11 +159,9 @@ decode_keybox_blob() {
     return $_dkb_rc
 }
 
-# _parse_serial: extract hex serial from DER-encoded certificate bytes
 _parse_serial() {
     _ps_file="$1"
     _ps_hex=$(od -v -tx1 "$_ps_file" 2>/dev/null | awk 'BEGIN{ORS=""} {for(i=2;i<=NF;i++) printf "%s",$i}')
-    # Try multiple serial lengths: 020a=10byte, 2010=16byte, 2008=8byte, 2014=20byte, 2012=18byte
     _ps_serial=$(echo "$_ps_hex" | grep -o "020a[0-9a-f]\{20\}" | head -1 | sed 's/^020a//')
     [ -z "$_ps_serial" ] && _ps_serial=$(echo "$_ps_hex" | grep -o "0210[0-9a-f]\{32\}" | head -1 | sed 's/^0210//')
     [ -z "$_ps_serial" ] && _ps_serial=$(echo "$_ps_hex" | grep -o "0208[0-9a-f]\{16\}" | head -1 | sed 's/^0208//')
@@ -193,11 +171,9 @@ _parse_serial() {
     unset _ps_file _ps_hex _ps_serial
 }
 
-# decode_keybox_serial: extract serial number from keybox.xml certificate
 decode_keybox_serial() {
     _dks_file="$1"
     [ -f "$_dks_file" ] || return 1
-    # Extract base64 — explicitly remove BEGIN/END lines and XML tags
     _dks_b64=$(sed -n '/<Certificate format="pem">/,/<\/Certificate>/p' "$_dks_file" 2>/dev/null | \
         grep -v 'Certificate' | \
         grep -v -- '-----BEGIN' | \
@@ -213,23 +189,19 @@ decode_keybox_serial() {
     unset _dks_file _dks_b64 _dks_tmp _dks_serial
 }
 
-# check_google_revocation: returns 0 if revoked, 1 if clean
 check_google_revocation() {
     _cgr_serial="$1"
     [ -n "$_cgr_serial" ] || return 1
     _cgr_list=$(download "$GOOGLE_REVOCATION_URL" 2>/dev/null)
     [ -z "$_cgr_list" ] && { log "REVOKE" "Warning: Could not fetch Google revocation list"; return 1; }
-    # Check hex serial
     if echo "$_cgr_list" | grep -qi "$_cgr_serial"; then
         unset _cgr_serial _cgr_list; return 0
     fi
-    # Check stripped leading zeros
     _cgr_clean="${_cgr_serial#"${_cgr_serial%%[!0]*}"}"
     [ -z "$_cgr_clean" ] && _cgr_clean=0
     if echo "$_cgr_list" | grep -qi "$_cgr_clean"; then
         unset _cgr_serial _cgr_list _cgr_clean; return 0
     fi
-    # Check decimal (only if serial short enough)
     if [ "${#_cgr_serial}" -le 16 ]; then
         _cgr_dec=$((16#$_cgr_clean))
         if echo "$_cgr_list" | grep -q "$_cgr_dec"; then
@@ -241,7 +213,6 @@ check_google_revocation() {
     return 1
 }
 
-# ── Boot props — data-driven, single source of truth ─────────────────────────
 apply_boot_props() {
     while IFS='|' read -r _abp_prop _abp_val; do
         [ -z "$_abp_prop" ] && continue
@@ -314,15 +285,11 @@ PROPS
     done
     unset _abp_rp _abp_prop _abp_val _abp_match
 
-    # ── Boot error prop cleanup — clears traces of past verified-boot
-    # failures / rescue-boot triggers that would otherwise persist and
-    # remain visible to attestation/root-detection checks.
     resetprop --delete "ro.boot.verifiedbooterror" 2>/dev/null || true
     resetprop --delete "ro.boot.verifyerrorpart" 2>/dev/null || true
     resetprop --delete "crashrecovery.rescue_boot_count" 2>/dev/null || true
 }
 
-# ── hexpatch_deleteprop ───────────────────────────────────────────────────────
 hexpatch_deleteprop() {
     _hd_prop="$1"
     [ -n "$_hd_prop" ] || return 0
@@ -342,8 +309,6 @@ hexpatch_deleteprop() {
     fi
     unset _hd_prop _hd_magiskboot _hd_file _hd_path _hd_search_hex _hd_search_len _hd_replacement _hd_replacement_hex
 }
-
-# ── Control Tab Functions ─────────────────────────────────────────────────────
 
 hide_recovery_folders() {
     _hrf_backup="/data/adb/recovery_backups"
@@ -373,23 +338,7 @@ hide_recovery_folders() {
     unset _hrf_backup _hrf_random _hrf_subdirs _hrf_path _hrf_folder
 }
 
-# ── apply_critical_hiding_props ───────────────────────────────────────────────
-# These props (oem_unlock_allowed/supported + warranty bits) must ALWAYS be
-# hidden regardless of any user toggle — Duck Detector and other root/attestation
-# checkers key on them directly. Previously these were only set inside
-# apply_boot_hardening(), which is gated behind the (user-toggleable) Boot
-# Hardening feature — so devices with that toggle off never got them spoofed
-# and failed root-hiding checks. Kept as its own unconditional function so it's
-# never accidentally re-coupled to a toggle again, and no longer duplicated in
-# apply_boot_props()'s early PROPS list (removed there to avoid the early,
-# silently-failing sp_try attempt racing with this authoritative one).
 apply_critical_hiding_props() {
-    # sys.oem_unlock_allowed: deleted rather than forced to 0. On genuine
-    # locked-bootloader devices this prop is typically absent entirely, not
-    # explicitly set to 0 — a checker reading it via reflection (e.g. Duck
-    # Detector) flags the mere presence of an explicit value as suspicious,
-    # even when that value is the "safe" 0. Deleting it matches real device
-    # behavior instead of mimicking it with a forced value.
     resetprop --delete sys.oem_unlock_allowed 2>/dev/null || true
     resetprop -n ro.oem_unlock_supported 0 2>/dev/null || true
     resetprop -n ro.boot.warranty_bit 0 2>/dev/null || true
@@ -426,7 +375,6 @@ apply_boot_hardening() {
     fi
 }
 
-# ── block_rom_spoof_engines — persist-tracked ─────────────────────────────────
 block_rom_spoof_engines() {
     _brs_gate=false
     resetprop 2>/dev/null | grep -qE 'persist\.sys\.(pihooks|entryhooks|pixelprops)' && _brs_gate=true
@@ -477,7 +425,6 @@ disable_bootloader_spoofer() {
     fi
 }
 
-# ── Conflict Detection System ─────────────────────────────────────────────────
 CONFLICT_BACKUP_FILE="$JERRYKEY_DIR/conflict_backups.txt"
 
 _conflict_registry() {

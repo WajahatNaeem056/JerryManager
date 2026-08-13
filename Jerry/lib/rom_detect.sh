@@ -1,26 +1,6 @@
 #!/system/bin/sh
-# ── ROM identity detection ────────────────────────────────────────────────────
-# Returns the actual ROM name (e.g. "PixelOS", "LineageOS", "One UI",
-# "ColorOS") instead of a generic Stock/Custom label.
-#
-# IMPORTANT: This must be sourced and run BEFORE features/rom_fingerprint.sh,
-# since that script deletes/rewrites the exact props this relies on. Callers
-# (service.sh / boot-completed.sh) cache the result via cfg_set so it survives
-# even after the props are stripped later in the same boot.
-#
-# Coverage note: custom-ROM detection below is reliable (each ROM ships its
-# own version prop). Stock OEM-skin detection is best-effort — there is no
-# universal "ROM name" prop across OEMs, marketing names change over time
-# (MIUI -> HyperOS, OxygenOS merging into ColorOS), and unlisted OEMs fall
-# back to a generic "Stock (<brand>)" rather than a guessed marketing name.
-#
-# "AOSP (Unrecognized)" fallback (step 4) is a test-keys heuristic — it is
-# NOT reliable proof of a custom ROM. Some budget/OEM stock builds ship with
-# test-keys due to sloppy signing pipelines, so this can false-positive on
-# genuine stock devices. Accepted trade-off, not a guarantee.
 
 detect_rom() {
-    # 1. Dedicated custom-ROM version/maintainer props → mapped to real display name
     for _rd_pair in \
         "ro.lineage.version:LineageOS" \
         "ro.pixelexperience.version:PixelExperience" \
@@ -51,11 +31,6 @@ detect_rom() {
         fi
     done
 
-    # 2. Fingerprint / description pattern match — catches ROMs that skip a
-    #    dedicated version prop but still leave their name in the build strings.
-    #    Matched case-insensitively: build strings don't reliably match a ROM's
-    #    "marketing" casing (e.g. AxionOS ships build IDs as "axion-2.2.1-...",
-    #    not "AxionOS-2.2.1-...").
     _rd_fp_raw="$(resetprop ro.build.fingerprint 2>/dev/null)|$(resetprop ro.build.description 2>/dev/null)|$(resetprop ro.build.display.id 2>/dev/null)"
     _rd_fp=$(printf '%s' "$_rd_fp_raw" | tr '[:upper:]' '[:lower:]')
     for _rd_pair in \
@@ -88,7 +63,6 @@ detect_rom() {
         esac
     done
 
-    # 3. Stock OEM skins — best-effort, only for brands with a well-documented prop
     _rd_brand=$(resetprop ro.product.brand 2>/dev/null | tr '[:upper:]' '[:lower:]')
     _rd_mfr=$(resetprop ro.product.manufacturer 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
@@ -124,9 +98,6 @@ detect_rom() {
             ;;
     esac
 
-    # 4. Nothing named matched. test-keys heuristic: NOT proof of a custom ROM —
-    #    some stock budget/OEM builds also ship test-keys due to sloppy signing.
-    #    Only applied here because no known OEM brand matched in step 3 either.
     _rd_tags=$(resetprop ro.build.tags 2>/dev/null)
     case "$_rd_tags" in
         *test-keys*)
@@ -135,7 +106,6 @@ detect_rom() {
             ;;
     esac
 
-    # 5. Truly nothing to go on — generic fallback, name the brand if known
     if [ -n "$_rd_brand" ]; then
         printf '%s' "Stock ($_rd_brand)"
     else

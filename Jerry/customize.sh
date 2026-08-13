@@ -1,4 +1,3 @@
-#!/system/bin/sh
 . "$MODPATH/lib/common.sh"
 . "$MODPATH/lib/urls.sh"
 . "$MODPATH/lib/paths.sh"
@@ -9,20 +8,6 @@ ui_print "*****Jerry Manager Installer******"
 ui_print "*********************************"
 ui_print ""
 
-# ── Config dir ensure — on both fresh install and update ──────────────────
-# JERRYKEY_CONFIG_DIR (from paths.sh) now lives outside MODPATH, at an
-# independent persistent path (/data/adb/JerryManager/config) — so
-# KernelSU-Next's module activation swap (modules_update -> modules) never
-# touches it, and old values stay safe across reinstalls/updates.
-#
-# NOTE: toggle_*.val files are no longer pre-seeded here. Defaults are now
-# set inside the _feature_enabled() function in both service.sh and
-# boot-completed.sh, via a per-feature case statement (TODO: this function
-# is currently copy-pasted in both files, not a single shared source — so
-# adding a new toggle requires updating both places, or the same silent-ON
-# mismatch bug that hit toggle_suspicious_props before can happen again).
-# (toggle_kill_play_store, which had this bug too, has since been removed
-# entirely — Play Store management is now handled by toggle_action_gms.)
 mkdir -p "$JERRYKEY_CONFIG_DIR" 2>/dev/null
 
 if [ -d "/data/adb/modules/jerrykey" ]; then
@@ -104,7 +89,6 @@ cat > "$MODPATH/webroot/json/module_paths.json" <<JSON
 JSON
 unset RUNTIME_DIR
 
-# Clean up v3 files from live module path
 if [ -d "/data/adb/modules/Jerrykey" ]; then
   if [ -d "/data/adb/modules/Jerrykey/Jerry" ] || [ -f "/data/adb/modules/Jerrykey/webroot/common/clear_all_detection_traces.sh" ] || [ -f "/data/adb/modules/Jerrykey/webroot/common/widevinel1.sh" ] || [ -f "/data/adb/modules/Jerrykey/webroot/common/boot_hash.sh" ]; then
     ui_print "- Detected outdated files from JerryKey v3"
@@ -123,8 +107,5 @@ elif [ -f /data/adb/modules_update/Jerrykey/webroot/common/device-info.sh ]; the
 elif [ -f /data/adb/modules/Jerrykey/webroot/common/device-info.sh ]; then
     sh /data/adb/modules/Jerrykey/webroot/common/device-info.sh
 fi
-
-# ── Write default config — fresh install aur update dono pe ──────────────────
-# (yeh block ab file ke shuru mein hai, dependency check se pehle — see top)
 
 return 0
