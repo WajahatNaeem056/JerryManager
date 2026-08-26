@@ -1,4 +1,41 @@
 # Changelog
+## What's New in v4.2
+
+This update is mostly focused on cleaning things up and fixing issues found in the previous release.
+
+Changes
+
+- Fixed a few issues in the module source files
+- Cleaned up some old and unnecessary code
+- Fixed some configuration and fallback issues
+- Improved compatibility with newer Android versions
+- Fixed a few bugs that could cause certain features to not work properly
+- Made some changes to the module's internal scripts
+- General stability and performance improvements
+
+Other
+
+- Small cleanup across the project
+- Updated a few files and internal components
+- Nothing major in the UI — this release is mainly about fixes and This
+
+## What's New in v4.1
+
+Added
+
+- OhMyKeymint support for improved Keybox handling.
+
+Improvements
+
+- Improved App Targeting functionality and reliability.
+- Improved overall UI consistency and responsiveness.
+- Improved stability and compatibility across the app.
+
+Fixes
+
+- Fixed multiple bugs and minor UI issues.
+- Fixed various App Targeting-related issues.
+- Fixed other minor stability and performance issues.
 
 ## What's New in v4.0
 
