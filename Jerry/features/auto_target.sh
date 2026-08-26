@@ -3,13 +3,16 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/keystore.sh"
 
 [ "$(cfg_get toggle_auto_target 1)" = "0" ] && exit 0
 
 log "AUTO_TARGET" "Start"
 
-if [ ! -f "$TARGET_TXT" ]; then
-  log "AUTO_TARGET" "target.txt missing — run Set Target first, skipping"
+resolve_keystore_backend
+
+if [ "$KEYSTORE_BACKEND" = "none" ]; then
+  log "AUTO_TARGET" "No active keystore backend found (Tricky Store / OhMyKeymint) — skipping"
   exit 0
 fi
 
@@ -51,22 +54,30 @@ while IFS= read -r _pkg; do
   if echo "$_known" | grep -Fxq "$_pkg" 2>/dev/null; then
     continue
   fi
-  if grep -Fxq "$_pkg" "$TARGET_TXT" 2>/dev/null; then
+  if [ "$KEYSTORE_BACKEND" = "trickystore" ] && grep -Fxq "$_pkg" "$TARGET_TXT" 2>/dev/null; then
     continue
   fi
   echo "$_pkg" >> "$NEW_LIST"
 done < "$TEMP_LIST"
 
 if [ -s "$NEW_LIST" ]; then
-  cat "$NEW_LIST" >> "$TARGET_TXT"
-  sort -u "$TARGET_TXT" -o "$TARGET_TXT" 2>/dev/null
   _added=$(wc -l < "$NEW_LIST" 2>/dev/null || echo "0")
-  log "AUTO_TARGET" "Added $_added new app(s) to target.txt"
+  if [ "$KEYSTORE_BACKEND" = "omk" ]; then
+    while IFS= read -r _new_pkg; do
+      [ -z "$_new_pkg" ] && continue
+      keystore_add_target "$_new_pkg"
+    done < "$NEW_LIST"
+    log "AUTO_TARGET" "Added $_added new app(s) to OhMyKeymint injector.toml"
+  else
+    cat "$NEW_LIST" >> "$TARGET_TXT"
+    sort -u "$TARGET_TXT" -o "$TARGET_TXT" 2>/dev/null
+    log "AUTO_TARGET" "Added $_added new app(s) to target.txt"
+  fi
 else
   log "AUTO_TARGET" "No new apps found"
 fi
 
-cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null
+cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
 rm -f "$TEMP_LIST" "$NEW_LIST"
 
 log "AUTO_TARGET" "Finish"

@@ -3,8 +3,11 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/urls.sh"
+. "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/keystore.sh"
 
-KEYBOX_FILE="/data/adb/tricky_store/keybox.xml"
+resolve_keystore_backend
+KEYBOX_FILE="$KEYSTORE_KEYBOX"
 INFO_PATH="$MODDIR/../webroot/json/keybox_info.json"
 
 _quick_fetch() {
@@ -97,7 +100,8 @@ cat <<EOF > "$INFO_PATH"
   "version": "$_version",
   "latest_version": "$_latest_version",
   "up_to_date": $_up_to_date,
-  "revoked": $_revoked
+  "revoked": $_revoked,
+  "backend": "$KEYSTORE_NAME"
 }
 EOF
 

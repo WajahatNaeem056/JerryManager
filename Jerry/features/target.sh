@@ -5,8 +5,28 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/package_list.sh"
 . "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/keystore.sh"
 
 log "TARGET" "Start"
+
+resolve_keystore_backend
+
+if [ "$KEYSTORE_BACKEND" = "none" ]; then
+    die "No active keystore backend found (Tricky Store / OhMyKeymint)"
+fi
+
+if [ "$KEYSTORE_BACKEND" = "omk" ]; then
+    log "TARGET" "OhMyKeymint active — merging FIXED_TARGETS into injector.toml"
+    _omk_count=0
+    for entry in $FIXED_TARGETS; do
+        _bare=$(printf '%s' "$entry" | sed 's/[!?]$//')
+        keystore_add_target "$_bare" && _omk_count=$((_omk_count + 1))
+    done
+    unset _bare
+    log "TARGET" "OhMyKeymint: processed $_omk_count FIXED_TARGETS entries"
+    log "TARGET" "Finish (OhMyKeymint)"
+    exit 0
+fi
 
 [ -d "$TRICKY_DIR" ] || die "Tricky Store data directory not found"
 

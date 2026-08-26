@@ -1,6 +1,4 @@
 kill_all.sh
-twrp.sh
-adb_disabler.sh
 rom_fingerprint.sh
 gms.sh
 target.sh

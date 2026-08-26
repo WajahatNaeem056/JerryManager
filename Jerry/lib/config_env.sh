@@ -19,8 +19,21 @@ update_description() {
     _ud_prop="$MODDIR/module.prop"
     [ -f "$_ud_prop" ] || return 0
 
+    # Count targets from whichever keystore backend is actually active —
+    # Tricky Store's target.txt is a flat one-package-per-line file, but
+    # OhMyKeymint stores its scoop list inside injector.toml's `scoop = [...]`
+    # block, so a plain line-count of TARGET_TXT always read 0 under OMK.
+    if [ -z "$KEYSTORE_BACKEND" ] && [ -f "$MODDIR/lib/keystore.sh" ]; then
+        . "$MODDIR/lib/keystore.sh"
+        resolve_keystore_backend
+    fi
+
     _ud_targets=0
-    [ -f "$TARGET_TXT" ] && _ud_targets=$(grep -c '.' "$TARGET_TXT" 2>/dev/null | tr -d ' ')
+    if [ "$KEYSTORE_BACKEND" = "omk" ]; then
+        [ -f "$OMK_INJECTOR" ] && _ud_targets=$(awk '/^scoop = \[/{f=1;next} f && /\]/{f=0;next} f{gsub(/[",]/,"");gsub(/^[ \t]+|[ \t]+$/,"");if(length($0))c++} END{print c+0}' "$OMK_INJECTOR" 2>/dev/null)
+    else
+        [ -f "$TARGET_TXT" ] && _ud_targets=$(grep -c '.' "$TARGET_TXT" 2>/dev/null | tr -d ' ')
+    fi
     [ -z "$_ud_targets" ] && _ud_targets=0
 
     _ud_valid_raw=$(cfg_get keybox_valid "Unknown")

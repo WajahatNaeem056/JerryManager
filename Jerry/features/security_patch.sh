@@ -2,8 +2,13 @@
 MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
+. "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/keystore.sh"
 
 log "SECURITY_PATCH" "Start"
+
+resolve_keystore_backend
+keystore_ready || die "No active keystore backend found (Tricky Store / OhMyKeymint)"
 
 current_year=$(date +%Y) || die "Failed to get year"
 current_month=$(date +%m | sed 's/^0*//') || die "Failed to get month"
@@ -25,9 +30,9 @@ fi
 formatted_month=$(printf "%02d" "$target_month")
 patch_date="${target_year}-${formatted_month}-05"
 
-log "SECURITY_PATCH" "Writing $patch_date to $SECURITY_PATCH_FILE"
+log "SECURITY_PATCH" "Writing $patch_date via $KEYSTORE_NAME"
 
-printf 'boot=%s\nvendor=%s\n' "$patch_date" "$patch_date" > "$SECURITY_PATCH_FILE" || die "Failed to write $SECURITY_PATCH_FILE"
+keystore_write_security_patch "$patch_date" || die "Failed to write security patch to $KEYSTORE_SECURITY"
 
 log "SECURITY_PATCH" "Finish"
 exit 0

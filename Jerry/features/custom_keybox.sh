@@ -2,8 +2,12 @@
 MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
+. "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/keystore.sh"
 
 log "CUSTOM_KEYBOX" "Start"
+
+resolve_keystore_backend
 
 CUSTOM_KEYBOX="$MODDIR/../custom_keybox.xml"
 
@@ -13,23 +17,23 @@ if [ ! -f "$CUSTOM_KEYBOX" ]; then
   exit 1
 fi
 
-if [ ! -d "$TRICKY_DIR" ]; then
-  log "CUSTOM_KEYBOX" "Error: Tricky Store data directory not found"
+if [ "$KEYSTORE_BACKEND" = "none" ]; then
+  log "CUSTOM_KEYBOX" "Error: No active keystore backend found (Tricky Store / OhMyKeymint)"
   exit 1
 fi
 
-mkdir -p "$TRICKY_DIR"
+ensure_dir "$KEYSTORE_DIR"
 
-if [ -f "$TARGET_FILE" ] && [ ! -f "$BACKUP_FILE" ]; then
-  cp "$TARGET_FILE" "$BACKUP_FILE"
+if [ "$KEYSTORE_BACKEND" = "trickystore" ] && [ -f "$KEYSTORE_KEYBOX" ] && [ ! -f "$BACKUP_FILE" ]; then
+  cp "$KEYSTORE_KEYBOX" "$BACKUP_FILE"
   log "CUSTOM_KEYBOX" "Created backup of existing keybox"
 fi
 
-cp "$CUSTOM_KEYBOX" "$TARGET_FILE" || {
-  log "CUSTOM_KEYBOX" "Error: Failed to copy custom_keybox.xml to Tricky Store"
+keystore_install_keybox "$CUSTOM_KEYBOX" || {
+  log "CUSTOM_KEYBOX" "Error: Failed to copy custom_keybox.xml to $KEYSTORE_NAME"
   exit 1
 }
 
-log "CUSTOM_KEYBOX" "Custom keybox installed successfully"
+log "CUSTOM_KEYBOX" "Custom keybox installed successfully ($KEYSTORE_NAME)"
 log "CUSTOM_KEYBOX" "Finish"
 exit 0

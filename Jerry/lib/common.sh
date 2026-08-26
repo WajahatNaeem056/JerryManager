@@ -1,5 +1,4 @@
 # shellcheck shell=sh
-
 JERRYKEY_LOG_FILE="/data/adb/JerryManager/boot.log"
 log() {
     _log_line="$(date +%Y-%m-%d\ %H:%M:%S) [$1] $2"
@@ -314,7 +313,7 @@ hide_recovery_folders() {
     _hrf_backup="/data/adb/recovery_backups"
     _hrf_random="" _hrf_subdirs=0 _hrf_path=""
 
-    for _hrf_folder in TWRP OrangeFox FOX PBRP PitchBlack Recovery; do
+    for _hrf_folder in TWRP twrp Twrp OrangeFox orangefox Fox FOX fox PBRP pbrp PitchBlack pitchblack Recovery recovery SHRP shrp Redwolf redwolf; do
         _hrf_path="/sdcard/$_hrf_folder"
         [ ! -d "$_hrf_path" ] && continue
 
@@ -335,6 +334,25 @@ hide_recovery_folders() {
             rm -rf "$_hrf_path" 2>/dev/null
         fi
     done
+
+    for _hrf_loose in \
+        "/sdcard/orangefox_settings.txt" \
+        "/sdcard/.twrps" \
+        "/sdcard/recovery.log"; do
+        rm -f "$_hrf_loose" 2>/dev/null || true
+    done
+    unset _hrf_loose
+
+    for _hrf_prop in \
+        ro.twrp.boot ro.twrp.version \
+        ro.orangefox.version ro.fox.version \
+        ro.boot.recovery ro.recovery.rescue_party_trigger \
+        ro.boot.boot_devices.recovery; do
+        resetprop --delete "$_hrf_prop"    2>/dev/null || true
+        resetprop -p --delete "$_hrf_prop" 2>/dev/null || true
+    done
+    unset _hrf_prop
+
     unset _hrf_backup _hrf_random _hrf_subdirs _hrf_path _hrf_folder
 }
 
@@ -433,13 +451,9 @@ zygisk_nohello|NoHello|/data/adb/modules/zygisk_nohello/service.sh|boot_hardenin
 tsupport-advance|TSupport-Advance|/data/adb/modules/tsupport-advance/post-fs-data.sh,/data/adb/modules/tsupport-advance/service.sh|boot_hardening,security_patch,suspicious_props,lsposed,rom_spoof,bootloader_spoofer,target|aggressive
 treat_wheel|TreatWheel|/data/adb/modules/treat_wheel/service.sh,/data/adb/modules/treat_wheel/service-or-boot-completed.sh|boot_hardening|passive
 sensitive_props|Sensitive Props|/data/adb/modules/sensitive_props/service.sh|boot_hardening,suspicious_props|passive
-Yurikey|Yurikey Manager|/data/adb/modules/Yurikey/service.sh|boot_hardening,security_patch,suspicious_props,rom_spoof|aggressive
 integritybox|Integrity Box|/data/adb/modules/playintegrityfix/service.sh,/data/adb/modules/playintegrityfix/post-fs-data.sh|boot_hardening,security_patch,suspicious_props,rom_spoof,bootloader_spoofer,target|aggressive
 brene|.BRENE|/data/adb/modules/brene/service.sh,/data/adb/modules/brene/post-fs-data.sh,/data/adb/modules/brene/boot-completed.sh|suspicious_props,boot_hash|passive
-tsupport-utl|Tricky Addon - Update Target List|/data/adb/modules/TA_utl/prop.sh|boot_hash|aggressive
-tsupport-enhanced|Tricky Addon Enhanced|/data/adb/modules/TA_enhanced/prop.sh,/data/adb/modules/TA_enhanced/bin/arm64-v8a/ta-enhanced,/data/adb/modules/TA_enhanced/bin/armeabi-v7a/ta-enhanced,/data/adb/modules/TA_enhanced/bin/x86_64/ta-enhanced,/data/adb/modules/TA_enhanced/bin/x86/ta-enhanced|boot_hash,keybox,security_patch|aggressive
 specter|Specter|/data/adb/modules/specter/service.sh,/data/adb/modules/specter/post-fs-data.sh|boot_hardening,security_patch,suspicious_props|aggressive
-zygisk-assistant|Zygisk Assistant|/data/adb/modules/zygisk-assistant/service.sh,/data/adb/modules/zygisk-assistant/post-fs-data.sh|boot_hardening|passive
 EOF
 }
 

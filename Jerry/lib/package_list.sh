@@ -1,4 +1,3 @@
-#!/system/bin/sh
 FIXED_TARGETS="\
 android
 com.android.vending
@@ -16,7 +15,7 @@ GMS_APPS="com.android.vending com.google.android.gsf com.google.android.gms com.
 
 REMOTE_CONTROL_APPS="com.anydesk.anydeskandroid com.teamviewer.teamviewer.market.mobile com.teamviewer.quicksupport.market com.sand.airdroid com.sand.airmirror com.koushikdutta.vysor com.genymobile.scrcpy com.microsoft.rdc.androidx com.realvnc.viewer.android com.splashtop.remote.pad.v2 com.dwservice.dwagent com.carriez.flutter_hbb com.carriez.flutter_hbbclient com.rustdesk.rustdesk"
 
-TOOL_APPS="com.omarea.vtools moe.shizuku.privileged.api com.estrongs.android.pop com.coolapk.market com.sevtinge.hyperceiler com.coderstory.toolkit"
+TOOL_APPS="com.omarea.vtools moe.shizuku.privileged.api com.estrongs.android.pop com.sevtinge.hyperceiler com.coderstory.toolkit"
 
 BLACKLIST_EXTRA="com.android.chrome com.google.android.apps.photos com.google.android.youtube com.topjohnwu.magisk mmrl"
 

@@ -4,8 +4,77 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/config_env.sh"
 . "$MODDIR/../lib/urls.sh"
+. "$MODDIR/../lib/keystore.sh"
 
 log "KEYBOX" "Start"
+
+resolve_keystore_backend
+
+if [ "$KEYSTORE_BACKEND" = "none" ]; then
+  log "KEYBOX" "Error: No active keystore backend found (Tricky Store / OhMyKeymint)"
+  exit 1
+fi
+
+if [ "$KEYSTORE_BACKEND" = "omk" ]; then
+  log "KEYBOX" "OhMyKeymint active — using simplified install path"
+  _omk_custom_type=$(cfg_get kb_custom_type "")
+  _omk_custom_value=$(cfg_get kb_custom_value "")
+  _omk_temp="$MODDIR/keybox.tmp"
+  _omk_decode="$MODDIR/keybox_decode"
+
+  if [ -n "$_omk_custom_type" ] && [ -n "$_omk_custom_value" ]; then
+    case "$_omk_custom_type" in
+      file|path)
+        [ -f "$_omk_custom_value" ] || { log "KEYBOX" "Error: Custom keybox file not found: $_omk_custom_value"; cfg_delete kb_custom_type; cfg_delete kb_custom_value; exit 1; }
+        keystore_install_keybox "$_omk_custom_value" || { log "KEYBOX" "Error: Failed to copy custom keybox"; exit 1; }
+        log "KEYBOX" "Custom keybox installed from $_omk_custom_value"
+        ;;
+      url)
+        check_network || { log "KEYBOX" "Error: No internet connection"; exit 1; }
+        download "$_omk_custom_value" > "$_omk_temp" || { log "KEYBOX" "Error: Custom URL download failed"; exit 1; }
+        if base64 -d "$_omk_temp" > "$_omk_decode" 2>/dev/null && [ -s "$_omk_decode" ]; then
+          keystore_install_keybox "$_omk_decode"
+        else
+          keystore_install_keybox "$_omk_temp"
+        fi
+        rm -f "$_omk_temp" "$_omk_decode"
+        log "KEYBOX" "Custom keybox installed from URL"
+        ;;
+    esac
+    cfg_delete kb_custom_type
+    cfg_delete kb_custom_value
+    unset _omk_custom_type _omk_custom_value _omk_temp _omk_decode
+    log "KEYBOX" "Finish (OhMyKeymint, custom)"
+    exit 0
+  fi
+  unset _omk_custom_type _omk_custom_value
+
+  check_network || { log "KEYBOX" "Error: No internet connection"; exit 1; }
+  log "KEYBOX" "Downloading keybox..."
+  download "$KEYBOX_URL" > "$_omk_temp" || { log "KEYBOX" "Error: Download failed"; rm -f "$_omk_temp"; exit 1; }
+
+  if base64 -d "$_omk_temp" > "$_omk_decode" 2>/dev/null && [ -s "$_omk_decode" ]; then
+    keystore_install_keybox "$_omk_decode" || { log "KEYBOX" "Error: Failed to install keybox"; exit 1; }
+  else
+    keystore_install_keybox "$_omk_temp" || { log "KEYBOX" "Error: Failed to install keybox"; exit 1; }
+  fi
+  rm -f "$_omk_temp" "$_omk_decode"
+
+  _serial=$(decode_keybox_serial "$KEYSTORE_KEYBOX" 2>/dev/null || echo "")
+  if [ -n "$_serial" ]; then
+    log "KEYBOX" "Checking Google revocation for serial $_serial"
+    if check_google_revocation "$_serial"; then
+      log "KEYBOX" "Warning: Keybox is revoked by Google (installed anyway — update soon)"
+      cfg_set keybox_valid "No"
+    else
+      cfg_set keybox_valid "Yes"
+    fi
+  fi
+  unset _serial
+
+  log "KEYBOX" "Finish (OhMyKeymint)"
+  exit 0
+fi
 
 DECODE_FILE="$TRICKY_DIR/keybox_decode"
 TEMP_FILE="$TRICKY_DIR/keybox.tmp"

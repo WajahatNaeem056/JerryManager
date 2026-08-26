@@ -2,24 +2,30 @@
 . "$MODPATH/lib/common.sh"
 . "$MODPATH/lib/urls.sh"
 . "$MODPATH/lib/paths.sh"
+. "$MODPATH/lib/config_env.sh"
+. "$MODPATH/lib/keystore.sh"
 
 ui_print ""
 ui_print "*********************************"
-ui_print "*****Jerry Manager Installer******"
+ui_print "*****Jerry Manager ******"
 ui_print "*********************************"
 ui_print ""
 
 mkdir -p "$JERRYKEY_CONFIG_DIR" 2>/dev/null
+
+resolve_keystore_backend
+ui_print "- Keystore backend: $KEYSTORE_NAME"
 
 if [ -d "/data/adb/modules/jerrykey" ]; then
   touch /data/adb/modules/jerrykey/remove
   ui_print "- Removed outdated module (lowercase 'jerrykey')"
 fi
 
-if [ ! -d "/data/adb/modules/tricky_store" ] && [ ! -d "/data/adb/modules_update/tricky_store" ]; then
-  ui_print "- Error: Tricky Store dependency is not installed"
-  ui_print "- Please install Tricky Store first."
-  ui_print "- After installing Tricky Store, install the keybox from the action button or WebUI."
+if [ ! -d "/data/adb/modules/tricky_store" ] && [ ! -d "/data/adb/modules_update/tricky_store" ] && \
+   [ ! -d "/data/adb/modules/oh_my_keymint" ] && [ ! -d "/data/adb/modules_update/oh_my_keymint" ]; then
+  ui_print "- Error: No supported keystore backend is installed"
+  ui_print "- Please install Tricky Store or OhMyKeymint first."
+  ui_print "- After installing one of them, install the keybox from the action button or WebUI."
   return 0
 fi
 
@@ -28,7 +34,7 @@ if [ -d "/data/adb/Jerrykey/bin" ]; then
   ui_print "- Cleaned up old binary directory"
 fi
 
-DECODE_FILE="$TRICKY_DIR/keybox_decode"
+DECODE_FILE="$MODPATH/keybox_decode"
 TEMP_FILE="$MODPATH/keybox.tmp"
 
 if check_network; then
@@ -39,31 +45,31 @@ if check_network; then
       ui_print "- Error: Keybox download failed. You can upload a keybox manually via the WebUI."
       rm -f "$TEMP_FILE"
   else
-      mkdir -p "$TRICKY_DIR"
+      ensure_dir "$KEYSTORE_DIR"
 
       if ! base64 -d "$TEMP_FILE" > "$DECODE_FILE" 2>/dev/null; then
           ui_print "- Error: Downloaded keybox is corrupted or invalid. Try again later."
           rm -f "$TEMP_FILE"
       else
-          if [ -f "$TARGET_FILE" ]; then
-              if cmp -s "$TARGET_FILE" "$DECODE_FILE"; then
+          if [ -f "$KEYSTORE_KEYBOX" ]; then
+              if cmp -s "$KEYSTORE_KEYBOX" "$DECODE_FILE"; then
                   ui_print "- Current keybox is already up to date. No changes needed."
                   rm -f "$TEMP_FILE" "$DECODE_FILE"
               else
-                  if ! grep -q "jerryroot" "$TARGET_FILE" 2>/dev/null; then
+                  if [ "$KEYSTORE_BACKEND" = "trickystore" ] && ! grep -q "jerryroot" "$KEYSTORE_KEYBOX" 2>/dev/null; then
                       ui_print "- Previous keybox was not installed by Jerry Keybox."
                       ui_print "- Creating a backup keybox..."
-                      cp "$TARGET_FILE" "$BACKUP_FILE"
+                      cp "$KEYSTORE_KEYBOX" "$BACKUP_FILE"
                   fi
-                  mv "$DECODE_FILE" "$TARGET_FILE"
-                  rm -f "$TEMP_FILE"
-                  ui_print "- Keybox installed successfully"
+                  keystore_install_keybox "$DECODE_FILE"
+                  rm -f "$TEMP_FILE" "$DECODE_FILE"
+                  ui_print "- Keybox installed successfully ($KEYSTORE_NAME)"
               fi
           else
               ui_print "- No keybox found! Creating a new one..."
-              mv "$DECODE_FILE" "$TARGET_FILE"
-              rm -f "$TEMP_FILE"
-              ui_print "- Keybox installed successfully"
+              keystore_install_keybox "$DECODE_FILE"
+              rm -f "$TEMP_FILE" "$DECODE_FILE"
+              ui_print "- Keybox installed successfully ($KEYSTORE_NAME)"
           fi
       fi
   fi
@@ -71,13 +77,13 @@ else
   ui_print "- No internet connection detected."
   if [ -f "$MODPATH/keybox.xml" ]; then
     ui_print "- Installing bundled keybox (Offline)..."
-    mkdir -p "$TRICKY_DIR"
-    if [ -f "$TARGET_FILE" ] && [ ! -f "$BACKUP_FILE" ]; then
-      cp "$TARGET_FILE" "$BACKUP_FILE"
+    ensure_dir "$KEYSTORE_DIR"
+    if [ "$KEYSTORE_BACKEND" = "trickystore" ] && [ -f "$KEYSTORE_KEYBOX" ] && [ ! -f "$BACKUP_FILE" ]; then
+      cp "$KEYSTORE_KEYBOX" "$BACKUP_FILE"
       ui_print "- Backup of existing keybox created."
     fi
-    cp "$MODPATH/keybox.xml" "$TARGET_FILE"
-    ui_print "- Bundled keybox installed successfully!"
+    keystore_install_keybox "$MODPATH/keybox.xml"
+    ui_print "- Bundled keybox installed successfully! ($KEYSTORE_NAME)"
   else
     ui_print "- No bundled keybox found. Use the Offline button in WebUI after reboot."
   fi

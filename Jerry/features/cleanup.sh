@@ -3,6 +3,8 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/package_list.sh"
+. "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/toggle_seed.sh"
 
 log "CLEANUP" "Start"
 
@@ -78,7 +80,7 @@ _rm "/dev/cpuset/scene-daemon"
 pm clear com.juom >/dev/null 2>&1 || true
 
 log "CLEANUP" "Checking bootloader spoofer conflicts..."
-disable_bootloader_spoofer
+_feature_enabled toggle_bootloader_spoofer && disable_bootloader_spoofer
 
 log "CLEANUP" "Applying prop hardening..."
 apply_boot_props || true
@@ -99,7 +101,9 @@ resetprop -n persist.sys.dev_mode 0
 resetprop -n persist.sys.debuggable 0
 
 log "CLEANUP" "Applying boot hardening..."
-apply_boot_hardening || true
+if _feature_enabled toggle_boot_hardening; then
+    apply_boot_hardening || true
+fi
 
 if [ "$(getenforce 2>/dev/null)" = "Enforcing" ]; then
   resetprop -n ro.boot.selinux enforcing 2>/dev/null || true

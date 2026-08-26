@@ -16,14 +16,11 @@ for _pid in $(pgrep -f 'droidguard\|com\.google\.android\.gms\b' 2>/dev/null); d
 done
 unset _pid
 
-for _pkg in $GMS_KILL_LIST; do
-  echo "$_installed_pkgs" | grep -Fq "package:$_pkg" || continue
-  am force-stop "$_pkg" >/dev/null 2>&1 || true
-  log "GMS" "Force-stopped $_pkg"
-  _count=$((_count + 1))
-done
-
 if echo "$_installed_pkgs" | grep -q "package:com.android.vending"; then
+  log "GMS" "Force-stopping Play Store (safe mode — account preserved)..."
+  am force-stop com.android.vending >/dev/null 2>&1 || log "GMS" "Warning: Failed to force-stop Play Store"
+  _count=$((_count + 1))
+
   log "GMS" "Clearing Play Store cache..."
   cmd package trim-caches 999999999 com.android.vending >/dev/null 2>&1 || log "GMS" "Warning: Failed to clear Play Store cache"
   log "GMS" "Play Store cache cleared"

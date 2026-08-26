@@ -12,6 +12,7 @@ log "ADB" "Start"
 
 _dev_opt=$(cfg_get toggle_adb_disabler_dev_options 0)
 _usb_dbg=$(cfg_get toggle_adb_disabler_usb_debug 0)
+_oem_unlock=$(cfg_get toggle_adb_disabler_oem_unlock 0)
 
 if [ "$_dev_opt" != "0" ]; then
   settings put global development_settings_enabled 0 2>/dev/null && log "ADB" "development_settings_enabled -> 0"
@@ -29,6 +30,12 @@ if [ "$_usb_dbg" != "0" ]; then
   resetprop -n init.svc_debug_pid.adbd "" 2>/dev/null && log "ADB" "init.svc_debug_pid.adbd -> ''"
   settings put global adb_enabled 0 2>/dev/null
   log "ADB" "USB debugging props reset"
+fi
+
+if [ "$_oem_unlock" != "0" ]; then
+  resetprop -n sys.oem_unlock_allowed 0 2>/dev/null && log "ADB" "sys.oem_unlock_allowed -> 0"
+  resetprop -n ro.oem_unlock_supported 0 2>/dev/null && log "ADB" "ro.oem_unlock_supported -> 0"
+  log "ADB" "OEM unlock support hidden"
 fi
 
 log "ADB" "Finish"
