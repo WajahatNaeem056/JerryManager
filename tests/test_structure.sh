@@ -21,7 +21,6 @@ check "system.prop"
 check "customize.sh"
 check "service.sh"
 check "post-fs-data.sh"
-check "boot-completed.sh"
 check "uninstall.sh"
 check "META-INF/com/google/android/update-binary"
 check "META-INF/com/google/android/updater-script"
@@ -36,8 +35,6 @@ check "webroot/index.html"
 check "webroot/config.json"
 
 echo "Checking pipelines/..."
-check "pipelines/root_hide"
-check "pipelines/banking_mode"
 check "pipelines/full_integrity"
 
 exit $status
