@@ -1,3 +1,4 @@
+#!/system/bin/sh
 FIXED_TARGETS="\
 android
 com.android.vending

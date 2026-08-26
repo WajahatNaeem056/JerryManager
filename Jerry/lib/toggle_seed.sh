@@ -1,3 +1,4 @@
+#!/system/bin/sh
 # Toggle default seeding — single source of truth for every toggle's default.
 
 _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
