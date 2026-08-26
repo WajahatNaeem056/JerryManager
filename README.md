@@ -2,7 +2,7 @@
 
 # JerryManager
 
-**A KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.**
+**A KernelSU / APatch module for achieving and maintaining Root Hiding and Integrity on Android.**
 
 ![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
 ![Version](https://img.shields.io/badge/Version-v4.0-purple)
