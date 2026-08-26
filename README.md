@@ -24,10 +24,10 @@ Built for people who need integrity to actually hold — banking apps, payment s
 
 - **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
 - **Keybox Management** — supply your own keybox or pull one automatically
-- Auto Target: inotify + polling for new apps
-- ADB Disabler: dev options, USB debugging, OEM unlock
-- Detection Cleanup: removes detector logs, temp dirs, caches
-- Widevine L1: attestation keys via KmInstallKeybox
+- **Auto Target**: inotify + polling for new apps
+- **ADB Disabler**: dev options, USB debugging, OEM unlock
+- **Detection Cleanup**: removes detector logs, temp dirs, caches
+- **Widevine L1**: attestation keys via KmInstallKeybox
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
 
 
@@ -40,7 +40,7 @@ Built for people who need integrity to actually hold — banking apps, payment s
 
 ## Requirements
 
-- KernelSU or APatch
+- KernelSU or APatch or Magisk
 - Android 8.0+
 
 ## Developer
