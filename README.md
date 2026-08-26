@@ -1,64 +1,56 @@
-<div align="center">
+JerryManager
 
-# JerryManager
+KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.
 
-**A KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.**
+JerryManager brings together the components needed to maintain Play Integrity across different devices and ROMs, with a focus on keeping the module lightweight, predictable, and easy to maintain.
 
-![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
-![Version](https://img.shields.io/badge/Version-v4.0-purple)
-![OS](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
-![License](https://img.shields.io/badge/License-GPL--3.0-orange)
-![Status](https://img.shields.io/badge/Status-Active-success)
+What it does
 
-</div>
+- Play Integrity — Handles the required changes for Basic, Device, and Strong Integrity.
+- Keybox Management — Supports using a configured keybox and managing the keybox used by the module.
+- ROM Detection — Detects the installed ROM using filesystem information instead of relying only on build properties.
+- Widevine Support — Includes the required DRM-level changes for supported configurations.
+- Mock Account Handling — Provides options for hiding mock accounts where required.
+- Persistent Configuration — Keeps module settings across reboots and module updates.
 
----
+Compatibility
 
-## About
+JerryManager is designed for:
 
-**JerryManager** is a root module for KernelSU and APatch focused on one job: getting devices to pass **Basic**, **Device**, and **Strong** Play Integrity checks, and keeping them passing across reboots and updates. It ships with a full Web UI for configuration instead of raw config files.
-
-Built for people who need integrity to actually hold — banking apps, payment systems, and other attestation-sensitive apps that break the moment a device is flagged.
-
-## Features
-
-- **Play Integrity Fix** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
-- **Keybox Management** — supply your own keybox or pull one automatically 
-- **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
-- **Banking Mode** — deep-clean and cache-clean routines aimed at passing banking-app checks, with dedicated fixes for common Pakistani banking apps
-- **Widevine Support** — DRM level patching for streaming apps
-- **Hide Mock Accounts (HMA)** — including variant handling for stricter detection methods
-- **Web UI** — Material Design 3 interface for every toggle; no manual file editing required
-- **Persistent Config** — toggle states survive module updates and reboots
-
-## Installation
-
-1. Download the latest ZIP 
-2. Flash via KernelSU or APatch (Magisk is not the primary target — verify support before flashing)
-3. Reboot
-4. Open the module's Web UI from your manager app to configure
-
-## Requirements
-
-- KernelSU or APatch
+- KernelSU
+- APatch
 - Android 8.0+
 
-## Developer
+Compatibility can vary depending on the device, ROM, Android version, and root environment.
 
-**WajahatNaeem056**
+Releases
 
-- GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
-- Telegram: [@JerryChatt](https://t.me/JerryChatt)
-- Telegram: [@JerryTweaks](https://t.me/JerryTweaks)
+JerryManager follows a versioned release cycle. Each release contains the corresponding module build and a changelog describing the changes made since the previous version.
 
-## License
+For detailed release changes, see "CHANGELOG.md" (CHANGELOG.md).
 
-GPL-3.0 — see [LICENSE](LICENSE) for full terms.
+Project
+
+The project is maintained with a focus on keeping the source simple and maintainable. Changes are tested before being included in a release, and older code is cleaned up when it is no longer needed.
+
+Issues and useful feedback are welcome, especially when accompanied by relevant device, ROM, Android, and KernelSU/APatch information.
+
+Developer
+
+WajahatNaeem056
+
+- GitHub: "@WajahatNaeem056" (https://github.com/WajahatNaeem056)
+- Telegram: "@JerryChat" (https://t.me/JerryChat)
+- Telegram: "@JerryTweaks" (https://t.me/JerryTweaks)
+
+License
+
+JerryManager is licensed under GPL-3.0.
+
+See "LICENSE" (LICENSE) for the full license text.
 
 ---
 
-<div align="center">
-
-*Built for the community, by the community.*
-
-</div>
+<p align="center">
+  <i>Built for the community, by the community.</i>
+</p>
