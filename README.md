@@ -1,39 +1,69 @@
-JerryManager
+<div align="center">
 
-KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.
+# JerryManager
 
-JerryManager brings together the components needed to maintain Play Integrity across different devices and ROMs, with a focus on keeping the module lightweight, predictable, and easy to maintain.
+**A KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.**
 
-What it does
+![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
+![Version](https://img.shields.io/badge/Version-v4.0-purple)
+![OS](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
+![License](https://img.shields.io/badge/License-GPL--3.0-orange)
+![Status](https://img.shields.io/badge/Status-Active-success)
 
-- Play Integrity — Handles the required changes for Basic, Device, and Strong Integrity.
-- Keybox Management — Supports using a configured keybox and managing the keybox used by the module.
-- ROM Detection — Detects the installed ROM using filesystem information instead of relying only on build properties.
-- Widevine Support — Includes the required DRM-level changes for supported configurations.
-- Mock Account Handling — Provides options for hiding mock accounts where required.
-- Persistent Configuration — Keeps module settings across reboots and module updates.
+</div>
+---
+##About
+
+A KernelSU / APatch module for maintaining Strong Device Integrity on Android.
+
+JerryManager is built around a simple goal: keeping the integrity setup stable without making the module unnecessarily complicated.
+
+It handles the required system-side changes, detects the device environment, and keeps its configuration persistent between updates and reboots.
+
+Features
+
+- Play Integrity — Support for Basic, Device, and Strong Integrity.
+- Keybox Management — Handles the keybox used by the integrity setup.
+- ROM Detection — Detects the installed ROM using device filesystem information instead of relying only on build properties.
+- Widevine Support — Includes support for DRM-related configurations.
+- Mock Account Handling — Handles mock-account detection where required.
+- Persistent Configuration — Settings remain preserved across reboots and module updates.
+
+Requirements
+
+- KernelSU or APatch
+- Android 8.0+
+- ARM64 device
 
 Compatibility
 
-JerryManager is designed for:
+JerryManager is primarily intended for KernelSU and APatch environments.
 
-- KernelSU
-- APatch
-- Android 8.0+
+Results may vary between devices and ROMs depending on their implementation and security configuration.
 
-Compatibility can vary depending on the device, ROM, Android version, and root environment.
+Project Structure
+
+The project is kept relatively simple so that the module can be maintained and updated without unnecessary dependencies.
+
+Source files and scripts are reviewed and cleaned up as the project evolves. Changes that affect the module's behaviour are documented in the changelog.
 
 Releases
 
-JerryManager follows a versioned release cycle. Each release contains the corresponding module build and a changelog describing the changes made since the previous version.
+Stable builds are published through GitHub Releases.
 
-For detailed release changes, see "CHANGELOG.md" (CHANGELOG.md).
+Each release has its own version code and changelog so changes between versions can be tracked easily.
 
-Project
+See "Releases" (../../releases) for available versions.
 
-The project is maintained with a focus on keeping the source simple and maintainable. Changes are tested before being included in a release, and older code is cleaned up when it is no longer needed.
+Changelog
 
-Issues and useful feedback are welcome, especially when accompanied by relevant device, ROM, Android, and KernelSU/APatch information.
+See "CHANGELOG.md" (CHANGELOG.md) for the complete release history.
+
+Credits
+
+JerryManager builds on the work and ideas from the Android root and integrity community.
+
+Thanks to everyone who has tested the module, reported issues, and contributed feedback.
 
 Developer
 
@@ -45,12 +75,12 @@ WajahatNaeem056
 
 License
 
-JerryManager is licensed under GPL-3.0.
+JerryManager is licensed under GNU General Public License v3.0.
 
 See "LICENSE" (LICENSE) for the full license text.
 
 ---
 
 <p align="center">
-  <i>Built for the community, by the community.</i>
+  <sub>Built for the community, maintained with care.</sub>
 </p>
