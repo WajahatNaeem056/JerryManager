@@ -25,10 +25,7 @@ Built for people who need integrity to actually hold — banking apps, payment s
 - **Play Integrity Fix** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
 - **Keybox Management** — supply your own keybox or pull one automatically 
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
-- **Banking Mode** — deep-clean and cache-clean routines aimed at passing banking-app checks, with dedicated fixes for common Pakistani banking apps
 - **Widevine Support** — DRM level patching for streaming apps
-- **Hide Mock Accounts (HMA)** — including variant handling for stricter detection methods
-- **Web UI** — Material Design 3 interface for every toggle; no manual file editing required
 - **Persistent Config** — toggle states survive module updates and reboots
 
 ## Installation
