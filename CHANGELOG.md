@@ -1,7 +1,5 @@
 # Changelog
 
-All notable changes to JerryManager are documented in this file.
-
 ## What's New in v4.0
 
 ### Added
