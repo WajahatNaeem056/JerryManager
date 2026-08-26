@@ -13,75 +13,53 @@
 </div>
 
 ---
+
 ## About
 
-A KernelSU / APatch module for maintaining Strong Device Integrity on Android.
+**JerryManager** is a root module for KernelSU and APatch focused on one job: getting devices to pass **Basic**, **Device**, and **Strong** Play Integrity checks, and keeping them passing across reboots and updates. It ships with a full Web UI for configuration instead of raw config files.
 
-JerryManager is built around a simple goal: keeping the integrity setup stable without making the module unnecessarily complicated.
+Built for people who need integrity to actually hold — banking apps, payment systems, and other attestation-sensitive apps that break the moment a device is flagged.
 
-It handles the required system-side changes, detects the device environment, and keeps its configuration persistent between updates and reboots.
+## Features
 
-Features
+- **Play Integrity Fix** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
+- **Keybox Management** — supply your own keybox or pull one automatically 
+- **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
+- **Banking Mode** — deep-clean and cache-clean routines aimed at passing banking-app checks, with dedicated fixes for common Pakistani banking apps
+- **Widevine Support** — DRM level patching for streaming apps
+- **Hide Mock Accounts (HMA)** — including variant handling for stricter detection methods
+- **Web UI** — Material Design 3 interface for every toggle; no manual file editing required
+- **Persistent Config** — toggle states survive module updates and reboots
 
-- Play Integrity — Support for Basic, Device, and Strong Integrity.
-- Keybox Management — Handles the keybox used by the integrity setup.
-- ROM Detection — Detects the installed ROM using device filesystem information instead of relying only on build properties.
-- Widevine Support — Includes support for DRM-related configurations.
-- Mock Account Handling — Handles mock-account detection where required.
-- Persistent Configuration — Settings remain preserved across reboots and module updates.
+## Installation
 
-Requirements
+1. Download the latest ZIP 
+2. Flash via KernelSU or APatch (Magisk is not the primary target — verify support before flashing)
+3. Reboot
+4. Open the module's Web UI from your manager app to configure
+
+## Requirements
 
 - KernelSU or APatch
 - Android 8.0+
-- ARM64 device
 
-Compatibility
+## Developer
 
-JerryManager is primarily intended for KernelSU and APatch environments.
+**WajahatNaeem056**
 
-Results may vary between devices and ROMs depending on their implementation and security configuration.
+- GitHub: [@WajahatNaeem056](https://github.com/WajahatNaeem056)
+- Telegram: [@JerryChatt](https://t.me/JerryChatt)
+- Telegram: [@JerryTweaks](https://t.me/JerryTweaks)
 
-Project Structure
+## License
 
-The project is kept relatively simple so that the module can be maintained and updated without unnecessary dependencies.
-
-Source files and scripts are reviewed and cleaned up as the project evolves. Changes that affect the module's behaviour are documented in the changelog.
-
-Releases
-
-Stable builds are published through GitHub Releases.
-
-Each release has its own version code and changelog so changes between versions can be tracked easily.
-
-See "Releases" (../../releases) for available versions.
-
-Changelog
-
-See "CHANGELOG.md" (CHANGELOG.md) for the complete release history.
-
-Credits
-
-JerryManager builds on the work and ideas from the Android root and integrity community.
-
-Thanks to everyone who has tested the module, reported issues, and contributed feedback.
-
-Developer
-
-WajahatNaeem056
-
-- GitHub: "@WajahatNaeem056" (https://github.com/WajahatNaeem056)
-- Telegram: "@JerryChat" (https://t.me/JerryChat)
-- Telegram: "@JerryTweaks" (https://t.me/JerryTweaks)
-
-License
-
-JerryManager is licensed under GNU General Public License v3.0.
-
-See "LICENSE" (LICENSE) for the full license text.
+GPL-3.0 — see [LICENSE](LICENSE) for full terms.
 
 ---
 
-<p align="center">
-  <sub>Built for the community, maintained with care.</sub>
-</p>
+<div align="center">
+
+*Built for the community, by the community.*
+
+</div>
+
