@@ -11,8 +11,9 @@
 ![Status](https://img.shields.io/badge/Status-Active-success)
 
 </div>
+
 ---
-##About
+## About
 
 A KernelSU / APatch module for maintaining Strong Device Integrity on Android.
 
