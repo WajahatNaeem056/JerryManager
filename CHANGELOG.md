@@ -17,7 +17,7 @@ Other
 
 - Small cleanup across the project
 - Updated a few files and internal components
-- Nothing major in the UI — this release is mainly about fixes and This
+- Nothing major in the UI — this release is mainly about fixes
 
 ## What's New in v4.1
 
