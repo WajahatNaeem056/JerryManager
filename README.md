@@ -34,7 +34,7 @@ Built for people who need integrity to actually hold — banking apps, payment s
 ## Installation
 
 1. Download the latest ZIP 
-2. Flash via KernelSU or APatch (Magisk is not the primary target — verify support before flashing)
+2. Flash via KernelSU or APatch or Magisk
 3. Reboot
 4. Open the module's Web UI from your manager app to configure
 
