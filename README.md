@@ -4,8 +4,8 @@
 
 **A KernelSU / APatch module for achieving and maintaining Root Hiding and Integrity on Android.**
 
-![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
-![Version](https://img.shields.io/badge/Version-v4.0-purple)
+![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch%20%7C%20Magisk-blue)
+![Version](https://img.shields.io/badge/Version-v4.2-purple)
 ![OS](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL--3.0-orange)
 ![Status](https://img.shields.io/badge/Status-Active-success)
