@@ -1,4 +1,23 @@
 # Changelog
+## What's New in v4.3
+
+### UI
+- Reworked the Control section and its toggles for a cleaner layout.
+- Redesigned the Set Custom Keybox section.
+- Refined the Action UI with a cleaner execution flow and runtime feedback.
+- Improved overall UI consistency, clarity, and visibility.
+
+### Custom ROM
+- Added new Custom ROM options and related toggles.
+- Improved and fixed existing Custom ROM controls.
+
+### Keybox
+- Added backup folder support for Keybox handling.
+
+### Action
+- Improved runtime output and state handling.
+- Removed unnecessary Action state files.
+
 ## What's New in v4.2
 
 This update is mostly focused on cleaning things up and fixing issues found in the previous release.
