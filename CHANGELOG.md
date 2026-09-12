@@ -4,7 +4,7 @@
 ### UI
 - Reworked the Control section and its toggles for a cleaner layout.
 - Redesigned the Set Custom Keybox section.
-- Refined the Action UI with a cleaner execution flow and runtime feedback.
+- Improved the Action UI with a cleaner execution flow.
 - Improved overall UI consistency, clarity, and visibility.
 
 ### Custom ROM
