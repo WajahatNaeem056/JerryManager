@@ -1,23 +1,49 @@
 # Changelog
 ## What's New in v4.3
 
-### UI
-- Reworked the Control section and its toggles for a cleaner layout.
-- Redesigned the Set Custom Keybox section.
-- Improved the Action UI with a cleaner execution flow.
-- Improved overall UI consistency, clarity, and visibility.
+New
 
-### Custom ROM
-- Added new Custom ROM options and related toggles.
-- Improved and fixed existing Custom ROM controls.
+- Added Per-app Attestation Mode with "Auto", "Generate certificate (!)", and "Leaf hack (?)" options.
+- Added Sync from DenyList for App Targeting.
+- Added Per-app Custom Security Patch Date.
+- Added separate System, Boot, and Vendor Security Patch support.
+- Added Clean PIF Traces.
+- Added improved Custom ROM logging.
 
-### Keybox
-- Added backup folder support for Keybox handling.
+Improved
 
-### Action
-- Improved runtime output and state handling.
-- Removed unnecessary Action state files.
+- Improved TEESimulator / TEESimulator-RS detection and configuration handling.
+- Improved Keystore Backend detection and reporting.
+- Improved Keybox loading, version detection, and runtime updates.
+- Improved App Targeting and Security Patch configuration handling.
+- Redesigned the Control section for a cleaner configuration experience.
+- Redesigned the Action interface with clearer runtime feedback.
+- Improved Home screen layout, live values, loading states, and UI consistency.
+- Improved Custom ROM cleanup and logging.
+- Changed the default first-install theme from Light to Auto.
 
+Fixed
+
+- Fixed incorrect TEESimulator / Keystore Backend detection.
+- Fixed Keystore Backend getting stuck in the loading state.
+- Fixed Home screen values remaining stuck at "—".
+- Fixed Keybox and Home layout overflow and alignment issues.
+- Fixed stale WebUI assets after updates.
+- Fixed duplicate Offline notifications.
+- Fixed Security Patch updates overwriting existing per-app configurations.
+- Improved boot-time error handling and overall module stability.
+
+Migration
+
+- Added safe migration support for existing Jerrykey installations.
+- Updated internal paths and identifiers to the new JerryManager name.
+- Preserved existing persistent data during migration.
+
+Removed
+
+- Removed the legacy Kernel information from the Home interface.
+- Fix Many Bugs .
+  
 ## What's New in v4.2
 
 This update is mostly focused on cleaning things up and fixing issues found in the previous release.
