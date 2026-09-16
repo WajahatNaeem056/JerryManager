@@ -14,19 +14,6 @@
 
 ---
 
-## Table of Contents
-
-- [About](#about)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Installation](#installation)
-- [Building from source](#building-from-source)
-- [Testing](#testing)
-- [Requirements](#requirements)
-- [Contributing](#contributing)
-- [Developer](#developer)
-- [License](#license)
-
 ## About
 
 **JerryManager** is a root module for KernelSU and APatch focused on one job: getting devices to pass **Basic**, **Device**, and **Strong** Play Integrity checks, and keeping them passing across reboots and updates. It ships with a full Web UI for configuration instead of raw config files.
