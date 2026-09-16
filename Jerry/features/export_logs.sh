@@ -1,0 +1,193 @@
+#!/system/bin/sh
+MODDIR=${0%/*}
+MODDIR=${MODDIR%/features}
+. "$MODDIR/lib/common.sh"
+. "$MODDIR/lib/paths.sh"
+. "$MODDIR/lib/config_env.sh"
+
+_out="${1:-$(dirname "$JERRYMANAGER_CONFIG_DIR")/JerryManager.log}"
+mkdir -p "$(dirname "$_out")" 2>/dev/null
+
+_version=$(grep '^version=' "$MODDIR/module.prop" 2>/dev/null | cut -d'=' -f2)
+_version_code=$(grep '^versionCode=' "$MODDIR/module.prop" 2>/dev/null | cut -d'=' -f2)
+_now=$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "unknown")
+
+_LOG_TAGS="BOOT SERVICE ACTION ADB AUTO_TARGET BANKING BOOT_HASH \
+CLEANUP CONFLICT CUSTOM_KEYBOX DESC ERROR EXPORT GMS KEYBOX KEYBOX_INFO \
+KEYSTORE KILL_ALL ORCH PIF POSTFS RECOVERY REVOKE \
+SECURITY_PATCH SUSPICIOUS TARGET TEESIM UNINSTALL WIDEVINE ZYGISK_NEXT"
+
+{
+  echo "JerryManager — Full Report (device info, keybox, security patch, app targeting, toggles, properties, per-feature logs)"
+  echo "version=$_version ($_version_code) | exported=$_now"
+  echo ""
+
+  echo "=== DEVICE INFO ==="
+  _info_json="$MODDIR/webroot/json/info.json"
+  if [ -f "$_info_json" ]; then
+    for _field in android root rom version; do
+      _val=$(grep -o "\"$_field\": *\"[^\"]*\"" "$_info_json" 2>/dev/null | sed 's/.*: *"//;s/"$//')
+      [ -n "$_val" ] && echo "${_field}=${_val}"
+    done
+    unset _field _val
+  else
+    echo "(not available — run the WebUI once to generate webroot/json/info.json)"
+  fi
+
+  _pif_dir="/data/adb/modules/playintegrityfix"
+  if [ -d "$_pif_dir" ]; then
+    _pif="unknown"
+    for _pif_cfg in "$_pif_dir/custom.pif.prop" "$_pif_dir/pif.json" "$_pif_dir/pif.prop"; do
+      if [ -f "$_pif_cfg" ]; then
+        _pif_model=$(grep -m1 '^MODEL=' "$_pif_cfg" 2>/dev/null | cut -d= -f2-)
+        [ -z "$_pif_model" ] && _pif_model=$(grep -m1 '"MODEL"' "$_pif_cfg" 2>/dev/null | sed -n 's/.*"MODEL"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+        if [ -n "$_pif_model" ]; then
+          _pif="$_pif_model"
+          break
+        fi
+      fi
+    done
+    echo "pif=$_pif"
+    unset _pif_cfg _pif_model
+  else
+    echo "pif=not installed"
+  fi
+  unset _pif_dir _pif
+
+  if [ -f "$_info_json" ]; then
+    _kernel_val=$(grep -o '"kernel": *"[^"]*"' "$_info_json" 2>/dev/null | sed 's/.*: *"//;s/"$//')
+    [ -n "$_kernel_val" ] && echo "kernel=$_kernel_val"
+    unset _kernel_val
+  fi
+  unset _info_json
+  echo ""
+
+  echo "=== KEYBOX ==="
+  if [ -f "$TARGET_FILE" ]; then
+    _kb_marker=$(grep -oE 'jerryroot:[0-9]+|JERRY-KEYBOX:[0-9]+' "$TARGET_FILE" 2>/dev/null | head -1)
+    _kb_device=$(grep -oE 'DeviceID="[^"]*"' "$TARGET_FILE" 2>/dev/null | head -1 | sed 's/DeviceID="//;s/"$//')
+    echo "installed=true"
+    [ -n "$_kb_marker" ] && echo "installed_by_jerry=true ($_kb_marker)" || echo "installed_by_jerry=unknown (no jerryroot marker found)"
+    [ -n "$_kb_device" ] && echo "device_id=$_kb_device"
+    unset _kb_marker _kb_device
+  else
+    echo "installed=false"
+  fi
+  [ -n "$(find_keybox_backup trickystore)" ] && echo "backup_present=true" || echo "backup_present=false"
+  echo ""
+
+  echo "=== SECURITY PATCH ==="
+  if [ -f "$SECURITY_PATCH_FILE" ]; then
+    cat "$SECURITY_PATCH_FILE" 2>/dev/null
+  else
+    echo "(not set)"
+  fi
+  echo ""
+
+  echo "=== APP TARGETING ==="
+  if [ -f "$TARGET_TXT" ]; then
+    _tt_count=$(grep -c . "$TARGET_TXT" 2>/dev/null || echo 0)
+    echo "target.txt entries=$_tt_count"
+    unset _tt_count
+  else
+    echo "target.txt not found"
+  fi
+  echo ""
+
+  echo "=== CUSTOM ROM LOGS ==="
+  if [ -d "$CUSTOM_ROM_LOG_DIR" ]; then
+    _crl_found=0
+    for _crl_file in "$CUSTOM_ROM_LOG_DIR"/*.log; do
+      [ -e "$_crl_file" ] || continue
+      _crl_found=1
+      echo ""
+      echo "--- $(basename "$_crl_file") ---"
+      cat "$_crl_file" 2>/dev/null
+    done
+    unset _crl_file
+    [ "$_crl_found" = "0" ] && echo "(no entries)"
+    unset _crl_found
+  else
+    echo "(no Custom ROM feature has logged anything yet)"
+  fi
+  echo ""
+
+  echo "# --- Toggles (live config dir: $JERRYMANAGER_CONFIG_DIR) ---"
+  if [ -d "$JERRYMANAGER_CONFIG_DIR" ]; then
+    for _f in "$JERRYMANAGER_CONFIG_DIR"/*.val; do
+      [ -e "$_f" ] || continue
+      _name=$(basename "$_f" .val)
+      _val=$(cat "$_f" 2>/dev/null)
+      echo "${_name}=${_val}"
+      unset _name _val
+    done | sort
+  else
+    echo "(config dir not found — no toggle has ever been written)"
+  fi
+  echo ""
+
+  echo "# --- Key runtime properties (as currently visible via getprop) ---"
+  for _p in \
+    sys.oem_unlock_allowed \
+    ro.oem_unlock_supported \
+    ro.warranty_bit \
+    ro.boot.warranty_bit \
+    ro.boot.verifiedbootstate \
+    vendor.boot.verifiedbootstate \
+    ro.boot.flash.locked \
+    ro.debuggable \
+    ro.build.tags \
+    ro.vendor.warranty_bit \
+    ro.vendor.boot.warranty_bit \
+    ro.secureboot.lockstate \
+    ro.boot.vbmeta.device_state \
+    vendor.boot.vbmeta.device_state \
+    ro.boot.veritymode \
+  ; do
+    echo "${_p}=$(getprop "$_p" 2>/dev/null)"
+  done
+  unset _f _p
+  echo ""
+
+  echo "# --- boot.log, split by feature ---"
+  if [ -f "$JERRYMANAGER_LOG_FILE" ]; then
+    _seen_tags=" "
+    for _tag in $_LOG_TAGS; do
+      _seen_tags="$_seen_tags$_tag "
+      echo ""
+      echo "=== $_tag.log ==="
+      _section_lines=$(grep "\[$_tag\]" "$JERRYMANAGER_LOG_FILE" 2>/dev/null | sed "s/^.*\[$_tag\] //")
+      if [ -n "$_section_lines" ]; then
+        echo "$_section_lines"
+      else
+        echo "(no entries)"
+      fi
+      unset _section_lines
+    done
+    echo ""
+    echo "=== OTHER.log ==="
+    _other_found=0
+    while IFS= read -r _line; do
+      _line_tag=$(echo "$_line" | grep -oE '\[[A-Za-z_]+\]' | head -1 | tr -d '[]')
+      [ -z "$_line_tag" ] && continue
+      case " $_seen_tags" in
+        *" $_line_tag "*) continue ;;
+      esac
+      echo "$_line"
+      _other_found=1
+    done < "$JERRYMANAGER_LOG_FILE"
+    [ "$_other_found" = "0" ] && echo "(no entries)"
+    unset _seen_tags _tag _line _line_tag _other_found
+  else
+    echo "(boot.log not found — module may not have completed a boot cycle yet)"
+  fi
+} > "$_out" 2>/dev/null
+
+if [ -s "$_out" ]; then
+  log "EXPORT" "Full log exported to $_out"
+  echo "$_out"
+  exit 0
+else
+  log "EXPORT" "Error: failed to write $_out"
+  exit 1
+fi

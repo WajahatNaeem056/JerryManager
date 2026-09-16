@@ -1,0 +1,36 @@
+# Jerry Manager - Early Boot Property Injection
+# These props are injected by Magisk/KSU before Android framework starts
+
+# Verified Boot State
+ro.boot.vbmeta.device_state=locked
+ro.boot.verifiedbootstate=green
+ro.boot.flash.locked=1
+ro.boot.veritymode=enforcing
+vendor.boot.vbmeta.device_state=locked
+vendor.boot.verifiedbootstate=green
+
+# Build Type
+ro.build.type=user
+ro.build.tags=release-keys
+
+# Warranty / OEM
+ro.boot.warranty_bit=0
+ro.warranty_bit=0
+ro.vendor.boot.warranty_bit=0
+ro.vendor.warranty_bit=0
+ro.oem_unlock_supported=0
+
+# Debug flags
+ro.debuggable=0
+ro.force.debuggable=0
+ro.secure=1
+ro.adb.secure=1
+
+# SELinux
+ro.boot.selinux=enforcing
+
+# Crypto
+ro.crypto.state=encrypted
+
+# Secure boot
+ro.secureboot.lockstate=locked

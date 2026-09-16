@@ -1,0 +1,23 @@
+# Lineage Identity Cleanup — prop overrides applied by features/lineage_identity_cleanup.sh
+# Format: key=value, one per line. Lines starting with # are ignored.
+#
+# (ro.crypto.state, ro.build.tags, ro.build.type) — those are skipped or
+# already covered elsewhere in JerryManager's own apply_boot_props().
+# ro.build.display.id / ro.build.description / ro.build.version.incremental
+# are already handled by rom_fingerprint.sh, and ro.modversion is already
+# deleted by hide_rom_identifier.sh — deliberately NOT repeated here to
+# avoid two scripts fighting over the same prop.
+#
+# Values below are set to empty — this removes the LineageOS-specific
+# identity signal without guessing at a fake vendor fingerprint (which
+# could itself look suspicious if wrong for your device/build). Safe on
+# stock LineageOS/crDroid/etc. Always verify against `getprop` on YOUR
+# device before trusting this blindly — some ROMs expose additional
+# custom keys under a different prefix (e.g. ro.crdroid.*,
+# ro.pixelexperience.*) that aren't listed here.
+
+ro.lineage.version=
+ro.lineage.device=
+ro.lineage.build.version=
+ro.lineage.build.version.plat.sdk=
+ro.lineage.releasetype=

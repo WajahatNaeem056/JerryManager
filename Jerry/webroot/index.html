@@ -1,0 +1,1665 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <style>md-icon:not(:defined){display:none}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <title data-i18n="app_title">JerryManager</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"
+        onerror="this.onerror=null;this.href='assets/material-icons.css'" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
+        onerror="this.onerror=null;this.href='assets/material-icons-outlined.css'" />
+
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem('themeMode'); } catch(e) {}
+      // First install: if no saved preference, default to auto (follow system theme)
+      // After user changes, remember their choice
+      var isFirstInstall = (saved === null || saved === undefined);
+      var mode = isFirstInstall ? 'auto' : saved;
+      if (isFirstInstall) {
+        try { localStorage.setItem('themeMode', 'auto'); } catch(e) {}
+      }
+      var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var resolved = mode === 'auto' ? (systemDark ? 'dark' : 'light') : mode;
+      document.documentElement.setAttribute('data-theme', mode);
+      document.documentElement.setAttribute('data-theme-resolved', resolved);
+      document.documentElement.style.colorScheme = resolved;
+      // Listen for system theme changes when mode is 'auto'
+      if (mode === 'auto' && !window.__autoThemeListener) {
+        window.__autoThemeListener = function(e) {
+          var currentMode = 'auto';
+          try { currentMode = localStorage.getItem('themeMode') || 'auto'; } catch(e) {}
+          if (currentMode === 'auto') {
+            var newResolved = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme-resolved', newResolved);
+            document.documentElement.style.colorScheme = newResolved;
+          }
+        };
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', window.__autoThemeListener);
+      }
+    })();
+  </script>
+  <script>
+  window.__setTheme = function(mode) {
+    // Update active button
+    ['dark','auto','light'].forEach(function(m) {
+      var btn = document.getElementById('theme-btn-' + m);
+      if (btn) btn.classList.toggle('active', m === mode);
+    });
+    document.documentElement.setAttribute('data-theme', mode);
+    var resolved = mode === 'auto'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : mode;
+    document.documentElement.setAttribute('data-theme-resolved', resolved);
+    document.documentElement.style.colorScheme = resolved;
+    try { localStorage.setItem('themeMode', mode); } catch(e) {}
+    // When switching to auto, immediately re-attach system listener
+    if (mode === 'auto' && !window.__autoThemeListener) {
+      window.__autoThemeListener = function(e) {
+        try { var m = localStorage.getItem('themeMode') || 'auto'; } catch(ex) { var m = 'auto'; }
+        if (m === 'auto') {
+          var r = e.matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme-resolved', r);
+          document.documentElement.style.colorScheme = r;
+        }
+      };
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', window.__autoThemeListener);
+    }
+  };
+  // Open a community link (Telegram channel) via root shell intent when available,
+  // falling back to a normal browser tab otherwise.
+  window.__openCommunityLink = function(url) {
+    try {
+      if (window.ksu && typeof window.ksu.exec === 'function') {
+        var safeUrl = url.replace(/'/g, "\\'");
+        var cb = 'communityLink_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        window[cb] = function() { delete window[cb]; };
+        window.ksu.exec("am start -a android.intent.action.VIEW -d '" + safeUrl + "'", '{}', cb);
+      } else {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      window.open(url, '_blank');
+    }
+  };
+  // On load, read saved theme and highlight active button
+  document.addEventListener('DOMContentLoaded', function() {
+    var saved = 'auto';
+    try { saved = localStorage.getItem('themeMode') || 'auto'; } catch(e) {}
+    setTimeout(function() {
+      ['dark','auto','light'].forEach(function(m) {
+        var btn = document.getElementById('theme-btn-' + m);
+        if (btn) btn.classList.toggle('active', m === saved);
+      });
+    }, 300);
+  });
+  </script>
+  <script type="module" crossorigin src="./assets/index-ChjuGUlr.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-lhHHWwHU.js">
+  <link rel="modulepreload" crossorigin href="./assets/bridge-BHYUl5TK.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-DfNBIdZK.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <header class="app-top-bar" id="top-bar">
+      <span class="md-typescale-headline-medium app-title" data-i18n="app_title">JerryManager</span>
+      <div style="flex: 1"></div>
+      <!-- Hidden network chip — required by JS bridge for online/offline detection -->
+      <span id="network-chip" class="network-chip" style="display:none">
+        <md-icon>wifi</md-icon>
+        <span id="network-label">Online</span>
+      </span>
+    </header>
+
+    <main>
+      <div id="pages">
+
+        <section id="home-page">
+
+          <!-- Hidden refresh button for compatibility -->
+          <button id="refresh-btn" style="display:none"></button>
+
+          <!-- Keybox Hero Card -->
+          <md-filled-card id="keybox-card" class="hero-card">
+            <div class="keybox-inner">
+              <md-icon id="keybox-icon" style="display:none">verified_user</md-icon>
+              <div class="keybox-text">
+                <p class="keybox-label" data-i18n="home_keybox_status" id="keybox-label">KEYBOX STATUS</p>
+                <p class="keybox-value" id="keybox-value">Checking... <span id="keybox-num"></span></p>
+              </div>
+            </div>
+          </md-filled-card>
+
+          <!-- Info Row List (redesigned — replaces old 2x2 grid) -->
+          <div class="jf-combined-card">
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#e6faf3">
+                <svg width="24" height="24" fill="#00b96b" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl">Status</span>
+              <span class="jf-row-val green" id="status-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#fff4e0">
+                <svg width="24" height="24" fill="#ff9500" viewBox="0 0 24 24">
+                  <path d="M17.523 15.341a.85.85 0 1 1 0-1.7.85.85 0 0 1 0 1.7zm-11.046 0a.85.85 0 1 1 0-1.7.85.85 0 0 1 0 1.7zm11.4-5.765l1.604-2.778a.334.334 0 0 0-.122-.456.334.334 0 0 0-.456.122l-1.625 2.815A9.265 9.265 0 0 0 12 8.545a9.265 9.265 0 0 0-3.878.734L6.497 6.464a.334.334 0 0 0-.456-.122.334.334 0 0 0-.122.456l1.604 2.778C4.91 10.79 3.25 13.1 3 15.82h18c-.25-2.72-1.91-5.03-4.123-6.244z"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_android">Android</span>
+              <span class="jf-row-val" id="android-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#f0eeff">
+                <svg width="24" height="24" fill="none" stroke="#7c5cfc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <circle cx="8" cy="12" r="3.5"/>
+                  <line x1="11.5" y1="12" x2="21" y2="12"/>
+                  <line x1="19" y1="12" x2="19" y2="14.5"/>
+                  <line x1="16.5" y1="12" x2="16.5" y2="14.5"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_root">Root</span>
+              <span class="jf-row-val" id="root-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#fff0f6">
+                <svg width="24" height="24" fill="none" stroke="#e91e8c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <rect x="2" y="3" width="20" height="14" rx="2"/>
+                  <polyline points="8 21 12 17 16 21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl">ROM</span>
+              <span class="jf-row-val" id="rom-value">—</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#e6f0ff">
+                <svg width="24" height="24" fill="none" stroke="#3478f6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <rect x="5" y="2" width="14" height="20" rx="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_pif_status">PIF Status</span>
+              <span class="jf-row-val" id="pif-status-value">Unknown</span>
+            </div>
+
+            <div class="jf-row">
+              <div class="jf-row-icon" style="background:#f0eeff">
+                <svg width="24" height="24" fill="none" stroke="#5b6ef5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3-3.5 3.5z"/>
+                </svg>
+              </div>
+              <span class="jf-row-lbl" data-i18n="home_keystore_backend">Keystore Backend</span>
+              <span class="jf-row-val" id="keystore-backend-value">—</span>
+            </div>
+
+          </div><!-- /.jf-combined-card -->
+
+        </section>
+
+        <section id="actions-page" hidden>
+
+          <div class="list-title" data-i18n="menu_keybox">Keybox</div>
+          <div class="list-container">
+            <div class="list-item" data-script="keybox.sh">
+              <md-icon>cloud_download</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_import_keybox">Install Jerry Keybox</div>
+                <span class="supporting-text" data-i18n="menu_import_keybox_desc">Downloads and installs remote keybox to the active keystore backend (Tricky Store / OhMyKeymint)</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+            <div class="list-item" id="custom-keybox-btn" style="cursor:pointer">
+              <md-icon>settings</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text">Set Custom Keybox</div>
+                <span class="supporting-text">Use your own keybox file, URL, or device path</span>
+              </div>
+              <div class="spacer"></div>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="menu_tricky_store">Keystore Backend</div>
+          <div class="list-container">
+            <div class="list-item" id="app-targeting-btn" onclick="openAppTargeting()">
+              <md-icon>manage_search</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text">App Targeting</div>
+                <span class="supporting-text">Manage per-app targeting states interactively</span>
+              </div>
+              <div class="spacer"></div>
+              <md-icon style="opacity:0.4;font-size:20px;">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" data-script="security_patch.sh">
+              <md-icon>security_update_good</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_patch">Set Security Patch</div>
+                <span class="supporting-text" data-i18n="menu_patch_desc">Writes spoofed security patch date to the active keystore backend</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" data-script="boot_hash.sh">
+              <md-icon>verified</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_set_verified_boot">Set Verified Boot Hash</div>
+                <span class="supporting-text" data-i18n="advance_set_verified_boot_desc">Reads and writes verified boot hash for attestation</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+        </section>
+
+        <section id="advanced-page" hidden>
+
+          <div class="list-title" data-i18n="advance_menu_title_extended">Detection Fixes</div>
+          <div class="list-container">
+            <div class="list-item" data-script="cleanup.sh" data-destructive>
+              <md-icon>delete_sweep</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_clear_all_detection_traces">Clear All Detection Traces</div>
+                <span class="supporting-text" data-i18n="advance_clear_all_detection_traces_desc">Deletes detector app data, temp files, resets props, removes ODEX</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+
+
+            <div class="list-item" data-script="kill_all.sh" data-destructive>
+              <md-icon>cancel</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_kill_all">Kill All Processes</div>
+                <span class="supporting-text" data-i18n="advance_kill_all_desc">Force-stops and clears data for all known detector apps</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+
+            <div class="list-item" data-script="banking_mode.sh" data-destructive>
+              <md-icon>account_balance</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text">Banking Mode</div>
+                <span class="supporting-text">Clears GMS cache, fixes banking & payment app detection</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+          <div class="list-title" data-i18n="advance_menu_title_config">Module Configs</div>
+          <div class="list-container">
+
+
+            <div class="list-item" data-script="zygisk_next.sh">
+              <md-icon>tune</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_set_zygisk_next_configs">Set Zygisk Next Configs</div>
+                <span class="supporting-text" data-i18n="advance_set_zygisk_desc">Configures enforce-denylist, memory-type, linker settings</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+            <div class="list-item" data-script="pif.sh">
+              <md-icon>fingerprint</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_set_pif">Set Fingerprint (PIF)</div>
+                <span class="supporting-text" data-i18n="advance_set_pif_desc">Runs Play Integrity Fix auto-update scripts</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+
+
+          </div>
+
+          <div class="list-title" data-i18n="advance_tee_section">Fix TEE: OnePlus, RedMagic, Realme, Oppo…</div>
+          <div class="list-container">
+            <div class="list-item" data-script="widevine.sh">
+              <md-icon>layers</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="advance_wdevinel1">Fix Widevine L1</div>
+                <span class="supporting-text" data-i18n="advance_wdevinel1_desc">Downloads attestation key and runs KmInstallKeybox vendor binary</span>
+              </div>
+              <div class="spacer"></div>
+              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Theme / Settings Page -->
+        <section id="control-page" hidden>
+
+          <div class="ctrl-heading-row">
+            <div class="list-title" data-i18n="control_boot_title">Boot Behavior</div>
+            <span class="ctrl-heading-badge" id="ctrl-badge-boot">–</span>
+          </div>
+          <div class="list-container ctrl-rows" id="ctrl-rows-boot" data-group="boot"></div>
+
+          <div class="ctrl-heading-row">
+            <div class="list-title" data-i18n="control_custom_rom_title">Custom Rom</div>
+            <span class="ctrl-heading-badge" id="ctrl-badge-custom_rom">–</span>
+          </div>
+          <div class="list-container ctrl-rows" id="ctrl-rows-custom_rom" data-group="custom_rom"></div>
+
+          <div class="ctrl-heading-row">
+            <div class="list-title" data-i18n="control_automation_title">Automation</div>
+            <span class="ctrl-heading-badge" id="ctrl-badge-automation">–</span>
+          </div>
+          <div class="list-container ctrl-rows" id="ctrl-rows-automation" data-group="automation"></div>
+
+          <div class="ctrl-heading-row">
+            <div class="list-title" data-i18n="control_adb_title">ADB &amp; Debug Disabler</div>
+            <span class="ctrl-heading-badge" id="ctrl-badge-adb">–</span>
+          </div>
+          <div class="list-container ctrl-rows" id="ctrl-rows-adb" data-group="adb"></div>
+
+          <div class="ctrl-heading-row">
+            <div class="list-title" data-i18n="control_action_title">Action Pipeline</div>
+            <span class="ctrl-heading-badge" id="ctrl-badge-action">–</span>
+          </div>
+          <div class="list-container ctrl-rows" id="ctrl-rows-action" data-group="action"></div>
+
+        </section>
+
+
+
+        <section id="settings-page" hidden>
+
+          <div class="list-title">Theme</div>
+          <div class="theme-toggle-card" id="theme-toggle-card">
+            <button class="theme-btn" id="theme-btn-dark" onclick="window.__setTheme('dark')">
+              <span class="theme-btn-icon">🌙</span>
+              <span class="theme-btn-label">Dark</span>
+            </button>
+            <button class="theme-btn" id="theme-btn-auto" onclick="window.__setTheme('auto')">
+              <span class="theme-btn-icon">⚙️</span>
+              <span class="theme-btn-label">Auto</span>
+            </button>
+            <button class="theme-btn" id="theme-btn-light" onclick="window.__setTheme('light')">
+              <span class="theme-btn-icon">☀️</span>
+              <span class="theme-btn-label">Light</span>
+            </button>
+          </div>
+
+          <div class="list-title">Community</div>
+          <div class="community-grid" id="community-links-card">
+            <button class="community-card" id="community-btn-chat" onclick="window.__openCommunityLink('https://t.me/JerryChatt')" aria-label="Open JerryChat on Telegram">
+              <span class="community-card__icon">💬</span>
+              <span class="community-card__title">JerryChat</span>
+              <span class="community-card__desc">Chat with users and get help</span>
+              <span class="community-card__arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="community-card" id="community-btn-tweaks" onclick="window.__openCommunityLink('https://t.me/JerryTweaks')" aria-label="Open JerryTweaks on Telegram">
+              <span class="community-card__icon">📣</span>
+              <span class="community-card__title">JerryTweaks</span>
+              <span class="community-card__desc">Share tweaks and experience more</span>
+              <span class="community-card__arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+
+        </section>
+
+      </div>
+
+    <!-- ===== APP TARGETING PANEL ===== -->
+    <div id="app-targeting-panel" style="display:none;position:fixed;inset:0;z-index:200;flex-direction:column;overflow:hidden;" class="at-panel">
+      <!-- Header -->
+      <div class="at-header">
+        <button onclick="closeAppTargeting()" class="at-back-btn">
+          <md-icon style="font-family:'Material Icons';font-size:20px;">arrow_back</md-icon>
+        </button>
+        <span class="at-title" id="at-title">App Targeting</span>
+        <div id="at-saving-indicator" style="display:none;font-size:12px;" class="at-saving">Saving…</div>
+        <div style="position:relative;">
+          <button onclick="atToggleMenu(event)" class="at-back-btn" aria-label="More options">
+            <md-icon style="font-family:'Material Icons';font-size:20px;pointer-events:none;">more_vert</md-icon>
+          </button>
+          <div id="at-menu" class="at-menu-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:210;width:207px;background:var(--at-menu-bg);border:1px solid var(--at-border);border-radius:18px;box-shadow:0 4px 12px var(--at-shadow);padding:6px;overflow:hidden;">
+            <button class="at-menu-item" id="at-menu-selectall-btn" onclick="atSelectAll()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              <span>Select All</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-deselectall-btn" onclick="atDeselectAll()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+              <span>Deselect All</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-deselectunnecessary-btn" onclick="atDeselectUnnecessary()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>
+              <span>Deselect Unnecessary</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-synddenylist-btn" onclick="atSyncDenyList()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 8.5 6"/><path d="M12 1v5h5"/></svg>
+              <span>Sync from DenyList</span>
+            </button>
+            <button class="at-menu-item" id="at-menu-togglesystem-btn" onclick="atToggleSystemApps()">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+              <span id="at-menu-togglesystem-label">Show system apps</span>
+            </button>
+          </div>
+        </div>
+
+        <style>
+          .at-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            min-height: 42px;
+            box-sizing: border-box;
+            text-align: left;
+            padding: 0 10px;
+            margin: 0 0 3px 0;
+            border: 1px solid var(--at-menu-item-border);
+            border-radius: 16px;
+            background: var(--at-menu-item-bg);
+            color: var(--at-text);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .at-menu-item:last-child { margin-bottom: 0; }
+          .at-menu-item svg {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+            position: relative;
+            z-index: 1;
+            transition: opacity 0.1s ease;
+          }
+          .at-menu-item span { display: flex; align-items: center; position: relative; z-index: 1; }
+          /* JS-driven ripple: a neutral on-surface circle spawned at the tap
+             point that expands and fades. More reliable than relying on
+             :active alone in a WebView, where the active state can be too
+             brief to register before the click handler fires and the menu
+             closes. Uses --at-text (on-surface white/black), not the
+             purple accent — this is temporary press feedback, not a
+             selection state, so it stays neutral like a standard Android
+             ripple. */
+          .at-menu-item .at-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--at-text);
+            opacity: 0.10;
+            transform: scale(0);
+            animation: at-ripple-expand 0.45s ease-out forwards;
+            pointer-events: none;
+            z-index: 0;
+          }
+          @keyframes at-ripple-expand {
+            to { transform: scale(1); opacity: 0; }
+          }
+          .at-menu-item.at-pressed {
+            background: var(--at-menu-item-press-bg);
+            border-color: var(--at-menu-item-border);
+            transform: scale(0.98);
+          }
+          .at-menu-item.at-pressed svg { opacity: 1; }
+          @media (hover: hover) {
+            .at-menu-item:hover { background: var(--at-menu-item-hover-bg); }
+          }
+          .at-menu-dropdown {
+            transform-origin: top right;
+            animation: at-menu-pop 0.14s ease-out;
+            backdrop-filter: blur(16px) saturate(1.4);
+            -webkit-backdrop-filter: blur(16px) saturate(1.4);
+          }
+          @keyframes at-menu-pop {
+            from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        </style>
+      </div>
+      <!-- Search -->
+      <div class="at-search-wrap">
+        <div class="at-search-box">
+          <md-icon style="font-family:'Material Icons';font-size:20px;opacity:0.5;flex-shrink:0;">search</md-icon>
+          <input id="at-search" type="text" placeholder="Search apps" oninput="atFilter()" class="at-search-input">
+        </div>
+      </div>
+      <!-- Filter chips -->
+      <div class="at-chips-row">
+        <button class="at-chip at-chip-active" id="at-chip-all" onclick="atSetFilter('all')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="margin-right:4px;flex-shrink:0;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>All
+        </button>
+        <button class="at-chip" id="at-chip-selected" onclick="atSetFilter('selected')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5"/></svg>Selected
+        </button>
+        <button class="at-chip" id="at-chip-not-selected" onclick="atSetFilter('not-selected')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9"/></svg>Not Selected
+        </button>
+      </div>
+      <!-- Loading state -->
+      <div id="at-loading" style="display:flex;align-items:center;justify-content:center;flex:1;gap:12px;">
+        <md-circular-progress indeterminate></md-circular-progress>
+        <span style="opacity:0.6;">Loading apps…</span>
+      </div>
+      <!-- App list -->
+      <div id="at-list" style="display:none;flex:1;overflow-y:auto;padding:0 8px 100px;"></div>
+      <!-- Apply FAB -->
+      <div class="at-fab-wrap">
+        <button id="at-apply-btn" onclick="atApply()" class="at-apply-fab">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          Apply
+        </button>
+      </div>
+    </div>
+
+    <style>
+    .at-panel {
+      background: var(--at-bg) !important;
+      color: var(--at-text);
+    }
+    /* Local theme variables for this panel — dark values (default) */
+    .at-panel {
+      --at-bg: #121212;
+      --at-card: #1E1E1E;
+      --at-search: #252525;
+      --at-border: #2A2A2A;
+      --at-purple: #7C4DFF;
+      --at-text: #F5F5F5;
+      --at-text-secondary: #A0A0A0;
+      --at-shadow: rgba(0,0,0,0.35);
+      --at-chip-hover: rgba(124,77,255,0.10);
+      --at-chip-active-press: rgba(124,77,255,0.16);
+      --at-menu-bg: #1C1C1E;
+      /* Menu-item surfaces: a neutral dark card, one step lighter than
+         --at-menu-bg (popup background) so each option reads as its own
+         surface. Border stays subtle/neutral. Hover/press use a neutral
+         on-surface tint (white-on-dark), not the purple accent — purple
+         is reserved for actual selection/action elements elsewhere in
+         this screen (filter chips, checkboxes, Apply button). */
+      --at-menu-item-bg: rgba(255,255,255,0.05);
+      --at-menu-item-border: rgba(255,255,255,0.10);
+      --at-menu-item-hover-bg: rgba(255,255,255,0.07);
+      --at-menu-item-press-bg: rgba(255,255,255,0.11);
+    }
+    /* Light theme values — Jerry's original translucent gradient look */
+    :root[data-theme-resolved=light] .at-panel,
+    :root[data-theme=light] .at-panel {
+      --at-bg: linear-gradient(145deg,#dce8ff 0%,#efe0ff 35%,#d8f5e8 65%,#fff0dc 100%);
+      --at-card: rgba(255,255,255,0.75);
+      --at-search: rgba(255,255,255,0.75);
+      --at-border: rgba(255,255,255,0.90);
+      --at-purple: #5533bb;
+      --at-text: #111133;
+      --at-text-secondary: #44447a;
+      --at-shadow: rgba(80,50,200,0.30);
+      --at-chip-hover: rgba(100,70,240,0.10);
+      --at-chip-active-press: rgba(100,70,240,0.18);
+      --at-menu-bg: #FFFFFF;
+      --at-menu-item-bg: rgba(85,51,187,0.045);
+      --at-menu-item-border: rgba(17,17,51,0.12);
+      --at-menu-item-hover-bg: rgba(17,17,51,0.06);
+      --at-menu-item-press-bg: rgba(17,17,51,0.10);
+    }
+    :root[data-theme-resolved=light] .at-header,
+    :root[data-theme=light] .at-header {
+      --at-header-bg: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px) saturate(1.4);
+      -webkit-backdrop-filter: blur(10px) saturate(1.4);
+    }
+    :root[data-theme-resolved=light] .at-search-box,
+    :root[data-theme=light] .at-search-box,
+    :root[data-theme-resolved=light] .at-chip,
+    :root[data-theme=light] .at-chip,
+    :root[data-theme-resolved=light] .at-app-row,
+    :root[data-theme=light] .at-app-row {
+      border-width: 1.5px;
+    }
+    :root[data-theme-resolved=light] .at-chip:not(.at-chip-active),
+    :root[data-theme=light] .at-chip:not(.at-chip-active) {
+      border-color: rgba(80,50,200,0.25) !important;
+    }
+
+    .at-header {
+      display:flex;align-items:center;gap:8px;
+      padding:16px 12px 12px;
+      background: var(--at-header-bg, var(--at-bg));
+      border-bottom:1px solid var(--at-border);
+      flex-shrink:0;
+    }
+
+    .at-back-btn {
+      background: var(--at-card);
+      color: var(--at-text);
+      border:1px solid var(--at-border);border-radius:50%;width:40px;height:40px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.12s ease;
+    }
+    .at-back-btn:active {
+      background: var(--at-chip-active-press);
+    }
+    @media (hover: hover) {
+      .at-back-btn:hover { background: var(--at-chip-hover); }
+    }
+    .at-title {
+      font-size:20px;font-weight:600;flex:1;
+      color: var(--at-text);
+    }
+
+    .at-saving { color: var(--at-purple); }
+
+    .at-search-wrap { padding:12px 16px 8px; flex-shrink:0; }
+    .at-search-box {
+      display:flex;align-items:center;gap:8px;
+      background: var(--at-search);
+      border: 1px solid var(--at-border);
+      border-radius:16px;padding:0 16px;height:48px;
+    }
+    .at-search-input {
+      border:none;background:transparent;flex:1;font-size:15px;
+      outline:none;color: var(--at-text);
+      font-family:inherit;
+    }
+    .at-search-input::placeholder { color: var(--at-text-secondary); }
+
+    .at-chips-row {
+      display:flex;gap:8px;padding:4px 16px 10px;
+      overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+    }
+    .at-chip {
+      display:flex;align-items:center;white-space:nowrap;
+      border-radius:20px;padding:8px 14px;font-size:14px;font-weight:500;
+      cursor:pointer;
+      border:1px solid var(--at-border);
+      background: var(--at-search);
+      color: var(--at-text);
+      transition:background 0.15s,border-color 0.15s;
+      font-family:inherit;
+    }
+    .at-chip.at-chip-active {
+      background: var(--at-purple) !important;
+      border-color: var(--at-purple) !important;
+      color: #ffffff !important;
+    }
+
+    .at-app-row {
+      display:flex;align-items:center;gap:12px;
+      padding:14px 12px;border-radius:16px;margin-bottom:8px;
+      background: var(--at-card);
+      border: 1px solid var(--at-border);
+      color: var(--at-text);
+      cursor:pointer;transition:background 0.12s;
+    }
+    .at-app-sub {
+      font-size:12px;
+      color: var(--at-text-secondary);
+    }
+    .at-app-name {
+      font-size:16px;font-weight:500;
+      color: var(--at-text);
+    }
+    /* Icon: no extra container/background — show the app's own icon only.
+       If the source image has transparent corners, they now show the
+       panel/card color instead of an injected white/gray placeholder box. */
+    .at-app-icon {
+      width:36px;height:36px;border-radius:10px;flex-shrink:0;
+      object-fit:cover;background:transparent;
+    }
+
+    .at-checkbox {
+      width:24px;height:24px;border-radius:50%;
+      border:1.5px solid var(--at-border);
+      background:transparent;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:background 0.15s,border-color 0.15s;
+    }
+    .at-checkbox.at-checked {
+      background: var(--at-purple) !important;
+      border-color: var(--at-purple) !important;
+    }
+
+    /* Per-app "!"/"?" attestation-mode badge — sits next to the checkbox,
+       tappable independently to open the mode dialog. Empty/no-suffix
+       (auto) renders as a blank slot so row height stays consistent. */
+    .at-mode-badge {
+      width:22px;height:22px;border-radius:7px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;
+      border:1.5px solid var(--at-border);
+      color: var(--at-text-secondary);
+      background: transparent;
+    }
+    .at-mode-badge--generate {
+      color:#ffffff; background:#e5484d; border-color:#e5484d;
+    }
+    .at-mode-badge--hack {
+      color:#ffffff; background:#f5a524; border-color:#f5a524;
+    }
+
+    .at-mode-options { display:flex; flex-direction:column; gap:4px; padding-top:4px; }
+    .at-patch-date-section {
+      margin-top:10px; padding:10px 8px 4px;
+      border-top:1px solid rgba(128,128,128,0.18);
+    }
+    .at-patch-date-section input[type="date"] {
+      padding:8px 10px; border-radius:10px;
+      border:1px solid rgba(128,128,128,0.35);
+      background:transparent; color:inherit; font-size:14px;
+    }
+    .at-mode-option {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 8px; border-radius:12px; cursor:pointer;
+    }
+    .at-mode-option input[type="radio"] { accent-color: var(--at-purple); width:18px; height:18px; flex-shrink:0; }
+    .at-mode-option span:nth-child(2) { flex:1; font-size:14px; }
+    .at-mode-icon {
+      width:20px;height:20px;border-radius:6px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:700;color:#ffffff;
+    }
+    .at-mode-icon--generate { background:#e5484d; }
+    .at-mode-icon--hack { background:#f5a524; }
+
+    /* Floating Apply button — compact pill, doesn't block list content */
+    .at-fab-wrap {
+      position:fixed;right:20px;
+      bottom:calc(24px + env(safe-area-inset-bottom));
+      z-index:201;
+    }
+    .at-apply-fab {
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      background: var(--at-purple);
+      color: #ffffff;
+      border:none;border-radius:16px;padding:0 24px;height:52px;
+      font-size:16px;font-weight:600;cursor:pointer;
+      box-shadow:0 4px 16px var(--at-shadow);
+      font-family:inherit;
+    }
+    </style>
+    </main>
+
+    <!-- Custom Navbar — Flat White/Dark Pill, Solid Filled Icons, No Indicator -->
+    <nav id="nav-bar" class="jerry-nav">
+      <div class="jerry-nav-inner">
+      <button class="jerry-nav-tab active" data-index="0" onclick="jerryNavSwitch(0)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label" data-i18n="nav_home">Home</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="1" onclick="jerryNavSwitch(1)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2 4 5v6c0 5.06 3.41 9.79 8 11 4.59-1.21 8-5.94 8-11V5l-8-3z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label">Action</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="2" onclick="jerryNavSwitch(2)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M4 6h9v2H4V6zm0 5h6v2H4v-2zm0 5h9v2H4v-2zM16 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm0 6.5A2.5 2.5 0 1 1 16 17a2.5 2.5 0 0 1 0-5.5z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label" data-i18n="nav_advancemenu">Advanced</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="3" onclick="jerryNavSwitch(3)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 6h10v1.5H3V6zm0 5.25h7v1.5H3v-1.5zM3 16.5h10V18H3v-1.5z"/>
+            <path d="M15.5 10.5l1.9 1.9 3.6-3.6-1.06-1.06-2.54 2.54-.84-.84z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label" data-i18n="nav_control">Control</span>
+      </button>
+      <button class="jerry-nav-tab" data-index="4" onclick="jerryNavSwitch(4)">
+        <div class="jerry-nav-pill">
+          <svg class="jerry-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.01 7.01 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 0 0-.59.22L2.74 8.87a.47.47 0 0 0 .12.61l2.03 1.58a7.2 7.2 0 0 0-.07.94c0 .32.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.04.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
+        </div>
+        <span class="jerry-nav-label">Other</span>
+      </button>
+      </div>
+    </nav>
+
+  </div>
+
+  <md-dialog id="progress-dialog">
+    <div slot="content" class="simple-progress">
+      <md-circular-progress indeterminate></md-circular-progress>
+      <p class="md-typescale-body-medium" id="progress-label"></p>
+      <p class="simple-progress__text" id="progress-text"></p>
+    </div>
+  </md-dialog>
+
+  <style>
+       ======================================== */
+
+    /* Keybox Hero Card */
+    .keybox-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 22px;
+    }
+    .keybox-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+    .keybox-text-right { align-items: flex-end; text-align: right; flex: 0 0 auto; max-width: 50%; }
+    .keystore-value { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; }
+    .keybox-label {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .keybox-value {
+      margin: 0;
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--md-sys-color-on-surface-variant); /* default/unknown */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      transition: color 0.25s ease;
+    }
+    /* Light theme: also cover the brief loading state before any status
+       class (keybox-ok/revoked/outdated/unknown/none) has been applied —
+       otherwise the label+value are near-invisible light grey while the
+       keybox check is still running. */
+    :root[data-theme-resolved=light] .keybox-label,
+    :root[data-theme-resolved=light] .keybox-value { color: #000000 !important; }
+    :root[data-theme-resolved=light] .keybox-label { opacity: 0.6 !important; }
+    /* Dark theme: same loading-state fix as above — on-surface-variant
+       renders too close to the dark card background, making "Checking…"
+       barely visible until a status class takes over. !important since
+       this must win regardless of any other rule's specificity/order. */
+    :root[data-theme-resolved=dark] .keybox-label,
+    :root[data-theme-resolved=dark] .keybox-value { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .keybox-label { opacity: 0.7 !important; }
+    /* Dynamic status colors — disabled: every keybox state now uses plain
+       white/default text regardless of status (ok/revoked/outdated/
+       unknown/none), instead of colored on-* tokens. */
+    #keybox-card.keybox-ok .keybox-value,
+    #keybox-card.keybox-ok .keybox-label,
+    #keybox-card.keybox-revoked .keybox-value,
+    #keybox-card.keybox-revoked .keybox-label,
+    #keybox-card.keybox-outdated .keybox-value,
+    #keybox-card.keybox-outdated .keybox-label,
+    #keybox-card.keybox-unknown .keybox-value,
+    #keybox-card.keybox-unknown .keybox-label,
+    #keybox-card.keybox-none .keybox-value,
+    #keybox-card.keybox-none .keybox-label { color: #F5F5F5 !important; }
+    /* Light theme: keep the same plain-black override for every state. */
+    :root[data-theme-resolved=light] #keybox-card.keybox-ok .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-ok .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-revoked .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-revoked .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-outdated .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-outdated .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-unknown .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-unknown .keybox-label,
+    :root[data-theme-resolved=light] #keybox-card.keybox-none .keybox-value,
+    :root[data-theme-resolved=light] #keybox-card.keybox-none .keybox-label { color: #000000 !important; }
+
+    /* Info grid emoji style */
+    .info-card__emoji {
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 4px;
+      display: block;
+      color: #5533bb;
+    }
+    #version-info-card .info-card__emoji { color: #4422aa; }
+    :root[data-theme-resolved=dark] .info-card__emoji,
+    :root[data-theme=dark] .info-card__emoji { color: #9977ee; }
+    :root[data-theme-resolved=dark] #version-info-card .info-card__emoji,
+    :root[data-theme=dark] #version-info-card .info-card__emoji { color: #ccaaff; }
+    .info-card__label {
+      margin: 0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+    }
+    .info-card__value {
+      margin: 4px 0 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      word-break: break-all;
+    }
+    .status-online { color: #2ecc71 !important; }
+
+    /* ═══ Home page zoom ═══ */
+    #home-page {
+      zoom: 0.78;
+    }
+
+    /* ═══ Redesigned home info section — row-list card (replaces 2x2 grid) ═══ */
+    .jf-combined-card {
+      margin: 0 2px;
+      background: #ffffff;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(91,110,245,0.12);
+      box-sizing: border-box;
+    }
+    .jf-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 20px;
+      min-height: 64px;
+      border-bottom: 0.8px solid rgba(18,19,43,0.06);
+      box-sizing: border-box;
+      width: 100%;
+      overflow: hidden;
+    }
+    .jf-row:last-child {
+      border-bottom: none;
+      padding-bottom: 22px;
+    }
+    .jf-row-icon {
+      width: 48px; height: 48px;
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    /* Dark theme — dim the pastel icon backgrounds (not the icon itself) via overlay */
+    :root[data-theme-resolved=dark] .jf-row-icon,
+    :root[data-theme=dark] .jf-row-icon {
+      background: rgba(255,255,255,0.06) !important;
+    }
+    .jf-row-lbl {
+      font-size: 15.5px;
+      color: rgba(18,19,43,0.80);
+      font-weight: 400;
+      flex: 1;
+      white-space: nowrap;
+    }
+    .jf-row-val {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #12132b;
+      text-align: right;
+      max-width: 58%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 1;
+    }
+    .jf-row-val.green  { color: #00b96b; }
+    .jf-row-val.purple { color: #5b6ef5; }
+    .jf-row-val.kernel-val {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0d0e22;
+      text-align: right;
+      max-width: 58%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      flex-shrink: 1;
+    }
+    .jf-chip {
+      font-size: 12px; font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(91,110,245,0.08);
+      color: #5b6ef5;
+      border: 1px solid rgba(91,110,245,0.15);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    /* Dark theme — jf-combined-card */
+    :root[data-theme-resolved=dark] .jf-combined-card,
+    :root[data-theme=dark] .jf-combined-card {
+      background: #1E1E1E !important;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.30) !important;
+    }
+    :root[data-theme-resolved=dark] .jf-row,
+    :root[data-theme=dark] .jf-row {
+      border-bottom-color: rgba(255,255,255,0.06) !important;
+    }
+    :root[data-theme-resolved=dark] .jf-row-lbl,
+    :root[data-theme=dark] .jf-row-lbl { color: #A0A0A0 !important; }
+    :root[data-theme-resolved=dark] .jf-row-val,
+    :root[data-theme=dark] .jf-row-val { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .jf-row-val.kernel-val,
+    :root[data-theme=dark] .jf-row-val.kernel-val { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .jf-chip,
+    :root[data-theme=dark] .jf-chip {
+      background: rgba(91,110,245,0.22) !important;
+      color: #b3bcfb !important;
+      border-color: rgba(91,110,245,0.35) !important;
+    }
+
+    /* ═══ Page background — flat light-lavender to match target screenshot ═══ */
+    html, body {
+      background: #eef0f8;
+    }
+    :root[data-theme-resolved=light] body,
+    :root[data-theme=light] body,
+    :root[data-theme-resolved=light] html,
+    :root[data-theme=light] html {
+      background: #eef0f8 !important;
+      background-attachment: initial !important;
+    }
+    .app-layout {
+      background: #eef0f8 !important;
+    }
+    :root[data-theme-resolved=dark] .app-layout,
+    :root[data-theme=dark] .app-layout {
+      background: #121212 !important;
+    }
+    :root[data-theme-resolved=dark] html,
+    :root[data-theme=dark] html,
+    :root[data-theme-resolved=dark] body,
+    :root[data-theme=dark] body {
+      background: #121212 !important;
+    }
+
+    /* Light theme overrides for new elements */
+    :root[data-theme-resolved=light] .info-card__label,
+    :root[data-theme=light] .info-card__label { color: #44447a !important; }
+    :root[data-theme-resolved=light] .info-card__value,
+    :root[data-theme=light] .info-card__value { color: #111133 !important; }
+
+    /* Dark theme overrides for new elements */
+    :root[data-theme-resolved=dark] .info-card__label,
+    :root[data-theme=dark] .info-card__label { color: #A0A0A0 !important; }
+    :root[data-theme-resolved=dark] .info-card__value,
+    :root[data-theme=dark] .info-card__value { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .status-online,
+    :root[data-theme=dark] .status-online { color: #4cde8a !important; }
+
+    @keyframes glass-slide-in {
+      0%   { opacity: 0; transform: translateY(8px) scale(0.99); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes glass-slide-out {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-5px) scale(0.99); }
+    }
+    section:not([hidden]) {
+      animation: glass-slide-in 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) both !important;
+      /* will-change intentionally omitted: this selector matches every
+         visible page section permanently, so declaring will-change here
+         would keep a GPU compositor layer allocated for the whole session,
+         not just during the brief 0.18s entrance animation. The animation
+         is short/cheap enough to not need it. */
+    }
+    /* Nav bar — instant feel */
+    md-navigation-bar {
+      transition: box-shadow 0.15s ease !important;
+    }
+    /* Instant tap response on list items */
+    .list-item {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+
+    /* Remove the browser/WebView's default blue/teal tap-highlight flash on every
+       clickable surface. This is purely the platform's built-in touch feedback
+       overlay (separate from the existing <md-ripple> effect and the purple
+       accent) — it was only ever suppressed on .list-item, so any other
+       clickable container (control-group cards, chips, rows, buttons) still
+       showed the browser's default highlight color on tap. No colors, layout,
+       or the existing ripple/press behavior are changed by this. */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-card,
+    .ctrl-badge,
+    .at-menu-item,
+    .at-chip,
+    .at-app-row,
+    .at-app-sub,
+    .at-back-btn,
+    .fb-row,
+    #fb-show-all-btn,
+    .jerry-nav-tab,
+    .theme-btn,
+    [style*="cursor:pointer"],
+    [style*="cursor: pointer"] {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       BALANCED PREMIUM DARK THEME — Material surface token overrides
+       ══════════════════════════════════════════════════════════════════
+       The Material Web components (.list-item, .app-layout, .info-card,
+       .theme-toggle-card, md-elevated-card, md-dialog, etc.) all read
+       their background/text colors from --md-sys-color-* custom
+       properties. Those tokens were never defined anywhere in this
+       project, so every one of them was silently falling back to the
+       library's built-in Material 3 baseline defaults — which are a
+       light, purple-tinted palette (#fef7ff, #ece6f0, #e6e0e9, ...) —
+       even in dark mode. That fallback is the actual source of the
+       leftover blue/purple dark surfaces (Home hero/nav included).
+
+       Scoped strictly to :root[data-theme-resolved=dark]: light theme
+       never references this block and keeps using the same fallback
+       values it always has, so it is completely unaffected.
+
+       Only the *surface* family and on-surface text tokens are
+       redefined here — primary/secondary/tertiary/error and their
+       "on-*"/container counterparts are left alone so every existing
+       accent color (green keybox-valid, purple headings/icons, pink
+       ROM icon, orange Android icon, blue selected Home tab, etc.)
+       renders exactly as before. */
+    :root[data-theme-resolved=dark] {
+      --md-sys-color-surface: #121212;                  /* page background */
+      --md-sys-color-surface-container-low: #1E1E1E;    /* secondary surfaces */
+      --md-sys-color-surface-container: #1E1E1E;        /* secondary surfaces */
+      --md-sys-color-surface-container-high: #1E1E1E;   /* cards / list-items / bottom nav / theme toggle */
+      --md-sys-color-surface-container-highest: #252525;/* icon containers / info-card */
+      --md-sys-color-surface-variant: #1E1E1E;           /* keybox "none" card, avatar bg */
+      --md-sys-color-on-surface: #F5F5F5;                /* primary text */
+      --md-sys-color-on-surface-variant: #A0A0A0;        /* secondary/body text */
+      --md-sys-color-outline: #2A2A2A;                   /* subtle borders */
+      --md-sys-color-outline-variant: #2A2A2A;           /* dividers */
+    }
+    /* Off-state toggle switches were nearly invisible against the dark
+       background (track/icon color matched surrounding card color).
+       Scoped only to md-switch — does not affect any other component. */
+    :root[data-theme-resolved=dark] md-switch,
+    :root[data-theme=dark] md-switch {
+      --md-switch-track-color: #3A3A3F;
+      --md-switch-track-outline-color: #55555C;
+      --md-switch-hover-track-color: #3A3A3F;
+      --md-switch-hover-track-outline-color: #55555C;
+      --md-switch-handle-color: #9A9AA2;
+      --md-switch-hover-handle-color: #B0B0B8;
+      --md-switch-icon-color: #C7C7CE;
+      --md-switch-hover-icon-color: #E0E0E5;
+    }
+  </style>
+
+  <style>
+    /* === UI POLISH: More blur, subtle neon, tight spacing === */
+
+    /* Tighter spacing on hero card */
+    .keybox-inner {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      align-items: flex-start !important;
+      padding: 16px 18px !important;
+      gap: 12px !important;
+    }
+
+    /* Info grid tighter */
+    .info-grid {
+      gap: 8px !important;
+    }
+    .info-card__emoji {
+      font-size: 24px !important;
+      margin-bottom: 2px !important;
+    }
+    .info-card__label {
+      font-size: 0.68rem !important;
+      letter-spacing: 0.09em !important;
+    }
+    .info-card__value {
+      margin: 2px 0 0 !important;
+      font-size: 1.0rem !important;
+    }
+
+    /* Glass effect — scoped to the hero keybox card only (was applying to
+       EVERY md-filled-card app-wide via !important, multiplying GPU
+       compositing cost on every screen that has multiple cards). Blur
+       radius also reduced from 12px to 8px — visually near-identical but
+       meaningfully cheaper to render every frame during scroll. */
+    #keybox-card.hero-card {
+      backdrop-filter: blur(8px) saturate(1.3) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(1.3) !important;
+    }
+
+    /* App top bar — subtle glass. Blur reduced from 14px to 8px: this bar is
+       fixed and sits over scrolling content, so every scroll frame pays this
+       blur's compositing cost. Lower radius = same glass look, less GPU work. */
+    .app-top-bar {
+      backdrop-filter: blur(8px) saturate(1.3) !important;
+      -webkit-backdrop-filter: blur(8px) saturate(1.3) !important;
+    }
+
+    .jerry-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+      contain: layout style;
+    }
+
+    /* ── Outer flat pill — light (default, matches screenshot) ── */
+    .jerry-nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 9999px;
+      border: none;
+      padding: 12px 8px;
+      overflow: hidden;
+      box-shadow:
+        0 6px 24px rgba(0,0,0,0.10),
+        0 1px 4px rgba(0,0,0,0.06);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    /* ── Outer flat pill — dark theme (semi-transparent, matches screenshot) ── */
+    :root[data-theme-resolved=dark] .jerry-nav-inner,
+    :root[data-theme=dark] .jerry-nav-inner {
+      background: rgba(30,30,30,0.85);
+      backdrop-filter: blur(8px) saturate(1.2);
+      -webkit-backdrop-filter: blur(8px) saturate(1.2);
+      border: 1px solid #2A2A2A;
+      box-shadow:
+        0 6px 24px rgba(0,0,0,0.40),
+        0 1px 4px rgba(0,0,0,0.25);
+    }
+
+    .jerry-nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      position: relative;
+      z-index: 1;
+    }
+
+    .jerry-nav-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ── Inactive icons/labels — light theme: solid gray ── */
+    .jerry-nav-icon {
+      width: 24px;
+      height: 24px;
+      fill: #9aa1ac;
+      transition: fill 0.2s ease, transform 0.2s ease;
+    }
+    .jerry-nav-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: #9aa1ac;
+      transition: color 0.2s ease, font-weight 0.15s ease;
+      letter-spacing: 0;
+    }
+
+    /* ── Inactive icons/labels — dark theme: light gray ── */
+    :root[data-theme-resolved=dark] .jerry-nav-icon,
+    :root[data-theme=dark] .jerry-nav-icon { fill: rgba(255,255,255,0.38); }
+    :root[data-theme-resolved=dark] .jerry-nav-label,
+    :root[data-theme=dark] .jerry-nav-label { color: rgba(255,255,255,0.38); }
+
+    /* Hide any legacy sliding indicator element */
+    .jerry-indicator { display: none !important; }
+
+    /* ── Active tab — app's real accent color #5b6ef5 (matches cards/chips) ── */
+    .jerry-nav-tab.active .jerry-nav-icon  { fill: #5b6ef5; transform: scale(1.08); }
+    .jerry-nav-tab.active .jerry-nav-label { color: #5b6ef5; font-weight: 700; }
+
+    :root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-icon,
+    :root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-icon { fill: #5b6ef5; }
+    :root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-label,
+    :root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-label { color: #5b6ef5; }
+
+    /* Press feedback */
+    .jerry-nav-tab:active .jerry-nav-icon { transform: scale(0.90); opacity: 0.75; }
+
+    /* Tighter page padding */
+    main {
+      padding: 0 !important;
+    }
+    #pages > section {
+      padding: 14px 12px 20px !important;
+    }
+    #keybox-card.hero-card {
+      margin-bottom: 14px;
+    }
+
+    /* List items tighter */
+    .list-item {
+      padding: 10px 14px !important;
+      min-height: 48px !important;
+    }
+    .list-title {
+      padding: 8px 14px 4px !important;
+      font-size: 0.70rem !important;
+      letter-spacing: 0.09em !important;
+    }
+
+    /* ===== Control tab summary cards (Jerry-style, open a modal) ===== */
+    .ctrl-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px !important;
+      min-height: 48px;
+      border-radius: 16px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .ctrl-card-content { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .ctrl-card-title { font-size: 0.92rem; font-weight: 600; }
+    .ctrl-card-desc {
+      font-size: 0.72rem;
+      opacity: 0.65;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .ctrl-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(124,58,237,0.16);
+      color: #b39ddb;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    :root[data-theme-resolved=light] .ctrl-badge,
+    :root[data-theme=light] .ctrl-badge {
+      background: rgba(94,53,177,0.12);
+      color: #5e35b1;
+    }
+    .ctrl-chevron { opacity: 0.45; flex-shrink: 0; }
+
+    /* Light theme — white glass, dark readable text (matches .list-item) */
+    :root[data-theme-resolved=light] .ctrl-card,
+    :root[data-theme=light] .ctrl-card {
+      background: rgba(255,255,255,0.75) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      color: #111133 !important;
+      font-weight: 500 !important;
+    }
+    :root[data-theme-resolved=light] .ctrl-card md-icon:first-child,
+    :root[data-theme=light] .ctrl-card md-icon:first-child { color: #5533bb !important; }
+    :root[data-theme-resolved=light] .ctrl-card-desc,
+    :root[data-theme=light] .ctrl-card-desc { color: #44447a !important; font-weight: 500 !important; }
+
+    /* Dark theme — matches .list-item */
+    :root[data-theme-resolved=dark] .ctrl-card,
+    :root[data-theme=dark] .ctrl-card {
+      background: #1E1E1E !important;
+      border-bottom: 1px solid #2A2A2A !important;
+      color: #F5F5F5 !important;
+      font-weight: 600 !important;
+    }
+    :root[data-theme-resolved=dark] .ctrl-card md-icon:first-child,
+    :root[data-theme=dark] .ctrl-card md-icon:first-child { color: #8B5CF6 !important; opacity: 0.85 !important; }
+    :root[data-theme-resolved=dark] .ctrl-card-title,
+    :root[data-theme=dark] .ctrl-card-title { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .ctrl-card-desc,
+    :root[data-theme=dark] .ctrl-card-desc { color: #A0A0A0 !important; }
+
+    /* Rows rendered inside the dynamic control-group dialog */
+    .ctrl-dialog-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 4px;
+      border-bottom: 1px solid rgba(128,128,128,0.14);
+    }
+    .ctrl-dialog-row:last-child { border-bottom: none; }
+    .ctrl-dialog-row-text { flex: 1; min-width: 0; }
+    .ctrl-dialog-row-title { font-size: 0.85rem; font-weight: 500; }
+    .ctrl-dialog-row-desc { font-size: 0.70rem; opacity: 0.62; margin-top: 2px; }
+
+    /* Direct toggle rows on the Control page (no dialog) — same visual
+       identity as .ctrl-card, one row per individual toggle. */
+    .ctrl-rows { display: flex; flex-direction: column; }
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      min-height: 48px;
+    }
+    .ctrl-row-content { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .ctrl-row-title { font-size: 0.92rem; font-weight: 600; }
+    .ctrl-row-desc {
+      font-size: 0.72rem;
+      opacity: 0.65;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    /* Child rows under a masterKey group, disabled while the master switch
+       is off — dims the row so it reads as unavailable, not just unchecked. */
+    .ctrl-row--locked { opacity: 0.45; }
+    .ctrl-row--locked .ctrl-row-switch { pointer-events: none; }
+
+    /* Rows whose switch lives inside a detail dialog instead of inline —
+       the whole row is clickable and shows a chevron instead of a switch. */
+    .ctrl-row--detail { display: flex; align-items: center; }
+    .ctrl-row-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(128,128,128,0.3);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .ctrl-chevron { opacity: 0.55; flex-shrink: 0; cursor: pointer; }
+    .ctrl-chevron:active { opacity: 0.9; }
+
+    .ctrl-dialog-desc { font-size: 0.78rem; opacity: 0.7; margin: 0 0 12px; }
+    .ctrl-dialog-row--master { font-weight: 600; }
+
+    :root[data-theme-resolved=light] .ctrl-row,
+    :root[data-theme=light] .ctrl-row {
+      background: rgba(255,255,255,0.75) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      color: #111133 !important;
+      font-weight: 500 !important;
+    }
+    :root[data-theme-resolved=light] .ctrl-row md-icon:first-child,
+    :root[data-theme=light] .ctrl-row md-icon:first-child { color: #5533bb !important; }
+    :root[data-theme-resolved=light] .ctrl-row-desc,
+    :root[data-theme=light] .ctrl-row-desc { color: #44447a !important; font-weight: 500 !important; }
+    :root[data-theme-resolved=light] .ctrl-row:not(:last-child),
+    :root[data-theme=light] .ctrl-row:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.06) !important; }
+
+    :root[data-theme-resolved=dark] .ctrl-row,
+    :root[data-theme=dark] .ctrl-row {
+      background: #1E1E1E !important;
+      border-bottom: 1px solid #2A2A2A !important;
+      color: #F5F5F5 !important;
+      font-weight: 600 !important;
+    }
+    :root[data-theme-resolved=dark] .ctrl-row:last-child,
+    :root[data-theme=dark] .ctrl-row:last-child { border-bottom: none !important; }
+    :root[data-theme-resolved=dark] .ctrl-row md-icon:first-child,
+    :root[data-theme=dark] .ctrl-row md-icon:first-child { color: #8B5CF6 !important; opacity: 0.85 !important; }
+    :root[data-theme-resolved=dark] .ctrl-row-title,
+    :root[data-theme=dark] .ctrl-row-title { color: #F5F5F5 !important; }
+    :root[data-theme-resolved=dark] .ctrl-row-desc,
+    :root[data-theme=dark] .ctrl-row-desc { color: #A0A0A0 !important; }
+
+    /* Heading row on the Control page: category title + enabled-count badge */
+    .ctrl-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-right: 14px;
+    }
+    .ctrl-heading-row .list-title { padding-right: 0 !important; }
+    .ctrl-heading-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(124,58,237,0.16);
+      color: #b39ddb;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    :root[data-theme-resolved=light] .ctrl-heading-badge,
+    :root[data-theme=light] .ctrl-heading-badge {
+      background: rgba(94,53,177,0.12);
+      color: #5e35b1;
+    }
+  </style>
+
+  <!-- ===== CONTROL TAB TOGGLES (Jerry-style grouped modal cards) ===== -->
+  <!-- ===== JERRY NAV SCRIPT ===== -->
+  <style>
+    #keybox-card.hero-card { position: relative; }
+  </style>
+
+  <!-- KEYBOX CARD CHECKING STATE OVERRIDE removed —
+       bundle's real keybox result now shows immediately, no artificial delay -->
+
+
+<style>
+    /* ── Custom Keybox Dialog — Dark theme purple buttons ── */
+    :root[data-theme-resolved=dark] #kb-file-btn,
+    :root[data-theme=dark] #kb-file-btn {
+      --md-filled-tonal-button-container-color: #7C3AED;
+      --md-filled-tonal-button-label-text-color: #ffffff;
+      --md-filled-tonal-button-hover-state-layer-color: #ffffff;
+      --md-filled-tonal-button-pressed-container-color: #6D28D9;
+    }
+    :root[data-theme-resolved=dark] #kb-apply-btn,
+    :root[data-theme=dark] #kb-apply-btn {
+      --md-filled-tonal-button-container-color: #7C3AED;
+      --md-filled-tonal-button-label-text-color: #ffffff;
+      --md-filled-tonal-button-hover-state-layer-color: #ffffff;
+      --md-filled-tonal-button-pressed-container-color: #6D28D9;
+    }
+    :root[data-theme-resolved=dark] #fb-select,
+    :root[data-theme=dark] #fb-select {
+      --md-filled-button-container-color: #7C3AED;
+      --md-filled-button-label-text-color: #ffffff;
+      --md-filled-button-pressed-container-color: #6D28D9;
+    }
+  </style>
+
+  <style>
+    /* ── Light theme: All md-dialog ── */
+    :root[data-theme-resolved=light] md-dialog,
+    :root[data-theme=light] md-dialog {
+      --md-dialog-container-color: #ffffff;
+      --md-dialog-headline-color: #252525;
+      --md-dialog-supporting-text-color: #444444;
+      --md-text-button-label-text-color: #5b21b6;
+    }
+    /* ── Light theme: Activity cards ── */
+    :root[data-theme-resolved=light] .activity-card,
+    :root[data-theme=light] .activity-card {
+      --md-elevated-card-container-color: #f5f3ff;
+      --md-elevated-card-container-elevation: 1;
+      border: 1px solid rgba(91,33,182,0.10);
+    }
+    :root[data-theme-resolved=light] .activity-card__name,
+    :root[data-theme=light] .activity-card__name {
+      color: #1a1a2e !important;
+      font-weight: 600 !important;
+    }
+    :root[data-theme-resolved=light] .activity-card__time,
+    :root[data-theme=light] .activity-card__time {
+      color: #6b7280 !important;
+    }
+    /* Success icon circle — light purple */
+    :root[data-theme-resolved=light] .activity-card--success .activity-card__leading,
+    :root[data-theme=light] .activity-card--success .activity-card__leading {
+      background: #ede9fe !important;
+    }
+    :root[data-theme-resolved=light] .activity-card--success .activity-card__icon,
+    :root[data-theme=light] .activity-card--success .activity-card__icon {
+      color: #5b21b6 !important;
+    }
+    /* Error icon circle */
+    :root[data-theme-resolved=light] .activity-card--error .activity-card__leading,
+    :root[data-theme=light] .activity-card--error .activity-card__leading {
+      background: #fee2e2 !important;
+    }
+    :root[data-theme-resolved=light] .activity-card--error .activity-card__icon,
+    :root[data-theme=light] .activity-card--error .activity-card__icon {
+      color: #b91c1c !important;
+    }
+    /* Activity list headline */
+    :root[data-theme-resolved=light] .activity-empty p,
+    :root[data-theme=light] .activity-empty p {
+      color: #6b7280 !important;
+    }
+  </style>
+  <script type="module" src="./assets/network-status.js"></script>
+  <script type="module" src="./assets/rom-status.js"></script>
+  <script type="module" src="./assets/pif-status.js"></script>
+  <script type="module" src="./assets/module-configs.js"></script>
+  <script type="module" src="./assets/nav-swipe-anim.js"></script>
+  <script type="module" src="./assets/keybox-indicator.js"></script>
+  <script type="module" src="./assets/swipe-nav.js"></script>
+  <script type="module" src="./assets/app-core.js"></script>
+  <script type="module" src="./assets/app-targeting.js"></script>
+</body>
+</html>
