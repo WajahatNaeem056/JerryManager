@@ -29,7 +29,3 @@ The module is plain shell scripts and a static Web UI — no build step required
 
 - Shell scripts: POSIX `sh` compatible where practical, matching the style of surrounding code
 - JS: match the existing plain-JS style in the Web UI — no framework required for module logic
-
-## Reporting security issues
-
-If you find a security issue (e.g. a way to leak the keybox, bypass a check insecurely, or exploit the Web UI), please open an issue marked clearly as security-related, or reach out via Telegram (see README) instead of filing a public issue with exploit details.
