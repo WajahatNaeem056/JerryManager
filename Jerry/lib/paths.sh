@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # Tricky Store paths
 TRICKY_DIR="/data/adb/tricky_store"
 TARGET_FILE="$TRICKY_DIR/keybox.xml"
