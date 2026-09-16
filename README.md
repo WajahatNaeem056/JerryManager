@@ -55,27 +55,6 @@ Built for people who need integrity to actually hold — banking apps, payment s
 3. Reboot
 4. Open the module's Web UI from your manager app to configure
 
-## Building from source
-
-The WebUI's Material Web components are built with Vite. This step is only needed if you're modifying the UI — the module works as-is without rebuilding.
-
-```bash
-git clone https://github.com/WajahatNaeem056/JerryManager
-cd JerryManager
-npm install
-npm run build
-```
-
-This outputs into `Jerry/webroot/assets/`, alongside the module's own hand-written scripts (`app-core.js`, `module-configs.js`, etc.), which are plain JS and need no build step.
-
-## Testing
-
-```bash
-bash tests/run.sh
-```
-
-Runs the full shell test suite — file/structure checks, hardcoded-path detection, and `module.prop` version-sync verification. This also runs automatically in CI on every push and pull request.
-
 ## Requirements
 
 - KernelSU, APatch, or Magisk
