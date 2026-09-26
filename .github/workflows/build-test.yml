@@ -1,0 +1,64 @@
+name: Build JerryManager Module
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: src
+          severity: warning
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify module structure
+        run: |
+          test -f Module/module.prop
+          test -f Module/lib/common.sh
+          test -f Module/lib/paths.sh
+          test -f Module/webroot/index.html
+          test -f Module/webroot/material-entry.js || test -d Module/webroot/assets
+
+      - name: Check no hardcoded install paths
+        run: |
+          ! grep -rn "/data/adb/modules/JerryManager" Module/lib/ Module/features/ --include="*.sh"
+
+      - name: Get module version
+        id: get_name
+        run: |
+          VERSION=$(grep -oP '(?<=^version=).*' Module/module.prop)
+          echo "artifact_name=JerryManager-${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.get_name.outputs.artifact_name }}
+          path: Module/
+          retention-days: 28
