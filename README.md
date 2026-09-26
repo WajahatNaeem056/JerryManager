@@ -1,6 +1,8 @@
+<div align="center">
+
 # JerryManager
 
-**A KernelSU / APatch module for achieving and maintaining Strong Device Integrity on Android.**
+**A KernelSU / APatch module for achieving and maintaining Root Hiding and Integrity on Android.**
 
 ![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
 ![Version](https://img.shields.io/badge/Version-v4.4-purple)
@@ -16,16 +18,16 @@
 
 Built for people who need integrity to actually hold — banking apps, payment systems, and other attestation-sensitive apps that break the moment a device is flagged.
 
-## Features
+##  Features
 
-- **Play Integrity Fix** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
+- **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
 - **Keybox Management** — supply your own keybox or pull one automatically
+- **Auto Target**: inotify + polling for new apps
+- **ADB Disabler**: dev options, USB debugging, OEM unlock
+- **Detection Cleanup**: removes detector logs, temp dirs, caches
+- **Widevine L1**: attestation keys via KmInstallKeybox
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
-- **Banking Mode** — deep-clean and cache-clean routines aimed at passing banking-app checks, with dedicated fixes for common Pakistani banking apps
-- **Widevine Support** — DRM level patching for streaming apps
-- **Hide Mock Accounts (HMA)** — including variant handling for stricter detection methods
-- **Web UI** — Material Design 3 interface for every toggle; no manual file editing required
-- **Persistent Config** — toggle states survive module updates and reboots
+
 
 ## Installation
 
