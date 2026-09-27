@@ -33,7 +33,7 @@ jobs:
         uses: ludeeus/action-shellcheck@2.0.0
         with:
           scandir: src
-          severity: warning
+          severity: error
 
       - name: Build
         run: npm run build
