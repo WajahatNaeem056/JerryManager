@@ -1,21 +1,27 @@
     (function() {
-      function setRomValue(v) {
-        var el = document.getElementById('rom-value');
+      function setText(id, v) {
+        var el = document.getElementById(id);
         if (el) el.textContent = v || '—';
       }
-      function fetchRom() {
+      function fetchInfo() {
         fetch('json/info.json?ts=' + Date.now())
           .then(function(r) { return r.json(); })
-          .then(function(e) { if (e && e.rom) setRomValue(e.rom); })
+          .then(function(e) {
+            if (!e) return;
+            if (e.rom) setText('rom-value', e.rom);
+            if (e.android) setText('android-value', e.android);
+            if (e.root) setText('root-value', e.root);
+            if (e.keystore_backend) setText('keystore-backend-value', e.keystore_backend);
+          })
           .catch(function() {});
       }
       document.addEventListener('DOMContentLoaded', function() {
-        fetchRom();
+        fetchInfo();
         var hiddenBtn = document.getElementById('refresh-btn');
         if (hiddenBtn) {
 
           hiddenBtn.addEventListener('click', function() {
-            setTimeout(fetchRom, 900);
+            setTimeout(fetchInfo, 900);
           });
         }
       });
