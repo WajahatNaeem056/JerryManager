@@ -47,37 +47,54 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - Android 8.0+
 
 ---
-## Source & building it yourself
+## Source & Building It Yourself
 
-The complete WebUI source is included in:
+The repository contains the JerryManager module source and the complete editable WebUI source.
 
-`webui-src/project/`
+### Repository Structure
 
-### Repository structure
+- `repo/` — JerryManager source repository
+- `repo/features/` — module feature scripts
+- `repo/lib/` — shared shell libraries
+- `repo/pipelines/` — integrity pipelines
+- `repo/webui-src/project/` — editable WebUI source
+- `repo/webroot/` — generated WebUI shipped with the module
+- `repo/build.sh` — module build script
+- `repo/tools/` — build and repository tools
 
-- `Jerry/features/` — module feature scripts
-- `Jerry/lib/` — shared shell libraries
-- `Jerry/pipelines/` — integrity pipelines
-- `webui-src/project/` — editable WebUI source (Vite)
-- `Jerry/webroot/` — built WebUI shipped in the module
-- `tools/` — repository build and WebUI validation tools
-- `build.sh` — module build script
+### Build From Source
 
-To build JerryManager yourself:
+Clone the repository:
+
+```bash
+git clone https://github.com/WajahatNaeem056/JerryManager.git
+cd JerryManager
+cd repo
+```
+
+Build the WebUI:
 
 ```bash
 cd webui-src/project
 npm install
 npm run build
+```
+
+Build the JerryManager module:
+
+```bash
 cd ../..
 sh build.sh
 ```
 
-The final flashable ZIP is generated at:
+The completed ZIP is generated in:
 
-`dist/JerryManager-<version>.zip`
+```text
+dist/JerryManager-<version>.zip
+```
 
-`webui-src/project/` contains the editable WebUI source, while `Jerry/webroot/` contains the generated production build.
+The WebUI source is located in `repo/webui-src/project/`, while the generated production WebUI is placed in `repo/webroot/`.
+
 
 ## Developer
 
