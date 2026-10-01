@@ -16,6 +16,5 @@ rm -f "$OUT"
 cd Jerry
 for f in $(find . -name '*.sh'); do sh -n "$f"; done
 zip -r9 "$OUT" . -x '*.zip' >/dev/null
-zip -j9 "$OUT" ../LICENSE >/dev/null   # GPL: ship the license inside the module zip
 if unzip -l "$OUT" | grep -q node_modules; then echo "ERROR: node_modules in zip" >&2; exit 1; fi
 echo "built dist/JerryManager-$VER.zip"
