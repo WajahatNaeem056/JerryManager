@@ -27,10 +27,12 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
 - **Keybox Management** — supply your own keybox or pull one automatically
 - **Auto Target**: inotify + polling for new apps
+- **Banking Mode**: dedicated handling for banking and payment apps
 - **ADB Disabler**: dev options, USB debugging, OEM unlock
 - **Detection Cleanup**: removes detector logs, temp dirs, caches
 - **Widevine L1**: attestation keys via KmInstallKeybox
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
+- **Multi-language Web UI** — translations live in `webroot/lang/` (`source/string.json` is the key list)
 
 ## Installation
 
@@ -43,31 +45,6 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 
 - KernelSU or APatch
 - Android 8.0+
-
----
-
-## Source & building it yourself
-
-This repo holds the editable source, built into the flashable module with GitHub Actions — not a hand-edited compiled bundle.
-
-### Layout
-- `src/` — module source: shell scripts (`lib/`, `features/`), webroot frontend (`webroot/`), and the Vite entry point (`webroot/material-entry.js`)
-- `src/webroot-public/` — static custom JS/CSS shipped as-is (not bundled): `app-core.js`, `app-targeting.js`, `rom-status.js`, etc. These already were readable source, just never organized into a proper repo.
-- `Module/` — build output (generated, gitignored, do not edit by hand)
-
-### Build
-```
-npm install
-npm run build
-```
-Produces `Module/` (ready-to-flash folder) and a `JerryManager-<version>.zip` in the repo root.
-
-### CI
-- `.github/workflows/build-test.yml` — builds on every push/PR, uploads the result as a workflow artifact
-- `.github/workflows/build-release.yml` — on pushing a `v*` tag, builds and attaches the zip to a GitHub Release
-
-### Note on `index-*.js` (@material/web bundle)
-The old compiled module only shipped a minified `index-ChjuGUlr.js` — the readable source for it never existed in this repo (it was always built elsewhere and only the output got shipped). Rather than reverse-engineer minified third-party library code, `material-entry.js` re-imports `@material/web` fresh from npm and Vite rebuilds the equivalent bundle from source on every build.
 
 ---
 

@@ -1,0 +1,19 @@
+{
+  "name": "jerrymanager-webui",
+  "private": true,
+  "version": "4.3.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node ../../tools/clean-webroot.mjs",
+    "build": "vite build",
+    "postbuild": "node ../../tools/check-webroot.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@material/web": "^2.4.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}
