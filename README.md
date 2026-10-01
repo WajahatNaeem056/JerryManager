@@ -55,11 +55,12 @@ The complete WebUI source is included in:
 
 ### Repository structure
 
-- `features/` — module feature scripts
-- `lib/` — shared shell libraries
-- `pipelines/` — integrity pipelines
+- `Jerry/features/` — module feature scripts
+- `Jerry/lib/` — shared shell libraries
+- `Jerry/pipelines/` — integrity pipelines
 - `webui-src/project/` — editable WebUI source (Vite)
-- `webroot/` — built WebUI shipped in the module
+- `Jerry/webroot/` — built WebUI shipped in the module
+- `tools/` — repository build and WebUI validation tools
 - `build.sh` — module build script
 
 To build JerryManager yourself:
@@ -76,8 +77,7 @@ The final flashable ZIP is generated at:
 
 `dist/JerryManager-<version>.zip`
 
-`webui-src/project/` contains the editable WebUI source, while `webroot/` contains the generated production build.
-
+`webui-src/project/` contains the editable WebUI source, while `Jerry/webroot/` contains the generated production build.
 
 ## Developer
 
