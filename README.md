@@ -47,20 +47,28 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - Android 8.0+
 
 ---
+
 ## Source & Building It Yourself
 
 The repository contains the JerryManager module source and the complete editable WebUI source.
 
 ### Repository Structure
 
-- `repo/` — JerryManager source repository
-- `repo/features/` — module feature scripts
-- `repo/lib/` — shared shell libraries
-- `repo/pipelines/` — integrity pipelines
-- `repo/webui-src/project/` — editable WebUI source
-- `repo/webroot/` — generated WebUI shipped with the module
-- `repo/build.sh` — module build script
-- `repo/tools/` — build and repository tools
+- `Jerry/` — the module itself (this is what gets zipped and flashed)
+- `Jerry/features/` — module feature scripts
+- `Jerry/lib/` — shared shell libraries
+- `Jerry/pipelines/` — integrity pipelines
+- `Jerry/webroot/` — generated WebUI shipped with the module
+- `webui-src/project/` — editable WebUI source (Vite)
+- `tools/` — webroot clean/check scripts used by the build
+- `build.sh` — module build script
+
+### Requirements
+
+- `git`, `zip`, `unzip`
+- `node` + `npm` — only needed if you change the WebUI
+
+Termux: `pkg install git zip unzip nodejs -y`
 
 ### Build From Source
 
@@ -69,22 +77,18 @@ Clone the repository:
 ```bash
 git clone https://github.com/WajahatNaeem056/JerryManager.git
 cd JerryManager
-cd repo
 ```
 
-Build the WebUI:
+Build the module ZIP (uses the WebUI already in `Jerry/webroot/`):
 
 ```bash
-cd webui-src/project
-npm install
-npm run build
-```
-
-Build the JerryManager module:
-
-```bash
-cd ../..
 sh build.sh
+```
+
+If you edited the WebUI source, rebuild it first with one command:
+
+```bash
+sh build.sh --webui
 ```
 
 The completed ZIP is generated in:
@@ -93,8 +97,7 @@ The completed ZIP is generated in:
 dist/JerryManager-<version>.zip
 ```
 
-The WebUI source is located in `repo/webui-src/project/`, while the generated production WebUI is placed in `repo/webroot/`.
-
+The version number is read from `Jerry/module.prop`. The WebUI source is in `webui-src/project/`, and the generated production WebUI is written to `Jerry/webroot/`.
 
 ## Developer
 
