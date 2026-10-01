@@ -41,13 +41,6 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 3. Reboot
 4. Open the module's Web UI from your manager app to configure
 
-## Requirements
-
-- KernelSU or APatch
-- Android 8.0+
-
----
-
 ## Build
 
 Requires `git`, `zip` and `unzip`. Node.js and npm are needed only to rebuild the WebUI.
