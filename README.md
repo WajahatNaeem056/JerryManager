@@ -47,6 +47,20 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - Android 8.0+
 
 ---
+## Source & building it yourself
+
+- `features/`, `lib/`, `pipelines/` — module shell scripts
+- `webui-src/project/` — WebUI source (Vite)
+- `webroot/` — built WebUI shipped in the module
+
+cd webui-src/project
+npm install
+npm run build
+cd ../..
+sh build.sh
+
+Produces `dist/JerryManager-<version>.zip`.
+
 
 ## Developer
 
