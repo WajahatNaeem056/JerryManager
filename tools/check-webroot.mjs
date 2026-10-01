@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../webroot');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../Jerry/webroot');
 const problems = [];
 const need = (from, rel) => {
   const target = path.resolve(path.dirname(from), rel);

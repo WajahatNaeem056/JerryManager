@@ -24,7 +24,7 @@ export default defineConfig({
   publicDir: 'public',
   plugins: [injectLegacyScripts()],
   build: {
-    outDir: '../../webroot',
+    outDir: '../../Jerry/webroot',
     emptyOutDir: false,
     assetsDir: 'assets',
   },
