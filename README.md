@@ -60,10 +60,14 @@ sh build.sh
 
 Output: `dist/JerryManager-v{version}.zip`
 
-To rebuild the WebUI from source first:
+To rebuild the WebUI from source first (requires Node.js and npm):
 
 ```bash
-sh build.sh --webui
+cd webui-src/project
+npm install
+npm run build
+cd ../..
+sh build.sh
 ```
 
 ## Structure
