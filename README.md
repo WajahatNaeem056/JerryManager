@@ -49,17 +49,34 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 ---
 ## Source & building it yourself
 
-- `features/`, `lib/`, `pipelines/` — module shell scripts
-- `webui-src/project/` — WebUI source (Vite)
-- `webroot/` — built WebUI shipped in the module
+The complete WebUI source is included in:
 
+`webui-src/project/`
+
+### Repository structure
+
+- `features/` — module feature scripts
+- `lib/` — shared shell libraries
+- `pipelines/` — integrity pipelines
+- `webui-src/project/` — editable WebUI source (Vite)
+- `webroot/` — built WebUI shipped in the module
+- `build.sh` — module build script
+
+To build JerryManager yourself:
+
+```bash
 cd webui-src/project
 npm install
 npm run build
 cd ../..
 sh build.sh
+```
 
-Produces `dist/JerryManager-<version>.zip`.
+The final flashable ZIP is generated at:
+
+`dist/JerryManager-<version>.zip`
+
+`webui-src/project/` contains the editable WebUI source, while `webroot/` contains the generated production build.
 
 
 ## Developer
