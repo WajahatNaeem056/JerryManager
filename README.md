@@ -48,56 +48,30 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 
 ---
 
-## Source & Building It Yourself
+## Build
 
-The repository contains the JerryManager module source and the complete editable WebUI source.
-
-### Repository Structure
-
-- `Jerry/` — the module itself (this is what gets zipped and flashed)
-- `Jerry/features/` — module feature scripts
-- `Jerry/lib/` — shared shell libraries
-- `Jerry/pipelines/` — integrity pipelines
-- `Jerry/webroot/` — generated WebUI shipped with the module
-- `webui-src/project/` — editable WebUI source (Vite)
-- `tools/` — webroot clean/check scripts used by the build
-- `build.sh` — module build script
-
-### Requirements
-
-- `git`, `zip`, `unzip`
-- `node` + `npm` — only needed if you change the WebUI
-
-Termux: `pkg install git zip unzip nodejs -y`
-
-### Build From Source
-
-Clone the repository:
+Requires `git`, `zip` and `unzip`. Node.js and npm are needed only to rebuild the WebUI.
 
 ```bash
 git clone https://github.com/WajahatNaeem056/JerryManager.git
 cd JerryManager
-```
-
-Build the module ZIP (uses the WebUI already in `Jerry/webroot/`):
-
-```bash
 sh build.sh
 ```
 
-If you edited the WebUI source, rebuild it first with one command:
+Output: `dist/JerryManager-v{version}.zip`
+
+To rebuild the WebUI from source first:
 
 ```bash
 sh build.sh --webui
 ```
 
-The completed ZIP is generated in:
+## Structure
 
-```text
-dist/JerryManager-<version>.zip
-```
-
-The version number is read from `Jerry/module.prop`. The WebUI source is in `webui-src/project/`, and the generated production WebUI is written to `Jerry/webroot/`.
+- `Jerry/`: module (features, lib, pipelines, webroot)
+- `webui-src/project/`: WebUI source (Vite), builds into `Jerry/webroot/`
+- `tools/`: webroot clean and check scripts
+- `build.sh`: packages `Jerry/` into the flashable ZIP
 
 ## Developer
 
