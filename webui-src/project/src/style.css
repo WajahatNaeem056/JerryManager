@@ -27,13 +27,13 @@ body {
 }
 
 [data-theme-resolved=dark] md-dialog {
-  --md-dialog-container-color:#252525;
-  --md-dialog-supporting-text-color:#A0A0A0;
-  --md-dialog-headline-color:#F5F5F5
+  --md-dialog-container-color:var(--color-gray-15);
+  --md-dialog-supporting-text-color:var(--color-gray-63);
+  --md-dialog-headline-color:var(--color-gray-96)
 }
 
 :root[data-theme-resolved=dark] {
-  --md-sys-color-scrim:#121212
+  --md-sys-color-scrim:var(--color-gray-7)
 }
 
 @media (prefers-reduced-motion:reduce) {
@@ -152,7 +152,7 @@ section:not([hidden]) {
 }
 
 #keybox-card.keybox-none #keybox-value,#keybox-card.keybox-none #keybox-icon,#keybox-card.keybox-none #keybox-label {
-  color:#F5F5F5!important
+  color:var(--color-gray-96)!important
 }
 
 #keybox-card.keybox-unknown {
@@ -160,7 +160,7 @@ section:not([hidden]) {
 }
 
 #keybox-card.keybox-unknown #keybox-value,#keybox-card.keybox-unknown #keybox-icon,#keybox-card.keybox-unknown #keybox-label {
-  color:#F5F5F5!important
+  color:var(--color-gray-96)!important
 }
 
 #keybox-card.keybox-ok {
@@ -168,7 +168,7 @@ section:not([hidden]) {
 }
 
 #keybox-card.keybox-ok #keybox-value,#keybox-card.keybox-ok #keybox-icon,#keybox-card.keybox-ok #keybox-label {
-  color:#F5F5F5!important
+  color:var(--color-gray-96)!important
 }
 
 #keybox-card.keybox-outdated {
@@ -176,7 +176,7 @@ section:not([hidden]) {
 }
 
 #keybox-card.keybox-outdated #keybox-value,#keybox-card.keybox-outdated #keybox-icon,#keybox-card.keybox-outdated #keybox-label {
-  color:#F5F5F5!important
+  color:var(--color-gray-96)!important
 }
 
 #keybox-card.keybox-revoked {
@@ -184,7 +184,7 @@ section:not([hidden]) {
 }
 
 #keybox-card.keybox-revoked #keybox-value,#keybox-card.keybox-revoked #keybox-icon,#keybox-card.keybox-revoked #keybox-label {
-  color:#F5F5F5!important
+  color:var(--color-gray-96)!important
 }
 
 .info-grid {
@@ -552,10 +552,10 @@ md-outlined-select,md-outlined-segmented-button-set {
 
 .activity-card__body pre {
   border-radius:var(--md-sys-shape-corner-small);
-  color:#e0e0e0;
+  color:var(--color-gray-88);
   white-space:pre-wrap;
   word-break:break-all;
-  background:#1E1E1E;
+  background:var(--color-gray-12);
   max-height:300px;
   margin:0 14px 14px;
   padding:10px 12px;
@@ -591,7 +591,7 @@ md-outlined-select,md-outlined-segmented-button-set {
 
 .terminal {
   border-radius:var(--md-sys-shape-corner-small);
-  background:#1E1E1E;
+  background:var(--color-gray-12);
   max-height:60vh;
   padding:12px;
   font-family:Courier New,Courier,monospace;
@@ -601,7 +601,7 @@ md-outlined-select,md-outlined-segmented-button-set {
 }
 
 .terminal pre {
-  color:#e0e0e0;
+  color:var(--color-gray-88);
   white-space:pre-wrap;
   word-break:break-all;
   margin:0
@@ -779,7 +779,7 @@ md-dialog {
 }
 
 .at-mode-icon {
-  color:#fff;
+  color:var(--color-white);
   border-radius:9999px;
   width:20px;
   height:20px;
@@ -796,7 +796,7 @@ md-dialog {
 }
 
 .at-mode-icon--hack {
-  background:#B8860B
+  background:var(--color-orange-38)
 }
 
 .at-patch-date-section {
@@ -831,7 +831,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] html, :root[data-theme=light] html, :root[data-theme-resolved=light] body, :root[data-theme=light] body {
-  background: #F7F7F8 !important;
+  background: var(--color-gray-97) !important;
   background-attachment: fixed !important;
 }
 
@@ -840,45 +840,45 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .app-top-bar, :root[data-theme=light] .app-top-bar {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border-bottom: 1px solid rgba(0,0,0,0.07) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme-resolved=light] .app-title, :root[data-theme=light] .app-title {
-  color: #18181B !important;
+  color: var(--color-gray-10) !important;
   font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=light] .network-chip, :root[data-theme=light] .network-chip {
-  color: #7C3AED !important;
+  color: var(--color-violet-58) !important;
 }
 
 :root[data-theme-resolved=light] .network-chip md-icon, :root[data-theme=light] .network-chip md-icon {
-  color: #7C3AED !important;
+  color: var(--color-violet-58) !important;
 }
 
 :root[data-theme-resolved=light] md-filled-card, :root[data-theme=light] md-filled-card {
   --md-filled-card-container-color: transparent !important;
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
   border-radius: 24px !important;
 }
 
 :root[data-theme-resolved=light] .info-card, :root[data-theme=light] .info-card {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] .info-card__label, :root[data-theme=light] .info-card__label {
-  color: #71717A !important;
+  color: var(--color-gray-46) !important;
   font-weight: 600 !important;
 }
 
 :root[data-theme-resolved=light] .info-card__value, :root[data-theme=light] .info-card__value {
-  color: #18181B !important;
+  color: var(--color-gray-10) !important;
   font-weight: 700 !important;
 }
 
@@ -889,51 +889,51 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] #version-info-card .info-card__label, :root[data-theme-resolved=light] #version-info-card .info-card__value, :root[data-theme=light] #version-info-card .info-card__label, :root[data-theme=light] #version-info-card .info-card__value {
-  color: #6D28D9 !important;
+  color: var(--color-violet-50) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-ok, :root[data-theme=light] #keybox-card.keybox-ok {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-ok #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-ok #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-ok #keybox-label, :root[data-theme=light] #keybox-card.keybox-ok #keybox-value, :root[data-theme=light] #keybox-card.keybox-ok #keybox-icon, :root[data-theme=light] #keybox-card.keybox-ok #keybox-label {
-  color: #000000 !important;
+  color: var(--color-black) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-revoked, :root[data-theme=light] #keybox-card.keybox-revoked {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-revoked #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-revoked #keybox-label, :root[data-theme=light] #keybox-card.keybox-revoked #keybox-value, :root[data-theme=light] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme=light] #keybox-card.keybox-revoked #keybox-label {
-  color: #000000 !important;
+  color: var(--color-black) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-outdated, :root[data-theme=light] #keybox-card.keybox-outdated {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-outdated #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-outdated #keybox-label, :root[data-theme=light] #keybox-card.keybox-outdated #keybox-value, :root[data-theme=light] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme=light] #keybox-card.keybox-outdated #keybox-label {
-  color: #000000 !important;
+  color: var(--color-black) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-unknown, :root[data-theme-resolved=light] #keybox-card.keybox-none, :root[data-theme=light] #keybox-card.keybox-unknown, :root[data-theme=light] #keybox-card.keybox-none {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-unknown #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-unknown #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-unknown #keybox-label, :root[data-theme-resolved=light] #keybox-card.keybox-none #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-none #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-none #keybox-label, :root[data-theme=light] #keybox-card.keybox-unknown #keybox-value, :root[data-theme=light] #keybox-card.keybox-unknown #keybox-icon, :root[data-theme=light] #keybox-card.keybox-unknown #keybox-label, :root[data-theme=light] #keybox-card.keybox-none #keybox-value, :root[data-theme=light] #keybox-card.keybox-none #keybox-icon, :root[data-theme=light] #keybox-card.keybox-none #keybox-label {
-  color: #000000 !important;
+  color: var(--color-black) !important;
 }
 
 :root[data-theme-resolved=light] .list-container, :root[data-theme=light] .list-container {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border-radius: 24px !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
@@ -942,10 +942,10 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .list-item, :root[data-theme=light] .list-item {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: none !important;
   border-bottom: 1px solid rgba(0,0,0,0.07) !important;
-  color: #18181B !important;
+  color: var(--color-gray-10) !important;
   font-weight: 500 !important;
 }
 
@@ -954,11 +954,11 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .list-item md-icon:first-child, :root[data-theme=light] .list-item md-icon:first-child {
-  color: #7C3AED !important;
+  color: var(--color-violet-58) !important;
 }
 
 :root[data-theme-resolved=light] .supporting-text, :root[data-theme=light] .supporting-text {
-  color: #6B6B73 !important;
+  color: var(--color-gray-44) !important;
   font-weight: 400 !important;
   font-size: 0.82rem !important;
   line-height: 1.4 !important;
@@ -966,58 +966,58 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .list-title, :root[data-theme=light] .list-title {
-  color: #7C3AED !important;
+  color: var(--color-violet-58) !important;
   font-weight: 800 !important;
   font-size: 1em !important;
 }
 
 :root[data-theme-resolved=light] .community-card, :root[data-theme=light] .community-card {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid transparent !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] .community-card__title, :root[data-theme=light] .community-card__title {
-  color: #18181B !important;
+  color: var(--color-gray-10) !important;
 }
 
 :root[data-theme-resolved=light] .community-card__desc, :root[data-theme=light] .community-card__desc {
-  color: #6b7280 !important;
+  color: var(--color-gray-46-a) !important;
 }
 
 :root[data-theme-resolved=light] .community-card__arrow, :root[data-theme=light] .community-card__arrow {
   background: rgba(124,58,237,0.12) !important;
-  color: #7C3AED !important;
+  color: var(--color-violet-58) !important;
 }
 
 :root[data-theme-resolved=light] #refresh-btn, :root[data-theme=light] #refresh-btn {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-  color: #7C3AED !important;
+  color: var(--color-violet-58) !important;
   font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=light] md-navigation-bar, :root[data-theme=light] md-navigation-bar {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.07) !important;
   box-shadow: 0 4px 18px rgba(0,0,0,0.08) !important;
 }
 
 :root[data-theme-resolved=light] .theme-toggle-card, :root[data-theme=light] .theme-toggle-card {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] .theme-btn, :root[data-theme=light] .theme-btn {
-  color: #71717A !important;
+  color: var(--color-gray-46) !important;
   font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=light] .theme-btn.active, :root[data-theme=light] .theme-btn.active {
-  background: #7C3AED !important;
-  color: #ffffff !important;
+  background: var(--color-violet-58) !important;
+  color: var(--color-white) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
@@ -1150,16 +1150,16 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] md-navigation-bar, :root[data-theme=light] md-navigation-bar {
-  --md-navigation-bar-label-text-color: #18181B !important;
-  --md-navigation-bar-active-label-text-color: #7C3AED !important;
-  --md-navigation-bar-inactive-label-text-color: #71717A !important;
-  --md-navigation-bar-active-icon-color: #7C3AED !important;
-  --md-navigation-bar-inactive-icon-color: #71717A !important;
+  --md-navigation-bar-label-text-color: var(--color-gray-10) !important;
+  --md-navigation-bar-active-label-text-color: var(--color-violet-58) !important;
+  --md-navigation-bar-inactive-label-text-color: var(--color-gray-46) !important;
+  --md-navigation-bar-active-icon-color: var(--color-violet-58) !important;
+  --md-navigation-bar-inactive-icon-color: var(--color-gray-46) !important;
   --md-navigation-bar-active-indicator-color: rgba(124,58,237,0.10) !important;
 }
 
 :root[data-theme-resolved=dark] html, :root[data-theme=dark] html, :root[data-theme-resolved=dark] body, :root[data-theme=dark] body {
-  background: #121212 !important;
+  background: var(--color-gray-7) !important;
   background-attachment: fixed !important;
   min-height: 100vh;
 }
@@ -1175,21 +1175,21 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .app-title, :root[data-theme=dark] .app-title {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
   font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=dark] .network-chip, :root[data-theme=dark] .network-chip {
-  color: #8B5CF6 !important;
+  color: var(--color-violet-66) !important;
 }
 
 :root[data-theme-resolved=dark] .network-chip md-icon, :root[data-theme=dark] .network-chip md-icon {
-  color: #8B5CF6 !important;
+  color: var(--color-violet-66) !important;
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-ok, :root[data-theme=dark] #keybox-card.keybox-ok {
   --md-filled-card-container-color: transparent !important;
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1197,11 +1197,11 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-ok #keybox-value, :root[data-theme-resolved=dark] #keybox-card.keybox-ok #keybox-icon, :root[data-theme-resolved=dark] #keybox-card.keybox-ok #keybox-label, :root[data-theme=dark] #keybox-card.keybox-ok #keybox-value, :root[data-theme=dark] #keybox-card.keybox-ok #keybox-icon, :root[data-theme=dark] #keybox-card.keybox-ok #keybox-label {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-revoked, :root[data-theme=dark] #keybox-card.keybox-revoked {
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1209,11 +1209,11 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-revoked #keybox-value, :root[data-theme-resolved=dark] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme-resolved=dark] #keybox-card.keybox-revoked #keybox-label, :root[data-theme=dark] #keybox-card.keybox-revoked #keybox-value, :root[data-theme=dark] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme=dark] #keybox-card.keybox-revoked #keybox-label {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-outdated, :root[data-theme=dark] #keybox-card.keybox-outdated {
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1221,11 +1221,11 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-outdated #keybox-value, :root[data-theme-resolved=dark] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme-resolved=dark] #keybox-card.keybox-outdated #keybox-label, :root[data-theme=dark] #keybox-card.keybox-outdated #keybox-value, :root[data-theme=dark] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme=dark] #keybox-card.keybox-outdated #keybox-label {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-unknown, :root[data-theme-resolved=dark] #keybox-card.keybox-none, :root[data-theme=dark] #keybox-card.keybox-unknown, :root[data-theme=dark] #keybox-card.keybox-none {
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1234,7 +1234,7 @@ md-dialog {
 
 :root[data-theme-resolved=dark] md-filled-card, :root[data-theme=dark] md-filled-card {
   --md-filled-card-container-color: transparent !important;
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1242,41 +1242,41 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .info-card, :root[data-theme=dark] .info-card {
-  background: #252525 !important;
+  background: var(--color-gray-15) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
 }
 
 :root[data-theme-resolved=dark] .info-card__label, :root[data-theme=dark] .info-card__label {
-  color: #A0A0A0 !important;
+  color: var(--color-gray-63) !important;
   font-weight: 600 !important;
   font-size: 0.70rem !important;
   letter-spacing: 0.09em !important;
 }
 
 :root[data-theme-resolved=dark] .info-card__value, :root[data-theme=dark] .info-card__value {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
   font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=dark] #version-info-card, :root[data-theme=dark] #version-info-card {
-  background: #252525 !important;
+  background: var(--color-gray-15) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
 }
 
 :root[data-theme-resolved=dark] #version-info-card .info-card__label, :root[data-theme-resolved=dark] #version-info-card .info-card__value, :root[data-theme=dark] #version-info-card .info-card__label, :root[data-theme=dark] #version-info-card .info-card__value {
-  color: #A0A0A0 !important;
+  color: var(--color-gray-63) !important;
 }
 
 :root[data-theme-resolved=dark] #version-info-card .info-card__value, :root[data-theme=dark] #version-info-card .info-card__value {
-  color: #c4b5fd !important;
+  color: var(--color-blue-85) !important;
 }
 
 :root[data-theme-resolved=dark] #refresh-btn, :root[data-theme=dark] #refresh-btn {
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1285,7 +1285,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .list-container, :root[data-theme=dark] .list-container {
-  background: #252525 !important;
+  background: var(--color-gray-15) !important;
   border-radius: 20px !important;
   border: none !important;
   outline: none !important;
@@ -1295,10 +1295,10 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .list-item, :root[data-theme=dark] .list-item {
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
   font-weight: 600 !important;
   min-height: 60px !important;
   padding: 12px 16px !important;
@@ -1310,22 +1310,22 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .list-item:active, :root[data-theme=dark] .list-item:active {
-  background: #252525 !important;
+  background: var(--color-gray-15) !important;
 }
 
 :root[data-theme-resolved=dark] .list-item md-icon:first-child, :root[data-theme=dark] .list-item md-icon:first-child {
-  color: #8B5CF6 !important;
+  color: var(--color-violet-66) !important;
   opacity: 0.85 !important;
 }
 
 :root[data-theme-resolved=dark] .list-item .list-item-content > :first-child, :root[data-theme=dark] .list-item .list-item-content > :first-child {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
   font-weight: 600 !important;
   font-size: 1.0rem !important;
 }
 
 :root[data-theme-resolved=dark] .supporting-text, :root[data-theme=dark] .supporting-text {
-  color: #A8A8B0 !important;
+  color: var(--color-gray-67) !important;
   font-weight: 400 !important;
   font-size: 0.82rem !important;
   line-height: 1.4 !important;
@@ -1333,7 +1333,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .list-title, :root[data-theme=dark] .list-title {
-  color: #8B5CF6 !important;
+  color: var(--color-violet-66) !important;
   font-weight: 800 !important;
   font-size: 1.0em !important;
   letter-spacing: 0.03em !important;
@@ -1341,37 +1341,37 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] md-navigation-bar, :root[data-theme=dark] md-navigation-bar {
-  background: #1E1E1E !important;
-  border: 1px solid #2A2A2A !important;
+  background: var(--color-gray-12) !important;
+  border: 1px solid var(--color-gray-16) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.20) !important;
-  --md-navigation-bar-active-label-text-color: #F5F5F5 !important;
-  --md-navigation-bar-inactive-label-text-color: #52525B !important;
-  --md-navigation-bar-active-icon-color: #F5F5F5 !important;
-  --md-navigation-bar-inactive-icon-color: #52525B !important;
-  --md-navigation-bar-active-indicator-color: #7C3AED !important;
+  --md-navigation-bar-active-label-text-color: var(--color-gray-96) !important;
+  --md-navigation-bar-inactive-label-text-color: var(--color-gray-34) !important;
+  --md-navigation-bar-active-icon-color: var(--color-gray-96) !important;
+  --md-navigation-bar-inactive-icon-color: var(--color-gray-34) !important;
+  --md-navigation-bar-active-indicator-color: var(--color-violet-58) !important;
 }
 
 :root[data-theme-resolved=dark] .theme-toggle-card, :root[data-theme=dark] .theme-toggle-card {
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
 }
 
 :root[data-theme-resolved=dark] .theme-btn, :root[data-theme=dark] .theme-btn {
-  color: #A0A0A0 !important;
+  color: var(--color-gray-63) !important;
   font-weight: 600 !important;
 }
 
 :root[data-theme-resolved=dark] .theme-btn.active, :root[data-theme=dark] .theme-btn.active {
-  background: #7C3AED !important;
-  color: #FFFFFF !important;
+  background: var(--color-violet-58) !important;
+  color: var(--color-white) !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
 }
 
 :root[data-theme-resolved=dark] md-elevated-card, :root[data-theme=dark] md-elevated-card {
   --md-elevated-card-container-color: transparent !important;
-  background: #1E1E1E !important;
+  background: var(--color-gray-12) !important;
   border: none !important;
   outline: none !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
@@ -1379,65 +1379,65 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] md-outlined-card, :root[data-theme=dark] md-outlined-card {
-  background: #252525 !important;
+  background: var(--color-gray-15) !important;
   border: none !important;
   outline: none !important;
   border-radius: 20px !important;
 }
 
 :root[data-theme-resolved=dark] .activity-card, :root[data-theme=dark] .activity-card {
-  background: #252525 !important;
+  background: var(--color-gray-15) !important;
   border: none !important;
   outline: none !important;
 }
 
 :root[data-theme-resolved=dark] .activity-card__name, :root[data-theme=dark] .activity-card__name {
-  color: #F5F5F5 !important;
+  color: var(--color-gray-96) !important;
 }
 
 :root[data-theme-resolved=dark] .activity-card__time, :root[data-theme=dark] .activity-card__time {
-  color: #A0A0A0 !important;
+  color: var(--color-gray-63) !important;
 }
 
 :root[data-theme-resolved=dark] .activity-card__chevron, :root[data-theme=dark] .activity-card__chevron {
-  color: #52525B !important;
+  color: var(--color-gray-34) !important;
 }
 
 :root[data-theme-resolved=light] md-elevated-card, :root[data-theme=light] md-elevated-card {
   --md-elevated-card-container-color: transparent !important;
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
   border-radius: 20px !important;
 }
 
 :root[data-theme-resolved=light] md-outlined-card, :root[data-theme=light] md-outlined-card {
-  background: #FFFFFF !important;
+  background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   border-radius: 20px !important;
 }
 
 :root[data-theme-resolved=light] .dialog-action-clear, :root[data-theme=light] .dialog-action-clear {
-  --md-text-button-label-text-color: #6D28D9 !important;
-  --md-text-button-hover-label-text-color: #5b21b6 !important;
-  --md-text-button-pressed-label-text-color: #5b21b6 !important;
-  --md-text-button-hover-state-layer-color: #6D28D9 !important;
-  --md-text-button-pressed-state-layer-color: #6D28D9 !important;
-  --md-text-button-disabled-label-text-color: #6D28D9 !important;
+  --md-text-button-label-text-color: var(--color-violet-50) !important;
+  --md-text-button-hover-label-text-color: var(--color-violet-42) !important;
+  --md-text-button-pressed-label-text-color: var(--color-violet-42) !important;
+  --md-text-button-hover-state-layer-color: var(--color-violet-50) !important;
+  --md-text-button-pressed-state-layer-color: var(--color-violet-50) !important;
+  --md-text-button-disabled-label-text-color: var(--color-violet-50) !important;
   --md-text-button-disabled-label-text-opacity: 0.38 !important;
-  color: #6D28D9 !important;
+  color: var(--color-violet-50) !important;
   font-weight: 600 !important;
 }
 
 :root[data-theme-resolved=dark] .dialog-action-clear, :root[data-theme=dark] .dialog-action-clear {
-  --md-text-button-label-text-color: #A78BFA !important;
-  --md-text-button-hover-label-text-color: #C4B5FD !important;
-  --md-text-button-pressed-label-text-color: #C4B5FD !important;
-  --md-text-button-hover-state-layer-color: #A78BFA !important;
-  --md-text-button-pressed-state-layer-color: #A78BFA !important;
-  --md-text-button-disabled-label-text-color: #A78BFA !important;
+  --md-text-button-label-text-color: var(--color-violet-76) !important;
+  --md-text-button-hover-label-text-color: var(--color-blue-85) !important;
+  --md-text-button-pressed-label-text-color: var(--color-blue-85) !important;
+  --md-text-button-hover-state-layer-color: var(--color-violet-76) !important;
+  --md-text-button-pressed-state-layer-color: var(--color-violet-76) !important;
+  --md-text-button-disabled-label-text-color: var(--color-violet-76) !important;
   --md-text-button-disabled-label-text-opacity: 0.38 !important;
-  color: #A78BFA !important;
+  color: var(--color-violet-76) !important;
   font-weight: 600 !important;
 }
 
@@ -1447,7 +1447,7 @@ md-dialog {
 }
 
 .dialog-action-clear:focus-visible, .dialog-action-close:focus-visible {
-  outline: 2px solid #7C3AED !important;
+  outline: 2px solid var(--color-violet-58) !important;
   outline-offset: 2px !important;
 }
 

@@ -72,17 +72,17 @@
   color: var(--at-text);
 }
 .at-panel {
-  --at-bg: #121212;
-  --at-card: #1E1E1E;
-  --at-search: #252525;
-  --at-border: #2A2A2A;
-  --at-purple: #7C4DFF;
-  --at-text: #F5F5F5;
-  --at-text-secondary: #A0A0A0;
+  --at-bg: var(--color-gray-7);
+  --at-card: var(--color-gray-12);
+  --at-search: var(--color-gray-15);
+  --at-border: var(--color-gray-16);
+  --at-purple: var(--color-violet-65);
+  --at-text: var(--color-gray-96);
+  --at-text-secondary: var(--color-gray-63);
   --at-shadow: rgba(0,0,0,0.35);
   --at-chip-hover: rgba(124,77,255,0.10);
   --at-chip-active-press: rgba(124,77,255,0.16);
-  --at-menu-bg: #1C1C1E;
+  --at-menu-bg: var(--color-gray-11);
   --at-menu-item-bg: rgba(255,255,255,0.05);
   --at-menu-item-border: rgba(255,255,255,0.10);
   --at-menu-item-hover-bg: rgba(255,255,255,0.07);
@@ -90,17 +90,17 @@
 }
 :root[data-theme-resolved=light] .at-panel,
 :root[data-theme=light] .at-panel {
-  --at-bg: linear-gradient(145deg,#dce8ff 0%,#efe0ff 35%,#d8f5e8 65%,#fff0dc 100%);
+  --at-bg: linear-gradient(145deg,var(--color-blue-93) 0%,var(--color-violet-94) 35%,var(--color-green-90) 65%,var(--color-orange-93) 100%);
   --at-card: rgba(255,255,255,0.75);
   --at-search: rgba(255,255,255,0.75);
   --at-border: rgba(255,255,255,0.90);
-  --at-purple: #5533bb;
-  --at-text: #111133;
-  --at-text-secondary: #44447a;
+  --at-purple: var(--color-violet-47);
+  --at-text: var(--color-blue-13);
+  --at-text-secondary: var(--color-blue-37);
   --at-shadow: rgba(80,50,200,0.30);
   --at-chip-hover: rgba(100,70,240,0.10);
   --at-chip-active-press: rgba(100,70,240,0.18);
-  --at-menu-bg: #FFFFFF;
+  --at-menu-bg: var(--color-white);
   --at-menu-item-bg: rgba(85,51,187,0.045);
   --at-menu-item-border: rgba(17,17,51,0.12);
   --at-menu-item-hover-bg: rgba(17,17,51,0.06);
@@ -185,7 +185,7 @@
 .at-chip.at-chip-active {
   background: var(--at-purple) !important;
   border-color: var(--at-purple) !important;
-  color: #ffffff !important;
+  color: var(--color-white) !important;
 }
 
 .at-app-row {
@@ -230,10 +230,10 @@
   background: transparent;
 }
 .at-mode-badge--generate {
-  color:#ffffff; background:#e5484d; border-color:#e5484d;
+  color:var(--color-white); background:var(--color-red-59); border-color:var(--color-red-59);
 }
 .at-mode-badge--hack {
-  color:#ffffff; background:#f5a524; border-color:#f5a524;
+  color:var(--color-white); background:var(--color-orange-55); border-color:var(--color-orange-55);
 }
 
 .at-mode-options { display:flex; flex-direction:column; gap:4px; padding-top:4px; }
@@ -255,10 +255,10 @@
 .at-mode-icon {
   width:20px;height:20px;border-radius:6px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:700;color:#ffffff;
+  font-size:12px;font-weight:700;color:var(--color-white);
 }
-.at-mode-icon--generate { background:#e5484d; }
-.at-mode-icon--hack { background:#f5a524; }
+.at-mode-icon--generate { background:var(--color-red-59); }
+.at-mode-icon--hack { background:var(--color-orange-55); }
 
 .at-fab-wrap {
   position:fixed;right:20px;
@@ -268,7 +268,7 @@
 .at-apply-fab {
   display:flex;align-items:center;justify-content:center;gap:8px;
   background: var(--at-purple);
-  color: #ffffff;
+  color: var(--color-white);
   border:none;border-radius:16px;padding:0 24px;height:52px;
   font-size:16px;font-weight:600;cursor:pointer;
   box-shadow:0 4px 16px var(--at-shadow);

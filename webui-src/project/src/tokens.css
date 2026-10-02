@@ -1,0 +1,73 @@
+/* Colour palette tokens. Every colour used in style.css, app.css and targeting.css is defined here once. */
+:root {
+  --color-black: #000000;
+
+  --color-blue-9: #0d0e22;
+  --color-blue-12: #12132b;
+  --color-blue-13: #111133;
+  --color-blue-37: #44447a;
+  --color-blue-66: #5b6ef5;
+  --color-blue-84: #b3bcfb;
+  --color-blue-85: #c4b5fd;
+  --color-blue-90: #e4e4e9;
+  --color-blue-93: #dce8ff;
+  --color-blue-95: #efeff4;
+  --color-blue-95-a: #eef0f8;
+  --color-blue-97: #f7f7fa;
+
+  --color-gray-7: #121212;
+  --color-gray-10: #18181b;
+  --color-gray-11: #1c1c1e;
+  --color-gray-11-a: #1b1b1f;
+  --color-gray-12: #1e1e1e;
+  --color-gray-15: #252525;
+  --color-gray-16: #2a2a2a;
+  --color-gray-24: #3a3a3f;
+  --color-gray-34: #52525b;
+  --color-gray-35: #55555c;
+  --color-gray-38: #5c5c66;
+  --color-gray-44: #6b6b73;
+  --color-gray-46: #71717a;
+  --color-gray-46-a: #6b7280;
+  --color-gray-49: #79797f;
+  --color-gray-62: #9a9aa2;
+  --color-gray-63: #a0a0a0;
+  --color-gray-64: #9aa1ac;
+  --color-gray-67: #a8a8b0;
+  --color-gray-71: #b0b0b8;
+  --color-gray-79: #c6c6cd;
+  --color-gray-79-a: #c7c7ce;
+  --color-gray-87: #dadae0;
+  --color-gray-88: #e0e0e0;
+  --color-gray-88-a: #dedee3;
+  --color-gray-89: #e0e0e5;
+  --color-gray-96: #f5f5f5;
+  --color-gray-97: #f7f7f8;
+
+  --color-green-36: #00b96b;
+  --color-green-49: #2ecc71;
+  --color-green-58: #4cde8a;
+  --color-green-90: #d8f5e8;
+
+  --color-orange-38: #b8860b;
+  --color-orange-55: #f5a524;
+  --color-orange-93: #fff0dc;
+
+  --color-red-59: #e5484d;
+
+  --color-violet-40: #4422aa;
+  --color-violet-42: #5b21b6;
+  --color-violet-45: #5e35b1;
+  --color-violet-47: #5533bb;
+  --color-violet-50: #6d28d9;
+  --color-violet-58: #7c3aed;
+  --color-violet-65: #7c4dff;
+  --color-violet-66: #8b5cf6;
+  --color-violet-70: #9977ee;
+  --color-violet-74: #b39ddb;
+  --color-violet-76: #a78bfa;
+  --color-violet-83: #ccaaff;
+  --color-violet-94: #efe0ff;
+
+  --color-white: #ffffff;
+}
