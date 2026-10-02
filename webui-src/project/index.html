@@ -16,8 +16,6 @@
     (function () {
       var saved = null;
       try { saved = localStorage.getItem('themeMode'); } catch(e) {}
-      // First install: if no saved preference, default to auto (follow system theme)
-      // After user changes, remember their choice
       var isFirstInstall = (saved === null || saved === undefined);
       var mode = isFirstInstall ? 'auto' : saved;
       if (isFirstInstall) {
@@ -28,7 +26,6 @@
       document.documentElement.setAttribute('data-theme', mode);
       document.documentElement.setAttribute('data-theme-resolved', resolved);
       document.documentElement.style.colorScheme = resolved;
-      // Listen for system theme changes when mode is 'auto'
       if (mode === 'auto' && !window.__autoThemeListener) {
         window.__autoThemeListener = function(e) {
           var currentMode = 'auto';
@@ -45,7 +42,6 @@
   </script>
   <script>
   window.__setTheme = function(mode) {
-    // Update active button
     ['dark','auto','light'].forEach(function(m) {
       var btn = document.getElementById('theme-btn-' + m);
       if (btn) btn.classList.toggle('active', m === mode);
@@ -57,7 +53,6 @@
     document.documentElement.setAttribute('data-theme-resolved', resolved);
     document.documentElement.style.colorScheme = resolved;
     try { localStorage.setItem('themeMode', mode); } catch(e) {}
-    // When switching to auto, immediately re-attach system listener
     if (mode === 'auto' && !window.__autoThemeListener) {
       window.__autoThemeListener = function(e) {
         try { var m = localStorage.getItem('themeMode') || 'auto'; } catch(ex) { var m = 'auto'; }
@@ -86,7 +81,6 @@
       window.open(url, '_blank');
     }
   };
-  // On load, read saved theme and highlight active button
   document.addEventListener('DOMContentLoaded', function() {
     var saved = 'auto';
     try { saved = localStorage.getItem('themeMode') || 'auto'; } catch(e) {}
@@ -121,7 +115,6 @@
           <!-- Hidden refresh button for compatibility -->
           <button id="refresh-btn" style="display:none"></button>
 
-          <!-- Keybox Hero Card -->
           <md-filled-card id="keybox-card" class="hero-card">
             <div class="keybox-inner">
               <md-icon id="keybox-icon" style="display:none">verified_user</md-icon>
@@ -132,7 +125,6 @@
             </div>
           </md-filled-card>
 
-          <!-- Info Row List (redesigned — replaces old 2x2 grid) -->
           <div class="jf-combined-card">
 
             <div class="jf-row">
@@ -201,7 +193,7 @@
               <span class="jf-row-val" id="keystore-backend-value">—</span>
             </div>
 
-          </div><!-- /.jf-combined-card -->
+          </div>
 
         </section>
 
@@ -283,8 +275,6 @@
               <md-ripple></md-ripple>
             </div>
 
-
-
             <div class="list-item" data-script="kill_all.sh" data-destructive>
               <md-icon>cancel</md-icon>
               <div class="list-item-content">
@@ -295,7 +285,6 @@
               <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
               <md-ripple></md-ripple>
             </div>
-
 
             <div class="list-item" data-script="banking_mode.sh" data-destructive>
               <md-icon>account_balance</md-icon>
@@ -311,7 +300,6 @@
 
           <div class="list-title" data-i18n="advance_menu_title_config">Module Configs</div>
           <div class="list-container">
-
 
             <div class="list-item" data-script="zygisk_next.sh">
               <md-icon>tune</md-icon>
@@ -335,7 +323,6 @@
               <md-ripple></md-ripple>
             </div>
 
-
           </div>
 
           <div class="list-title" data-i18n="advance_tee_section">Fix TEE: OnePlus, RedMagic, Realme, Oppo…</div>
@@ -354,7 +341,6 @@
 
         </section>
 
-        <!-- Theme / Settings Page -->
         <section id="control-page" hidden>
 
           <div class="ctrl-heading-row">
@@ -388,8 +374,6 @@
           <div class="list-container ctrl-rows" id="ctrl-rows-action" data-group="action"></div>
 
         </section>
-
-
 
         <section id="settings-page" hidden>
 
@@ -438,9 +422,7 @@
 
       </div>
 
-    <!-- ===== APP TARGETING PANEL ===== -->
     <div id="app-targeting-panel" style="display:none;position:fixed;inset:0;z-index:200;flex-direction:column;overflow:hidden;" class="at-panel">
-      <!-- Header -->
       <div class="at-header">
         <button onclick="closeAppTargeting()" class="at-back-btn">
           <md-icon style="font-family:'Material Icons';font-size:20px;">arrow_back</md-icon>
@@ -512,14 +494,6 @@
             transition: opacity 0.1s ease;
           }
           .at-menu-item span { display: flex; align-items: center; position: relative; z-index: 1; }
-          /* JS-driven ripple: a neutral on-surface circle spawned at the tap
-             point that expands and fades. More reliable than relying on
-             :active alone in a WebView, where the active state can be too
-             brief to register before the click handler fires and the menu
-             closes. Uses --at-text (on-surface white/black), not the
-             purple accent — this is temporary press feedback, not a
-             selection state, so it stays neutral like a standard Android
-             ripple. */
           .at-menu-item .at-ripple {
             position: absolute;
             border-radius: 50%;
@@ -554,14 +528,12 @@
           }
         </style>
       </div>
-      <!-- Search -->
       <div class="at-search-wrap">
         <div class="at-search-box">
           <md-icon style="font-family:'Material Icons';font-size:20px;opacity:0.5;flex-shrink:0;">search</md-icon>
           <input id="at-search" type="text" placeholder="Search apps" oninput="atFilter()" class="at-search-input">
         </div>
       </div>
-      <!-- Filter chips -->
       <div class="at-chips-row">
         <button class="at-chip at-chip-active" id="at-chip-all" onclick="atSetFilter('all')">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="margin-right:4px;flex-shrink:0;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>All
@@ -573,14 +545,11 @@
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;flex-shrink:0;"><circle cx="12" cy="12" r="9"/></svg>Not Selected
         </button>
       </div>
-      <!-- Loading state -->
       <div id="at-loading" style="display:flex;align-items:center;justify-content:center;flex:1;gap:12px;">
         <md-circular-progress indeterminate></md-circular-progress>
         <span style="opacity:0.6;">Loading apps…</span>
       </div>
-      <!-- App list -->
       <div id="at-list" style="display:none;flex:1;overflow-y:auto;padding:0 8px 100px;"></div>
-      <!-- Apply FAB -->
       <div class="at-fab-wrap">
         <button id="at-apply-btn" onclick="atApply()" class="at-apply-fab">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
@@ -594,7 +563,6 @@
       background: var(--at-bg) !important;
       color: var(--at-text);
     }
-    /* Local theme variables for this panel — dark values (default) */
     .at-panel {
       --at-bg: #121212;
       --at-card: #1E1E1E;
@@ -607,18 +575,11 @@
       --at-chip-hover: rgba(124,77,255,0.10);
       --at-chip-active-press: rgba(124,77,255,0.16);
       --at-menu-bg: #1C1C1E;
-      /* Menu-item surfaces: a neutral dark card, one step lighter than
-         --at-menu-bg (popup background) so each option reads as its own
-         surface. Border stays subtle/neutral. Hover/press use a neutral
-         on-surface tint (white-on-dark), not the purple accent — purple
-         is reserved for actual selection/action elements elsewhere in
-         this screen (filter chips, checkboxes, Apply button). */
       --at-menu-item-bg: rgba(255,255,255,0.05);
       --at-menu-item-border: rgba(255,255,255,0.10);
       --at-menu-item-hover-bg: rgba(255,255,255,0.07);
       --at-menu-item-press-bg: rgba(255,255,255,0.11);
     }
-    /* Light theme values — Jerry's original translucent gradient look */
     :root[data-theme-resolved=light] .at-panel,
     :root[data-theme=light] .at-panel {
       --at-bg: linear-gradient(145deg,#dce8ff 0%,#efe0ff 35%,#d8f5e8 65%,#fff0dc 100%);
@@ -735,9 +696,6 @@
       font-size:16px;font-weight:500;
       color: var(--at-text);
     }
-    /* Icon: no extra container/background — show the app's own icon only.
-       If the source image has transparent corners, they now show the
-       panel/card color instead of an injected white/gray placeholder box. */
     .at-app-icon {
       width:36px;height:36px;border-radius:10px;flex-shrink:0;
       object-fit:cover;background:transparent;
@@ -754,9 +712,7 @@
       border-color: var(--at-purple) !important;
     }
 
-    /* Per-app "!"/"?" attestation-mode badge — sits next to the checkbox,
-       tappable independently to open the mode dialog. Empty/no-suffix
-       (auto) renders as a blank slot so row height stays consistent. */
+    /* Per-app "!"/"?" attestation-mode badge next to the checkbox */
     .at-mode-badge {
       width:22px;height:22px;border-radius:7px;flex-shrink:0;
       display:flex;align-items:center;justify-content:center;
@@ -796,7 +752,6 @@
     .at-mode-icon--generate { background:#e5484d; }
     .at-mode-icon--hack { background:#f5a524; }
 
-    /* Floating Apply button — compact pill, doesn't block list content */
     .at-fab-wrap {
       position:fixed;right:20px;
       bottom:calc(24px + env(safe-area-inset-bottom));
@@ -814,7 +769,6 @@
     </style>
     </main>
 
-    <!-- Custom Navbar — Flat White/Dark Pill, Solid Filled Icons, No Indicator -->
     <nav id="nav-bar" class="jerry-nav">
       <div class="jerry-nav-inner">
       <button class="jerry-nav-tab active" data-index="0" onclick="jerryNavSwitch(0)">
@@ -874,7 +828,6 @@
   <style>
        ======================================== */
 
-    /* Keybox Hero Card */
     .keybox-inner {
       display: flex;
       align-items: flex-start;
@@ -897,30 +850,22 @@
       font-size: 1.7rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: var(--md-sys-color-on-surface-variant); /* default/unknown */
+      color: var(--md-sys-color-on-surface-variant);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
       transition: color 0.25s ease;
     }
-    /* Light theme: also cover the brief loading state before any status
-       class (keybox-ok/revoked/outdated/unknown/none) has been applied —
-       otherwise the label+value are near-invisible light grey while the
-       keybox check is still running. */
+    /* Light theme: keybox loading-state text visibility */
     :root[data-theme-resolved=light] .keybox-label,
     :root[data-theme-resolved=light] .keybox-value { color: #000000 !important; }
     :root[data-theme-resolved=light] .keybox-label { opacity: 0.6 !important; }
-    /* Dark theme: same loading-state fix as above — on-surface-variant
-       renders too close to the dark card background, making "Checking…"
-       barely visible until a status class takes over. !important since
-       this must win regardless of any other rule's specificity/order. */
+    /* Dark theme: keybox loading-state text visibility (!important to win) */
     :root[data-theme-resolved=dark] .keybox-label,
     :root[data-theme-resolved=dark] .keybox-value { color: #F5F5F5 !important; }
     :root[data-theme-resolved=dark] .keybox-label { opacity: 0.7 !important; }
-    /* Dynamic status colors — disabled: every keybox state now uses plain
-       white/default text regardless of status (ok/revoked/outdated/
-       unknown/none), instead of colored on-* tokens. */
+    /* Dynamic status colors disabled: all keybox states use default text */
     #keybox-card.keybox-ok .keybox-value,
     #keybox-card.keybox-ok .keybox-label,
     #keybox-card.keybox-revoked .keybox-value,
@@ -931,7 +876,6 @@
     #keybox-card.keybox-unknown .keybox-label,
     #keybox-card.keybox-none .keybox-value,
     #keybox-card.keybox-none .keybox-label { color: #F5F5F5 !important; }
-    /* Light theme: keep the same plain-black override for every state. */
     :root[data-theme-resolved=light] #keybox-card.keybox-ok .keybox-value,
     :root[data-theme-resolved=light] #keybox-card.keybox-ok .keybox-label,
     :root[data-theme-resolved=light] #keybox-card.keybox-revoked .keybox-value,
@@ -943,7 +887,6 @@
     :root[data-theme-resolved=light] #keybox-card.keybox-none .keybox-value,
     :root[data-theme-resolved=light] #keybox-card.keybox-none .keybox-label { color: #000000 !important; }
 
-    /* Info grid emoji style */
     .info-card__emoji {
       font-size: 28px;
       line-height: 1;
@@ -971,12 +914,10 @@
     }
     .status-online { color: #2ecc71 !important; }
 
-    /* ═══ Home page zoom ═══ */
     #home-page {
       zoom: 0.78;
     }
 
-    /* ═══ Redesigned home info section — row-list card (replaces 2x2 grid) ═══ */
     .jf-combined-card {
       margin: 0 2px;
       background: #ffffff;
@@ -1007,7 +948,6 @@
       flex-shrink: 0;
       position: relative;
     }
-    /* Dark theme — dim the pastel icon backgrounds (not the icon itself) via overlay */
     :root[data-theme-resolved=dark] .jf-row-icon,
     :root[data-theme=dark] .jf-row-icon {
       background: rgba(255,255,255,0.06) !important;
@@ -1055,7 +995,6 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    /* Dark theme — jf-combined-card */
     :root[data-theme-resolved=dark] .jf-combined-card,
     :root[data-theme=dark] .jf-combined-card {
       background: #1E1E1E !important;
@@ -1078,7 +1017,6 @@
       border-color: rgba(91,110,245,0.35) !important;
     }
 
-    /* ═══ Page background — flat light-lavender to match target screenshot ═══ */
     html, body {
       background: #eef0f8;
     }
@@ -1103,13 +1041,11 @@
       background: #121212 !important;
     }
 
-    /* Light theme overrides for new elements */
     :root[data-theme-resolved=light] .info-card__label,
     :root[data-theme=light] .info-card__label { color: #44447a !important; }
     :root[data-theme-resolved=light] .info-card__value,
     :root[data-theme=light] .info-card__value { color: #111133 !important; }
 
-    /* Dark theme overrides for new elements */
     :root[data-theme-resolved=dark] .info-card__label,
     :root[data-theme=dark] .info-card__label { color: #A0A0A0 !important; }
     :root[data-theme-resolved=dark] .info-card__value,
@@ -1127,28 +1063,16 @@
     }
     section:not([hidden]) {
       animation: glass-slide-in 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) both !important;
-      /* will-change intentionally omitted: this selector matches every
-         visible page section permanently, so declaring will-change here
-         would keep a GPU compositor layer allocated for the whole session,
-         not just during the brief 0.18s entrance animation. The animation
-         is short/cheap enough to not need it. */
+      /* will-change omitted on purpose: selector matches every page section */
     }
-    /* Nav bar — instant feel */
     md-navigation-bar {
       transition: box-shadow 0.15s ease !important;
     }
-    /* Instant tap response on list items */
     .list-item {
       -webkit-tap-highlight-color: transparent !important;
     }
 
-    /* Remove the browser/WebView's default blue/teal tap-highlight flash on every
-       clickable surface. This is purely the platform's built-in touch feedback
-       overlay (separate from the existing <md-ripple> effect and the purple
-       accent) — it was only ever suppressed on .list-item, so any other
-       clickable container (control-group cards, chips, rows, buttons) still
-       showed the browser's default highlight color on tap. No colors, layout,
-       or the existing ripple/press behavior are changed by this. */
+    /* Remove default WebView tap-highlight on clickable elements */
     * {
       -webkit-tap-highlight-color: transparent;
     }
@@ -1168,64 +1092,33 @@
       -webkit-tap-highlight-color: transparent !important;
     }
 
-    /* ══════════════════════════════════════════════════════════════════
-       BALANCED PREMIUM DARK THEME — Material surface token overrides
-       ══════════════════════════════════════════════════════════════════
-       The Material Web components (.list-item, .app-layout, .info-card,
-       .theme-toggle-card, md-elevated-card, md-dialog, etc.) all read
-       their background/text colors from --md-sys-color-* custom
-       properties. Those tokens were never defined anywhere in this
-       project, so every one of them was silently falling back to the
-       library's built-in Material 3 baseline defaults — which are a
-       light, purple-tinted palette (#fef7ff, #ece6f0, #e6e0e9, ...) —
-       even in dark mode. That fallback is the actual source of the
-       leftover blue/purple dark surfaces (Home hero/nav included).
-
-       Scoped strictly to :root[data-theme-resolved=dark]: light theme
-       never references this block and keeps using the same fallback
-       values it always has, so it is completely unaffected.
-
-       Only the *surface* family and on-surface text tokens are
-       redefined here — primary/secondary/tertiary/error and their
-       "on-*"/container counterparts are left alone so every existing
-       accent color (green keybox-valid, purple headings/icons, pink
-       ROM icon, orange Android icon, blue selected Home tab, etc.)
-       renders exactly as before. */
+    /* Dark theme: Material surface token overrides (accent tokens untouched) */
     :root[data-theme-resolved=dark] {
-      --md-sys-color-surface: #121212;                  /* page background */
-      --md-sys-color-surface-container-low: #1E1E1E;    /* secondary surfaces */
-      --md-sys-color-surface-container: #1E1E1E;        /* secondary surfaces */
-      --md-sys-color-surface-container-high: #1E1E1E;   /* cards / list-items / bottom nav / theme toggle */
-      --md-sys-color-surface-container-highest: #252525;/* icon containers / info-card */
-      --md-sys-color-surface-variant: #1E1E1E;           /* keybox "none" card, avatar bg */
-      --md-sys-color-on-surface: #F5F5F5;                /* primary text */
-      --md-sys-color-on-surface-variant: #A0A0A0;        /* secondary/body text */
-      --md-sys-color-outline: #2A2A2A;                   /* subtle borders */
-      --md-sys-color-outline-variant: #2A2A2A;           /* dividers */
+      --md-sys-color-surface: #121212;
+      --md-sys-color-surface-container-low: #1E1E1E;
+      --md-sys-color-surface-container: #1E1E1E;
+      --md-sys-color-surface-container-high: #1E1E1E;
+      --md-sys-color-surface-container-highest: #252525;
+      --md-sys-color-surface-variant: #1E1E1E;
+      --md-sys-color-on-surface: #F5F5F5;
+      --md-sys-color-on-surface-variant: #A0A0A0;
+      --md-sys-color-outline: #2A2A2A;
+      --md-sys-color-outline-variant: #2A2A2A;
     }
-    /* Light-theme counterpart of the block above. Same token set, same
-       roles, mirrored to a clean neutral-white palette instead of the
-       library's washed-out lavender defaults (#fef7ff/#ece6f0/...).
-       Structured identically to the dark block so every card, list-item,
-       bottom nav and text color resolves the same way it does in dark —
-       just light. Accent tokens (primary/secondary/tertiary/error and
-       their containers) are left untouched here too, for the same reason
-       as dark: keeps every existing accent color unchanged. */
+    /* Light theme: same surface tokens, neutral white palette */
     :root[data-theme-resolved=light] {
-      --md-sys-color-surface: #F7F7FA;                  /* page background */
-      --md-sys-color-surface-container-low: #FFFFFF;    /* secondary surfaces */
-      --md-sys-color-surface-container: #FFFFFF;        /* secondary surfaces */
-      --md-sys-color-surface-container-high: #FFFFFF;   /* cards / list-items / bottom nav / theme toggle */
-      --md-sys-color-surface-container-highest: #EFEFF4;/* icon containers / info-card */
-      --md-sys-color-surface-variant: #EFEFF4;           /* keybox "none" card, avatar bg */
-      --md-sys-color-on-surface: #1B1B1F;                /* primary text */
-      --md-sys-color-on-surface-variant: #5C5C66;        /* secondary/body text */
-      --md-sys-color-outline: #DEDEE3;                   /* subtle borders */
-      --md-sys-color-outline-variant: #E4E4E9;           /* dividers */
+      --md-sys-color-surface: #F7F7FA;
+      --md-sys-color-surface-container-low: #FFFFFF;
+      --md-sys-color-surface-container: #FFFFFF;
+      --md-sys-color-surface-container-high: #FFFFFF;
+      --md-sys-color-surface-container-highest: #EFEFF4;
+      --md-sys-color-surface-variant: #EFEFF4;
+      --md-sys-color-on-surface: #1B1B1F;
+      --md-sys-color-on-surface-variant: #5C5C66;
+      --md-sys-color-outline: #DEDEE3;
+      --md-sys-color-outline-variant: #E4E4E9;
     }
-    /* Off-state toggle switches were nearly invisible against the dark
-       background (track/icon color matched surrounding card color).
-       Scoped only to md-switch — does not affect any other component. */
+    /* Dark theme: make off-state md-switch visible */
     :root[data-theme-resolved=dark] md-switch,
     :root[data-theme=dark] md-switch {
       --md-switch-track-color: #3A3A3F;
@@ -1251,9 +1144,7 @@
   </style>
 
   <style>
-    /* === UI POLISH: More blur, subtle neon, tight spacing === */
 
-    /* Tighter spacing on hero card */
     .keybox-inner {
       display: flex !important;
       flex-direction: row !important;
@@ -1263,7 +1154,6 @@
       gap: 12px !important;
     }
 
-    /* Info grid tighter */
     .info-grid {
       gap: 8px !important;
     }
@@ -1280,19 +1170,13 @@
       font-size: 1.0rem !important;
     }
 
-    /* Glass effect — scoped to the hero keybox card only (was applying to
-       EVERY md-filled-card app-wide via !important, multiplying GPU
-       compositing cost on every screen that has multiple cards). Blur
-       radius also reduced from 12px to 8px — visually near-identical but
-       meaningfully cheaper to render every frame during scroll. */
+    /* Glass effect: hero keybox card only, low blur for performance */
     #keybox-card.hero-card {
       backdrop-filter: blur(8px) saturate(1.3) !important;
       -webkit-backdrop-filter: blur(8px) saturate(1.3) !important;
     }
 
-    /* App top bar — subtle glass. Blur reduced from 14px to 8px: this bar is
-       fixed and sits over scrolling content, so every scroll frame pays this
-       blur's compositing cost. Lower radius = same glass look, less GPU work. */
+    /* Top bar: subtle glass, low blur for scroll performance */
     .app-top-bar {
       backdrop-filter: blur(8px) saturate(1.3) !important;
       -webkit-backdrop-filter: blur(8px) saturate(1.3) !important;
@@ -1311,7 +1195,6 @@
       contain: layout style;
     }
 
-    /* ── Outer flat pill — light (default, matches screenshot) ── */
     .jerry-nav-inner {
       display: flex;
       align-items: center;
@@ -1329,7 +1212,6 @@
       position: relative;
     }
 
-    /* ── Outer flat pill — dark theme (semi-transparent, matches screenshot) ── */
     :root[data-theme-resolved=dark] .jerry-nav-inner,
     :root[data-theme=dark] .jerry-nav-inner {
       background: rgba(30,30,30,0.85);
@@ -1367,7 +1249,6 @@
       box-shadow: none !important;
     }
 
-    /* ── Inactive icons/labels — light theme: solid gray ── */
     .jerry-nav-icon {
       width: 24px;
       height: 24px;
@@ -1382,7 +1263,6 @@
       letter-spacing: 0;
     }
 
-    /* ── Inactive icons/labels — dark theme: light gray ── */
     :root[data-theme-resolved=dark] .jerry-nav-icon,
     :root[data-theme=dark] .jerry-nav-icon { fill: rgba(255,255,255,0.38); }
     :root[data-theme-resolved=dark] .jerry-nav-label,
@@ -1391,7 +1271,6 @@
     /* Hide any legacy sliding indicator element */
     .jerry-indicator { display: none !important; }
 
-    /* ── Active tab — app's real accent color #5b6ef5 (matches cards/chips) ── */
     .jerry-nav-tab.active .jerry-nav-icon  { fill: #5b6ef5; transform: scale(1.08); }
     .jerry-nav-tab.active .jerry-nav-label { color: #5b6ef5; font-weight: 700; }
 
@@ -1400,10 +1279,8 @@
     :root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-label,
     :root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-label { color: #5b6ef5; }
 
-    /* Press feedback */
     .jerry-nav-tab:active .jerry-nav-icon { transform: scale(0.90); opacity: 0.75; }
 
-    /* Tighter page padding */
     main {
       padding: 0 !important;
     }
@@ -1414,7 +1291,6 @@
       margin-bottom: 14px;
     }
 
-    /* List items tighter */
     .list-item {
       padding: 10px 14px !important;
       min-height: 48px !important;
@@ -1425,7 +1301,6 @@
       letter-spacing: 0.09em !important;
     }
 
-    /* ===== Control tab summary cards (Jerry-style, open a modal) ===== */
     .ctrl-card {
       display: flex;
       align-items: center;
@@ -1465,7 +1340,6 @@
     }
     .ctrl-chevron { opacity: 0.45; flex-shrink: 0; }
 
-    /* Light theme — white glass, dark readable text (matches .list-item) */
     :root[data-theme-resolved=light] .ctrl-card,
     :root[data-theme=light] .ctrl-card {
       background: rgba(255,255,255,0.75) !important;
@@ -1479,7 +1353,6 @@
     :root[data-theme-resolved=light] .ctrl-card-desc,
     :root[data-theme=light] .ctrl-card-desc { color: #44447a !important; font-weight: 500 !important; }
 
-    /* Dark theme — matches .list-item */
     :root[data-theme-resolved=dark] .ctrl-card,
     :root[data-theme=dark] .ctrl-card {
       background: #1E1E1E !important;
@@ -1494,7 +1367,6 @@
     :root[data-theme-resolved=dark] .ctrl-card-desc,
     :root[data-theme=dark] .ctrl-card-desc { color: #A0A0A0 !important; }
 
-    /* Rows rendered inside the dynamic control-group dialog */
     .ctrl-dialog-row {
       display: flex;
       align-items: center;
@@ -1507,8 +1379,6 @@
     .ctrl-dialog-row-title { font-size: 0.85rem; font-weight: 500; }
     .ctrl-dialog-row-desc { font-size: 0.70rem; opacity: 0.62; margin-top: 2px; }
 
-    /* Direct toggle rows on the Control page (no dialog) — same visual
-       identity as .ctrl-card, one row per individual toggle. */
     .ctrl-rows { display: flex; flex-direction: column; }
     .ctrl-row {
       display: flex;
@@ -1537,13 +1407,11 @@
       -webkit-box-orient: vertical;
     }
 
-    /* Child rows under a masterKey group, disabled while the master switch
-       is off — dims the row so it reads as unavailable, not just unchecked. */
+    /* Child rows under a masterKey group, dimmed while master is off */
     .ctrl-row--locked { opacity: 0.45; }
     .ctrl-row--locked .ctrl-row-switch { pointer-events: none; }
 
-    /* Rows whose switch lives inside a detail dialog instead of inline —
-       the whole row is clickable and shows a chevron instead of a switch. */
+    /* Rows with the switch inside a detail dialog: clickable, chevron shown */
     .ctrl-row--detail { display: flex; align-items: center; }
     .ctrl-row-divider {
       width: 1px;
@@ -1589,7 +1457,6 @@
     :root[data-theme-resolved=dark] .ctrl-row-desc,
     :root[data-theme=dark] .ctrl-row-desc { color: #A0A0A0 !important; }
 
-    /* Heading row on the Control page: category title + enabled-count badge */
     .ctrl-heading-row {
       display: flex;
       align-items: center;
@@ -1614,18 +1481,11 @@
     }
   </style>
 
-  <!-- ===== CONTROL TAB TOGGLES (Jerry-style grouped modal cards) ===== -->
-  <!-- ===== JERRY NAV SCRIPT ===== -->
   <style>
     #keybox-card.hero-card { position: relative; }
   </style>
 
-  <!-- KEYBOX CARD CHECKING STATE OVERRIDE removed —
-       bundle's real keybox result now shows immediately, no artificial delay -->
-
-
 <style>
-    /* ── Custom Keybox Dialog — Dark theme purple buttons ── */
     :root[data-theme-resolved=dark] #kb-file-btn,
     :root[data-theme=dark] #kb-file-btn {
       --md-filled-tonal-button-container-color: #7C3AED;
@@ -1649,7 +1509,6 @@
   </style>
 
   <style>
-    /* ── Light theme: All md-dialog ── */
     :root[data-theme-resolved=light] md-dialog,
     :root[data-theme=light] md-dialog {
       --md-dialog-container-color: #ffffff;
@@ -1657,7 +1516,6 @@
       --md-dialog-supporting-text-color: #444444;
       --md-text-button-label-text-color: #5b21b6;
     }
-    /* ── Light theme: Activity cards ── */
     :root[data-theme-resolved=light] .activity-card,
     :root[data-theme=light] .activity-card {
       --md-elevated-card-container-color: #f5f3ff;
@@ -1673,7 +1531,6 @@
     :root[data-theme=light] .activity-card__time {
       color: #6b7280 !important;
     }
-    /* Success icon circle — light purple */
     :root[data-theme-resolved=light] .activity-card--success .activity-card__leading,
     :root[data-theme=light] .activity-card--success .activity-card__leading {
       background: #ede9fe !important;
@@ -1682,7 +1539,6 @@
     :root[data-theme=light] .activity-card--success .activity-card__icon {
       color: #5b21b6 !important;
     }
-    /* Error icon circle */
     :root[data-theme-resolved=light] .activity-card--error .activity-card__leading,
     :root[data-theme=light] .activity-card--error .activity-card__leading {
       background: #fee2e2 !important;
@@ -1691,7 +1547,6 @@
     :root[data-theme=light] .activity-card--error .activity-card__icon {
       color: #b91c1c !important;
     }
-    /* Activity list headline */
     :root[data-theme-resolved=light] .activity-empty p,
     :root[data-theme=light] .activity-empty p {
       color: #6b7280 !important;
