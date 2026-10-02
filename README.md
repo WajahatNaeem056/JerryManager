@@ -41,12 +41,12 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 3. Reboot
 4. Open the module's Web UI from your manager app to configure
 
-## Requirements
+## Structure
 
-- KernelSU or APatch
-- Android 8.0+
-
----
+- `Jerry/`: module (features, lib, pipelines, webroot)
+- `webui-src/project/`: WebUI source (Vite), builds into `Jerry/webroot/`
+- `tools/`: webroot clean and check scripts
+- `build.sh`: packages `Jerry/` into the flashable ZIP
 
 ## Build
 
@@ -70,12 +70,6 @@ cd ../..
 sh build.sh
 ```
 
-## Structure
-
-- `Jerry/`: module (features, lib, pipelines, webroot)
-- `webui-src/project/`: WebUI source (Vite), builds into `Jerry/webroot/`
-- `tools/`: webroot clean and check scripts
-- `build.sh`: packages `Jerry/` into the flashable ZIP
 
 ## Developer
 
