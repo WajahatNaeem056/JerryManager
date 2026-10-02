@@ -1,0 +1,65 @@
+#keybox-card.hero-card { position: relative; }
+
+:root[data-theme-resolved=dark] #kb-file-btn,
+:root[data-theme=dark] #kb-file-btn {
+  --md-filled-tonal-button-container-color: #7C3AED;
+  --md-filled-tonal-button-label-text-color: #ffffff;
+  --md-filled-tonal-button-hover-state-layer-color: #ffffff;
+  --md-filled-tonal-button-pressed-container-color: #6D28D9;
+}
+:root[data-theme-resolved=dark] #kb-apply-btn,
+:root[data-theme=dark] #kb-apply-btn {
+  --md-filled-tonal-button-container-color: #7C3AED;
+  --md-filled-tonal-button-label-text-color: #ffffff;
+  --md-filled-tonal-button-hover-state-layer-color: #ffffff;
+  --md-filled-tonal-button-pressed-container-color: #6D28D9;
+}
+:root[data-theme-resolved=dark] #fb-select,
+:root[data-theme=dark] #fb-select {
+  --md-filled-button-container-color: #7C3AED;
+  --md-filled-button-label-text-color: #ffffff;
+  --md-filled-button-pressed-container-color: #6D28D9;
+}
+
+:root[data-theme-resolved=light] md-dialog,
+:root[data-theme=light] md-dialog {
+  --md-dialog-container-color: #ffffff;
+  --md-dialog-headline-color: #252525;
+  --md-dialog-supporting-text-color: #444444;
+  --md-text-button-label-text-color: #5b21b6;
+}
+:root[data-theme-resolved=light] .activity-card,
+:root[data-theme=light] .activity-card {
+  --md-elevated-card-container-color: #f5f3ff;
+  --md-elevated-card-container-elevation: 1;
+  border: 1px solid rgba(91,33,182,0.10);
+}
+:root[data-theme-resolved=light] .activity-card__name,
+:root[data-theme=light] .activity-card__name {
+  color: #1a1a2e !important;
+  font-weight: 600 !important;
+}
+:root[data-theme-resolved=light] .activity-card__time,
+:root[data-theme=light] .activity-card__time {
+  color: #6b7280 !important;
+}
+:root[data-theme-resolved=light] .activity-card--success .activity-card__leading,
+:root[data-theme=light] .activity-card--success .activity-card__leading {
+  background: #ede9fe !important;
+}
+:root[data-theme-resolved=light] .activity-card--success .activity-card__icon,
+:root[data-theme=light] .activity-card--success .activity-card__icon {
+  color: #5b21b6 !important;
+}
+:root[data-theme-resolved=light] .activity-card--error .activity-card__leading,
+:root[data-theme=light] .activity-card--error .activity-card__leading {
+  background: #fee2e2 !important;
+}
+:root[data-theme-resolved=light] .activity-card--error .activity-card__icon,
+:root[data-theme=light] .activity-card--error .activity-card__icon {
+  color: #b91c1c !important;
+}
+:root[data-theme-resolved=light] .activity-empty p,
+:root[data-theme=light] .activity-empty p {
+  color: #6b7280 !important;
+}
