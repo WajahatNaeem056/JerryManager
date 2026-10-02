@@ -1,65 +1,81 @@
+:root {
+  --color-accent: #7C3AED;
+  --color-accent-pressed: #6D28D9;
+  --color-on-accent: #ffffff;
+  --color-violet-strong: #5b21b6;
+  --color-violet-surface: #f5f3ff;
+  --color-violet-tint: #ede9fe;
+  --color-surface-white: #ffffff;
+  --color-text-title: #252525;
+  --color-text-body: #444444;
+  --color-text-strong: #1a1a2e;
+  --color-text-muted: #6b7280;
+  --color-error-surface: #fee2e2;
+  --color-error-text: #b91c1c;
+}
+
 #keybox-card.hero-card { position: relative; }
 
 :root[data-theme-resolved=dark] #kb-file-btn,
 :root[data-theme=dark] #kb-file-btn {
-  --md-filled-tonal-button-container-color: #7C3AED;
-  --md-filled-tonal-button-label-text-color: #ffffff;
-  --md-filled-tonal-button-hover-state-layer-color: #ffffff;
-  --md-filled-tonal-button-pressed-container-color: #6D28D9;
+  --md-filled-tonal-button-container-color: var(--color-accent);
+  --md-filled-tonal-button-label-text-color: var(--color-on-accent);
+  --md-filled-tonal-button-hover-state-layer-color: var(--color-on-accent);
+  --md-filled-tonal-button-pressed-container-color: var(--color-accent-pressed);
 }
 :root[data-theme-resolved=dark] #kb-apply-btn,
 :root[data-theme=dark] #kb-apply-btn {
-  --md-filled-tonal-button-container-color: #7C3AED;
-  --md-filled-tonal-button-label-text-color: #ffffff;
-  --md-filled-tonal-button-hover-state-layer-color: #ffffff;
-  --md-filled-tonal-button-pressed-container-color: #6D28D9;
+  --md-filled-tonal-button-container-color: var(--color-accent);
+  --md-filled-tonal-button-label-text-color: var(--color-on-accent);
+  --md-filled-tonal-button-hover-state-layer-color: var(--color-on-accent);
+  --md-filled-tonal-button-pressed-container-color: var(--color-accent-pressed);
 }
 :root[data-theme-resolved=dark] #fb-select,
 :root[data-theme=dark] #fb-select {
-  --md-filled-button-container-color: #7C3AED;
-  --md-filled-button-label-text-color: #ffffff;
-  --md-filled-button-pressed-container-color: #6D28D9;
+  --md-filled-button-container-color: var(--color-accent);
+  --md-filled-button-label-text-color: var(--color-on-accent);
+  --md-filled-button-pressed-container-color: var(--color-accent-pressed);
 }
 
 :root[data-theme-resolved=light] md-dialog,
 :root[data-theme=light] md-dialog {
-  --md-dialog-container-color: #ffffff;
-  --md-dialog-headline-color: #252525;
-  --md-dialog-supporting-text-color: #444444;
-  --md-text-button-label-text-color: #5b21b6;
+  --md-dialog-container-color: var(--color-surface-white);
+  --md-dialog-headline-color: var(--color-text-title);
+  --md-dialog-supporting-text-color: var(--color-text-body);
+  --md-text-button-label-text-color: var(--color-violet-strong);
 }
 :root[data-theme-resolved=light] .activity-card,
 :root[data-theme=light] .activity-card {
-  --md-elevated-card-container-color: #f5f3ff;
+  --md-elevated-card-container-color: var(--color-violet-surface);
   --md-elevated-card-container-elevation: 1;
   border: 1px solid rgba(91,33,182,0.10);
 }
 :root[data-theme-resolved=light] .activity-card__name,
 :root[data-theme=light] .activity-card__name {
-  color: #1a1a2e !important;
+  color: var(--color-text-strong) !important;
   font-weight: 600 !important;
 }
 :root[data-theme-resolved=light] .activity-card__time,
 :root[data-theme=light] .activity-card__time {
-  color: #6b7280 !important;
+  color: var(--color-text-muted) !important;
 }
 :root[data-theme-resolved=light] .activity-card--success .activity-card__leading,
 :root[data-theme=light] .activity-card--success .activity-card__leading {
-  background: #ede9fe !important;
+  background: var(--color-violet-tint) !important;
 }
 :root[data-theme-resolved=light] .activity-card--success .activity-card__icon,
 :root[data-theme=light] .activity-card--success .activity-card__icon {
-  color: #5b21b6 !important;
+  color: var(--color-violet-strong) !important;
 }
 :root[data-theme-resolved=light] .activity-card--error .activity-card__leading,
 :root[data-theme=light] .activity-card--error .activity-card__leading {
-  background: #fee2e2 !important;
+  background: var(--color-error-surface) !important;
 }
 :root[data-theme-resolved=light] .activity-card--error .activity-card__icon,
 :root[data-theme=light] .activity-card--error .activity-card__icon {
-  color: #b91c1c !important;
+  color: var(--color-error-text) !important;
 }
 :root[data-theme-resolved=light] .activity-empty p,
 :root[data-theme=light] .activity-empty p {
-  color: #6b7280 !important;
+  color: var(--color-text-muted) !important;
 }
