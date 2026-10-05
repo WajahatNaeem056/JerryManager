@@ -142,6 +142,12 @@ resetprop -n partition.odm.verified 2
     log "SERVICE" "Delayed re-apply: reapplying critical props"
     sp_try ro.crypto.state encrypted
     sp_try ro.build.tags release-keys
+    sp_try ro.boot.veritymode.managed yes
+    sp_try ro.boot.selinux enforcing
+    sp_try ro.build.selinux 1
+    sp_try ro.secure 1
+    sp_try ro.hardware.virtual_device 0
+    sp_try ro.is_ever_orange 0
     sp_try ro.boot.verifiedbootstate green
     sp_try vendor.boot.verifiedbootstate green
     resetprop --delete sys.oem_unlock_allowed 2>/dev/null || true
