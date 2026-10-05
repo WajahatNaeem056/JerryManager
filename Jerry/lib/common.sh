@@ -201,17 +201,17 @@ check_google_revocation() {
     [ -n "$_cgr_serial" ] || return 1
     _cgr_list=$(download "$GOOGLE_REVOCATION_URL" 2>/dev/null)
     [ -z "$_cgr_list" ] && { log "REVOKE" "Warning: Could not fetch Google revocation list"; return 1; }
-    if echo "$_cgr_list" | grep -qi "$_cgr_serial"; then
+    if echo "$_cgr_list" | grep -qiE "\"$_cgr_serial\"[[:space:]]*:"; then
         unset _cgr_serial _cgr_list; return 0
     fi
     _cgr_clean="${_cgr_serial#"${_cgr_serial%%[!0]*}"}"
     [ -z "$_cgr_clean" ] && _cgr_clean=0
-    if echo "$_cgr_list" | grep -qi "$_cgr_clean"; then
+    if echo "$_cgr_list" | grep -qiE "\"$_cgr_clean\"[[:space:]]*:"; then
         unset _cgr_serial _cgr_list _cgr_clean; return 0
     fi
     if [ "${#_cgr_serial}" -le 16 ]; then
         _cgr_dec=$((16#$_cgr_clean))
-        if echo "$_cgr_list" | grep -q "$_cgr_dec"; then
+        if echo "$_cgr_list" | grep -qE "\"$_cgr_dec\"[[:space:]]*:"; then
             unset _cgr_serial _cgr_list _cgr_clean _cgr_dec; return 0
         fi
         unset _cgr_dec
