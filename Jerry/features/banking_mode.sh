@@ -169,7 +169,7 @@ for _p in \
     persist.com.luckyzyx.luckytool.log.level \
     persist.com.luckyzyx.luckytool.debug \
     persist.com.luckyzyx.luckytool.enable; do
-    resetprop -p --delete "$_p" 2>/dev/null || true
+    sp_persist_delete "$_p"
 done
 unset _p
 

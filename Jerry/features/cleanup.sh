@@ -96,15 +96,15 @@ log "CLEANUP" "Applying prop hardening..."
 apply_boot_props || true
 
 log "CLEANUP" "Deleting persist props..."
-resetprop -p --delete persist.service.adb.enable 2>/dev/null || true
-resetprop -p --delete persist.service.debuggable 2>/dev/null || true
-resetprop -p --delete persist.zygote.app_data_isolation 2>/dev/null || true
-resetprop -p --delete persist.hyperceiler.log.level 2>/dev/null || true
-resetprop -p --delete persist.com.luckyzyx.luckytool.log.level 2>/dev/null || true
-resetprop -p --delete persist.com.luckyzyx.luckytool.debug 2>/dev/null || true
-resetprop -p --delete persist.com.luckyzyx.luckytool.enable 2>/dev/null || true
-resetprop -p --delete persist.sys.developer_options 2>/dev/null || true
-resetprop -p --delete persist.sys.dev_mode 2>/dev/null || true
+sp_persist_delete persist.service.adb.enable
+sp_persist_delete persist.service.debuggable
+sp_persist_delete persist.zygote.app_data_isolation
+sp_persist_delete persist.hyperceiler.log.level
+sp_persist_delete persist.com.luckyzyx.luckytool.log.level
+sp_persist_delete persist.com.luckyzyx.luckytool.debug
+sp_persist_delete persist.com.luckyzyx.luckytool.enable
+sp_persist_delete persist.sys.developer_options
+sp_persist_delete persist.sys.dev_mode
 
 resetprop -n persist.sys.developer_options 0 2>/dev/null || true
 resetprop -n persist.sys.dev_mode 0 2>/dev/null || true

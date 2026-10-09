@@ -12,7 +12,7 @@ log "AUTO_TARGET" "Start"
 resolve_keystore_backend
 
 if [ "$KEYSTORE_BACKEND" = "none" ]; then
-  log "AUTO_TARGET" "No active keystore backend found (Tricky Store / OhMyKeymint) — skipping"
+  log "AUTO_TARGET" "No active keystore backend found — skipping"
   exit 0
 fi
 
@@ -62,12 +62,12 @@ done < "$TEMP_LIST"
 
 if [ -s "$NEW_LIST" ]; then
   _added=$(wc -l < "$NEW_LIST" 2>/dev/null || echo "0")
-  if [ "$KEYSTORE_BACKEND" = "omk" ]; then
+  if [ "$KEYSTORE_BACKEND" = "omk" ] || [ "$KEYSTORE_BACKEND" = "teesim" ]; then
     while IFS= read -r _new_pkg; do
       [ -z "$_new_pkg" ] && continue
       keystore_add_target "$_new_pkg"
     done < "$NEW_LIST"
-    log "AUTO_TARGET" "Added $_added new app(s) to OhMyKeymint injector.toml"
+    log "AUTO_TARGET" "Added $_added new app(s) via $KEYSTORE_NAME"
   else
     cat "$NEW_LIST" >> "$TARGET_TXT"
     sort -u "$TARGET_TXT" -o "$TARGET_TXT" 2>/dev/null

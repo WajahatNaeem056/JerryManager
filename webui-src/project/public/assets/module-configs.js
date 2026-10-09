@@ -10,7 +10,7 @@
           { key: 'toggle_bootloader_spoofer', icon: 'lock',                def: '1', titleKey: 'control_toggle_bootloader_spoofer', title: 'Bootloader Spoofer Block',    descKey: 'control_toggle_bootloader_spoofer_desc', desc: 'Remove conflicting bootloader spoofer packages at boot' },
           { key: 'toggle_rom_spoof',          icon: 'smartphone',          def: '1', titleKey: 'control_toggle_rom_spoof', title: 'Block ROM Spoof Engines',     descKey: 'control_toggle_rom_spoof_desc', desc: 'Disable ROM-level spoof engines (PixelProps, PIHooks, etc.)' },
           { key: 'toggle_suspicious_props',   icon: 'visibility_off',      def: '1', titleKey: 'control_toggle_suspicious_props', title: 'Clean Suspicious Props',      descKey: 'control_toggle_suspicious_props_desc', desc: 'Scan for and clear known root/emulator/tamper-indicating system properties, at boot and hourly' },
-          { key: 'toggle_pif_traces',                 icon: 'cleaning_services', def: '1', titleKey: 'control_toggle_pif_traces', title: 'Clean PIF Traces',    descKey: 'control_toggle_pif_traces_desc', desc: 'Removes leftover spoofing traces (PIHook, PixelProps, and similar) from your device — helps avoid detection by security-checking apps' }
+          { key: 'toggle_multiroot_hide', icon: 'folder_off', def: '0', titleKey: 'control_toggle_multiroot_hide', title: 'Hide Other Root Solutions', descKey: 'control_toggle_multiroot_hide_desc', desc: 'Medium risk: at boot, moves leftover Magisk/KernelSU/APatch folders of the root solutions you are NOT using out of /data/adb, and moves them back when turned off or on uninstall. Does nothing if the active root cannot be identified.' }
         ]
       },
       custom_rom: {
@@ -33,7 +33,8 @@
           { key: 'toggle_lineage_identity_cleanup',       icon: 'android',             def: '0', titleKey: 'control_toggle_lineage_identity_cleanup', title: 'Lineage Identity Cleanup',                descKey: 'control_toggle_lineage_identity_cleanup_desc', desc: 'Spoofs LineageOS-specific properties (from lineage_identity_cleanup.prop) so apps cannot detect a LineageOS-based custom ROM' },
           { key: 'toggle_nuke_lineage',       icon: 'delete_forever',      def: '0', titleKey: 'control_toggle_nuke_lineage', title: 'Nuke Lineage',                descKey: 'control_toggle_nuke_lineage_desc', desc: 'Medium risk: aggressively DELETES any prop whose value contains "lineage" at boot, instead of overriding it. Off by default — only enable if Lineage Identity Cleanup is not enough.' },
           { key: 'toggle_custom_rom_identity_cleanup',    icon: 'delete_sweep',        def: '0', titleKey: 'control_toggle_custom_rom_identity_cleanup', title: 'Custom ROM Identity Cleanup',             descKey: 'control_toggle_custom_rom_identity_cleanup_desc', desc: 'Deletes leftover NikGapps/BitGApps/LiteGApps installer log files at boot. Does not hide root or affect Play Integrity — only removes GApps-install forensic traces. Irreversible delete, no backup.' },
-          { key: 'toggle_hide_rom_identifier', icon: 'delete_forever',  def: '0', titleKey: 'control_toggle_hide_rom_identifier', title: 'Hide ROM Identifier', descKey: 'control_toggle_hide_rom_identifier_desc', desc: 'Medium risk: deletes any prop whose key or value matches one of 24 known custom-ROM names (LineageOS, crDroid, PixelOS, GrapheneOS, Havoc, CalyxOS, and more), plus ro.modversion. Broader than Nuke Lineage, same collateral-deletion risk.' }
+          { key: 'toggle_hide_rom_identifier', icon: 'delete_forever',  def: '0', titleKey: 'control_toggle_hide_rom_identifier', title: 'Hide ROM Identifier', descKey: 'control_toggle_hide_rom_identifier_desc', desc: 'Medium risk: deletes any prop whose key or value matches one of 24 known custom-ROM names (LineageOS, crDroid, PixelOS, GrapheneOS, Havoc, CalyxOS, and more), plus ro.modversion. Broader than Nuke Lineage, same collateral-deletion risk.' },
+          { key: 'toggle_pif_traces',                 icon: 'cleaning_services', def: '0', titleKey: 'control_toggle_pif_traces', title: 'Clean PIF Traces',    descKey: 'control_toggle_pif_traces_desc', desc: 'Removes leftover spoofing traces (PIHook, PixelProps, and similar) from your device — helps avoid detection by security-checking apps' }
         ]
       },
       automation: {
@@ -43,7 +44,7 @@
         toggles: [
           { key: 'toggle_auto_target', icon: 'radar', def: '1', titleKey: 'control_toggle_auto_target', title: 'Auto Target New Apps', descKey: 'control_toggle_auto_target_desc', desc: 'Automatically detect newly installed apps and add them to target.txt' },
           { key: 'toggle_target_system', icon: 'apps', def: '0', titleKey: 'control_toggle_target_system', title: 'Include System Apps', descKey: 'control_toggle_target_system_desc', desc: 'Also scan and auto-target pre-installed system apps, not just user-installed ones' },
-          { key: 'toggle_teesim_sync', icon: 'sync', def: '0', titleKey: 'control_toggle_teesim_sync', title: 'Sync TEESimulator Config', descKey: 'control_toggle_teesim_sync_desc', desc: 'If TEESimulator is installed, keep its device identity, security patch, and target list in sync with Jerry' }
+          { key: 'toggle_teesim_sync', icon: 'sync', def: '0', titleKey: 'control_toggle_teesim_sync', title: 'Sync TEESimulator Config', descKey: 'control_toggle_teesim_sync_desc', desc: 'If TEESimulator is installed, keep its device identity (brand/device/product/manufacturer/model) in sync with your PIF config' }
         ]
       },
       adb: {

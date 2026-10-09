@@ -1,8 +1,6 @@
 # Tricky Store paths
 TRICKY_DIR="/data/adb/tricky_store"
 TARGET_FILE="$TRICKY_DIR/keybox.xml"
-LOCKED_FILE="$TRICKY_DIR/locked.xml"
-LOCKED_BACKUP="$TRICKY_DIR/locked.xml.bak"
 TARGET_TXT="$TRICKY_DIR/target.txt"
 SECURITY_PATCH_FILE="$TRICKY_DIR/security_patch.txt"
 TEE_STATUS="$TRICKY_DIR/tee_status"
@@ -15,6 +13,7 @@ OMK_RESTART_DIR="/data/adb/omk"
 # TEESimulator paths
 TEESIM_DIR="/data/adb/teesim"
 TEESIM_CONFIG="$TEESIM_DIR/config.json"
+TEESIM_KEYBOX="$TEESIM_DIR/keybox.xml"
 
 KEYBOX_BACKUP_DIR="/data/adb/JerryManager/KeyBackup"
 ensure_dir "$KEYBOX_BACKUP_DIR"
@@ -23,11 +22,7 @@ find_keybox_backup() {
   find "$KEYBOX_BACKUP_DIR" -maxdepth 1 -type f -name "${1}_keybox_*.xml" 2>/dev/null | head -n1
 }
 
-# BACKUP_FILE / OMK_BACKUP resolve to the EXISTING backup for their backend
-# if one was already made, so "[ -f "$BACKUP_FILE" ]" checks and restores
-# throughout the codebase keep working unchanged. If no backup exists yet,
-# they resolve to a fresh timestamped path (not yet created) ready for the
-# next "cp ... "$BACKUP_FILE"" call that makes the one-time backup.
+# Existing backup path if one exists, else a fresh timestamped path to create
 _resolve_keybox_backup_var() {
   _existing="$(find_keybox_backup "$1")"
   if [ -n "$_existing" ]; then
@@ -38,6 +33,7 @@ _resolve_keybox_backup_var() {
 }
 BACKUP_FILE="$(_resolve_keybox_backup_var trickystore)"
 OMK_BACKUP="$(_resolve_keybox_backup_var omk)"
+TEESIM_BACKUP="$(_resolve_keybox_backup_var teesim)"
 
 BOOT_HASH_FILE="/data/adb/boot_hash"
 IDFILE="/data/local/tmp/jerryid"

@@ -18,7 +18,7 @@ if [ ! -f "$CUSTOM_KEYBOX" ]; then
 fi
 
 if [ "$KEYSTORE_BACKEND" = "none" ]; then
-  log "CUSTOM_KEYBOX" "Error: No active keystore backend found (Tricky Store / OhMyKeymint)"
+  log "CUSTOM_KEYBOX" "Error: No active keystore backend found"
   exit 1
 fi
 

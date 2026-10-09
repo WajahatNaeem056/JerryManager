@@ -11,7 +11,7 @@ log "KEYBOX" "Start"
 resolve_keystore_backend
 
 if [ "$KEYSTORE_BACKEND" = "none" ]; then
-  log "KEYBOX" "Error: No active keystore backend found (Tricky Store / OhMyKeymint)"
+  log "KEYBOX" "Error: No active keystore backend found"
   exit 1
 fi
 
@@ -84,6 +84,71 @@ if [ "$KEYSTORE_BACKEND" = "omk" ]; then
   unset _serial
 
   log "KEYBOX" "Finish (OhMyKeymint)"
+  exit 0
+fi
+
+if [ "$KEYSTORE_BACKEND" = "teesim" ]; then
+  log "KEYBOX" "$KEYSTORE_NAME active — installing raw keybox.xml"
+  _tee_custom_type=$(cfg_get kb_custom_type "")
+  _tee_custom_value=$(cfg_get kb_custom_value "")
+  _tee_temp="$MODDIR/keybox.tmp"
+  _tee_decode="$MODDIR/keybox_decode"
+
+  _tee_install() {
+    mkdir -p "$TEESIM_DIR" 2>/dev/null
+    if [ -f "$TEESIM_KEYBOX" ] && [ -z "$(find_keybox_backup teesim)" ]; then
+      cp "$TEESIM_KEYBOX" "$TEESIM_BACKUP" 2>/dev/null
+      log "KEYBOX" "Created backup of existing keybox"
+    fi
+    cp "$1" "$TEESIM_KEYBOX" 2>/dev/null || return 1
+    [ -f "$TEESIM_CONFIG" ] && _teesim_set_keybox_field "$TEESIM_CONFIG"
+    return 0
+  }
+
+  if [ -n "$_tee_custom_type" ] && [ -n "$_tee_custom_value" ]; then
+    case "$_tee_custom_type" in
+      file|path)
+        [ -f "$_tee_custom_value" ] || { log "KEYBOX" "Error: Custom keybox file not found: $_tee_custom_value"; cfg_delete kb_custom_type; cfg_delete kb_custom_value; exit 1; }
+        _tee_install "$_tee_custom_value" || { log "KEYBOX" "Error: Failed to copy custom keybox"; exit 1; }
+        log "KEYBOX" "Custom keybox installed from $_tee_custom_value"
+        ;;
+      url)
+        check_network || { log "KEYBOX" "Error: No internet connection"; exit 1; }
+        download "$_tee_custom_value" > "$_tee_temp" || { log "KEYBOX" "Error: Custom URL download failed"; rm -f "$_tee_temp"; exit 1; }
+        if base64 -d "$_tee_temp" > "$_tee_decode" 2>/dev/null && [ -s "$_tee_decode" ]; then
+          _tee_install "$_tee_decode" || { log "KEYBOX" "Error: Failed to install keybox"; rm -f "$_tee_temp" "$_tee_decode"; exit 1; }
+          rm -f "$_tee_temp" "$_tee_decode"
+          log "KEYBOX" "Custom keybox installed from URL"
+        else
+          log "KEYBOX" "Error: Custom keybox decode failed, not a valid base64 blob"
+          rm -f "$_tee_temp" "$_tee_decode"
+          exit 1
+        fi
+        ;;
+    esac
+    cfg_delete kb_custom_type
+    cfg_delete kb_custom_value
+    unset _tee_custom_type _tee_custom_value _tee_temp _tee_decode
+    log "KEYBOX" "Finish (TEESimulator, custom)"
+    exit 0
+  fi
+  unset _tee_custom_type _tee_custom_value
+
+  check_network || { log "KEYBOX" "Error: No internet connection"; exit 1; }
+  log "KEYBOX" "Downloading keybox..."
+  download "$KEYBOX_URL" > "$_tee_temp" || { log "KEYBOX" "Error: Download failed"; rm -f "$_tee_temp"; exit 1; }
+
+  if base64 -d "$_tee_temp" > "$_tee_decode" 2>/dev/null && [ -s "$_tee_decode" ]; then
+    _tee_install "$_tee_decode" || { log "KEYBOX" "Error: Failed to install keybox"; exit 1; }
+  else
+    log "KEYBOX" "Error: Base64 decode failed"
+    rm -f "$_tee_temp" "$_tee_decode"
+    exit 1
+  fi
+  rm -f "$_tee_temp" "$_tee_decode"
+
+  log "KEYBOX" "Keybox installed successfully ($KEYSTORE_NAME)"
+  log "KEYBOX" "Finish"
   exit 0
 fi
 
@@ -178,59 +243,6 @@ if ! base64 -d "$TEMP_FILE" > "$DECODE_FILE" 2>/dev/null; then
   rm -f "$TEMP_FILE"
   [ -f "$BACKUP_FILE" ] && cp "$BACKUP_FILE" "$TARGET_FILE"
   exit 1
-fi
-
-_install_teesimulator() {
-  log "KEYBOX" "TEESimulator detected — generating locked.xml format"
-
-  _tee_serial=$(decode_keybox_serial "$DECODE_FILE" 2>/dev/null || echo "unknown")
-  _tee_random=$(hexdump -n 4 -e '4/4 "%08X"' /dev/urandom 2>/dev/null || echo "$$")
-  _tee_ecdsa=$(sed -n '/<Key algorithm="ecdsa">/,/<\/Key>/p' "$DECODE_FILE" 2>/dev/null)
-  _tee_rsa=$(sed -n '/<Key algorithm="rsa">/,/<\/Key>/p' "$DECODE_FILE" 2>/dev/null)
-
-  if [ -f "$LOCKED_FILE" ] && [ ! -f "$LOCKED_BACKUP" ]; then
-    cp "$LOCKED_FILE" "$LOCKED_BACKUP"
-    log "KEYBOX" "Backup created: locked.xml.bak"
-  fi
-
-  if [ -z "$_tee_ecdsa" ]; then
-    log "KEYBOX" "Warning: No ECDSA key found — writing placeholder locked.xml"
-    {
-      echo '<?xml version="1.0" encoding="UTF-8"?>'
-      echo '<AndroidAttestation>'
-      echo '<NumberOfKeyboxes>1</NumberOfKeyboxes>'
-      echo '<Keybox>'
-      echo '# No valid ECDSA key available — placeholder only'
-      echo '</Keybox>'
-      echo '</AndroidAttestation>'
-    } > "$LOCKED_FILE"
-    log "KEYBOX" "Placeholder locked.xml written"
-    unset _tee_serial _tee_random _tee_ecdsa _tee_rsa
-    return
-  fi
-
-  {
-    echo '<?xml version="1.0" encoding="UTF-8"?>'
-    echo '<AndroidAttestation>'
-    echo '<NumberOfKeyboxes>1</NumberOfKeyboxes>'
-    echo "<Keybox DeviceID=\"$_tee_serial\">"
-    printf '%s\n' "$_tee_ecdsa"
-    echo "  <serial>${_tee_serial}_${_tee_random}</serial>"
-    [ -n "$_tee_rsa" ] && printf '%s\n' "$_tee_rsa"
-    echo '</Keybox>'
-    echo '</AndroidAttestation>'
-  } > "$LOCKED_FILE"
-
-  log "KEYBOX" "locked.xml written to $LOCKED_FILE"
-  unset _tee_serial _tee_random _tee_ecdsa _tee_rsa
-}
-
-if _is_teesimulator; then
-  log "KEYBOX" "TEESimulator module detected"
-  _install_teesimulator
-  rm -f "$TEMP_FILE" "$DECODE_FILE" 2>/dev/null
-  log "KEYBOX" "Finish"
-  exit 0
 fi
 
 mv "$DECODE_FILE" "$TARGET_FILE" || { log "KEYBOX" "Error: Failed to move keybox"; exit 1; }

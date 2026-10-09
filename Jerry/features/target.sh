@@ -12,7 +12,7 @@ log "TARGET" "Start"
 resolve_keystore_backend
 
 if [ "$KEYSTORE_BACKEND" = "none" ]; then
-    die "No active keystore backend found (Tricky Store / OhMyKeymint)"
+    die "No active keystore backend found"
 fi
 
 if [ "$KEYSTORE_BACKEND" = "omk" ]; then
@@ -30,32 +30,22 @@ if [ "$KEYSTORE_BACKEND" = "omk" ]; then
     exit 0
 fi
 
-[ -d "$TRICKY_DIR" ] || die "Tricky Store data directory not found"
-
-if _is_teesimulator; then
-    log "TARGET" "TEESimulator — generating locked.xml section"
-    _cust="/sdcard/JerryManager/customize.txt"
-    if [ -f "$_cust" ] && [ "$(head -1 "$_cust" 2>/dev/null)" != "#disable" ]; then
-      _locked=$(grep -v '^#' "$_cust" | sed 's/[!?]$//' 2>/dev/null || echo "")
-      if [ -n "$_locked" ]; then
-        [ -f "$TARGET_TXT" ] && cp "$TARGET_TXT" "${TARGET_TXT}.bak"
-        _tmp=$(mktemp 2>/dev/null || echo "/data/local/tmp/.jerry_tee_$$")
-        _locked_f="/data/local/tmp/.jerry_locked.$$"
-        printf '%s\n' $_locked > "$_locked_f"
-        if [ -f "$TARGET_TXT" ] && [ -s "$TARGET_TXT" ]; then
-          sed '/^\[/d' "$TARGET_TXT" | grep -Fvxf "$_locked_f" > "$_tmp"
+if [ "$KEYSTORE_BACKEND" = "teesim" ]; then
+    log "TARGET" "$KEYSTORE_NAME active — merging FIXED_TARGETS into config.json"
+    _teesim_count=0
+    for entry in $FIXED_TARGETS; do
+        _bare=$(printf '%s' "$entry" | sed 's/[!?]$//')
+        if keystore_add_target "$_bare"; then
+            _teesim_count=$((_teesim_count + 1))
         fi
-        rm -f "$_locked_f"
-        printf '%s\n' '[locked.xml]' $_locked >> "$_tmp"
-        [ -s "$_tmp" ] && mv -f "$_tmp" "$TARGET_TXT" || rm -f "$_tmp"
-        unset _tmp
-      fi
-      unset _locked
-    fi
-    unset _cust
-    log "TARGET" "Finish (TEESimulator)"
+    done
+    unset _bare
+    log "TARGET" "$KEYSTORE_NAME: processed $_teesim_count FIXED_TARGETS entries"
+    log "TARGET" "Finish ($KEYSTORE_NAME)"
     exit 0
 fi
+
+[ -d "$TRICKY_DIR" ] || die "Tricky Store data directory not found"
 
 _count=0
 

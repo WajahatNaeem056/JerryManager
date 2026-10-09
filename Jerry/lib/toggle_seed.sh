@@ -27,7 +27,8 @@ _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
     toggle_rom_identifier_cleanup:0 \
     toggle_rom_prefix_cleanup:0 \
     toggle_build_marker_cleanup:0 \
-    toggle_pif_traces:1"
+    toggle_pif_traces:0 \
+    toggle_multiroot_hide:0"
 
 seed_toggle_defaults() {
   for _std_pair in $_TOGGLE_DEFAULTS_LIST; do

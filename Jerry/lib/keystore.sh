@@ -20,17 +20,17 @@ resolve_keystore_backend() {
     case "$_rkb_pref" in
         trickystore) KEYSTORE_BACKEND="trickystore" ;;
         omk)         KEYSTORE_BACKEND="omk" ;;
+        teesim)      KEYSTORE_BACKEND="teesim" ;;
         *)
             if _module_enabled "teesim" >/dev/null; then
-                KEYSTORE_BACKEND="none"
-                log "KEYSTORE" "TEESimulator is active — handled separately by Sync TEESimulator Config, not a Jerry-managed backend"
+                KEYSTORE_BACKEND="teesim"
             elif _module_enabled "tricky_store" >/dev/null; then
                 KEYSTORE_BACKEND="trickystore"
             elif _module_enabled "oh_my_keymint" >/dev/null; then
                 KEYSTORE_BACKEND="omk"
             else
                 KEYSTORE_BACKEND="none"
-                log "KEYSTORE" "Error: Tricky Store or OhMyKeymint is not installed"
+                log "KEYSTORE" "Error: Tricky Store, OhMyKeymint or TEESimulator is not installed"
             fi
             ;;
     esac
@@ -44,7 +44,6 @@ resolve_keystore_backend() {
             KEYSTORE_BACKUP="$BACKUP_FILE"
             KEYSTORE_TARGETS="$TARGET_TXT"
             KEYSTORE_SECURITY="$SECURITY_PATCH_FILE"
-            KEYSTORE_LOCKED="$LOCKED_FILE"
             KEYSTORE_FORMAT="flat"
             ;;
         omk)
@@ -55,31 +54,31 @@ resolve_keystore_backend() {
             KEYSTORE_BACKUP="$OMK_BACKUP"
             KEYSTORE_TARGETS="$OMK_INJECTOR"
             KEYSTORE_SECURITY="$OMK_CONFIG"
-            KEYSTORE_LOCKED=""
             KEYSTORE_FORMAT="toml"
             ;;
+        teesim)
+            KEYSTORE_NAME=$(_module_enabled "teesim")
+            [ -n "$KEYSTORE_NAME" ] || KEYSTORE_NAME="TEESimulator"
+            KEYSTORE_DIR="$TEESIM_DIR"
+            KEYSTORE_KEYBOX="$TEESIM_KEYBOX"
+            KEYSTORE_BACKUP="$TEESIM_BACKUP"
+            KEYSTORE_TARGETS="$TEESIM_CONFIG"
+            KEYSTORE_SECURITY="$TEESIM_CONFIG"
+            KEYSTORE_FORMAT="json"
+            ;;
         *)
-            _teesim_name=$(_module_enabled "teesim")
-            if [ -n "$_teesim_name" ]; then
-                KEYSTORE_NAME="$_teesim_name"
-            elif _module_enabled "teesim" >/dev/null; then
-                KEYSTORE_NAME="TEESimulator"
-            else
-                KEYSTORE_NAME="None"
-            fi
-            unset _teesim_name
+            KEYSTORE_NAME="None"
             KEYSTORE_DIR=""
             KEYSTORE_KEYBOX=""
             KEYSTORE_BACKUP=""
             KEYSTORE_TARGETS=""
             KEYSTORE_SECURITY=""
-            KEYSTORE_LOCKED=""
             KEYSTORE_FORMAT=""
             ;;
     esac
 
     export KEYSTORE_BACKEND KEYSTORE_NAME KEYSTORE_DIR KEYSTORE_KEYBOX \
-           KEYSTORE_TARGETS KEYSTORE_SECURITY KEYSTORE_LOCKED KEYSTORE_FORMAT
+           KEYSTORE_TARGETS KEYSTORE_SECURITY KEYSTORE_FORMAT
     unset _rkb_pref
 }
 
@@ -87,8 +86,7 @@ keystore_ready() {
     [ "$KEYSTORE_BACKEND" != "none" ] && [ -n "$KEYSTORE_DIR" ] && [ -d "$KEYSTORE_DIR" ]
 }
 
-# Ask the active backend to pick up changes. Tricky Store watches its files
-# directly (no reload needed); OhMyKeymint needs an explicit restart touch-file.
+# OhMyKeymint needs an explicit restart touch-file; Tricky Store just watches files
 keystore_reload_keymint() {
     [ "$KEYSTORE_BACKEND" = "omk" ] || return 0
     ensure_dir "$OMK_RESTART_DIR"
@@ -108,18 +106,23 @@ keystore_write_security_patch() {
 
     case "$KEYSTORE_FORMAT" in
         flat)
+            ensure_dir "$(dirname "$KEYSTORE_SECURITY")"
             printf 'system=%s\nboot=%s\nvendor=%s\n' "$_kwsp_os" "$_kwsp_boot" "$_kwsp_vendor" > "$KEYSTORE_SECURITY"
             _kwsp_status=$?
             ;;
         toml)
             ensure_dir "$(dirname "$KEYSTORE_SECURITY")"
-            if [ -f "$KEYSTORE_SECURITY" ] && grep -q '^security_patch' "$KEYSTORE_SECURITY" 2>/dev/null; then
-                sed -i "s/^security_patch.*/security_patch = \"$_kwsp_os\"/" "$KEYSTORE_SECURITY"
+            if [ -f "$KEYSTORE_SECURITY" ] && grep -qE '^[[:space:]]*security_patch[[:space:]]*=' "$KEYSTORE_SECURITY" 2>/dev/null; then
+                sed -i "s/^\([[:space:]]*\)security_patch[[:space:]]*=.*/\1security_patch = \"$_kwsp_os\"/" "$KEYSTORE_SECURITY"
             else
                 printf '\n[main]\nsecurity_patch = "%s"\n' "$_kwsp_os" >> "$KEYSTORE_SECURITY"
             fi
             _kwsp_status=$?
             keystore_reload_keymint
+            ;;
+        json)
+            _teesim_set_patch "$KEYSTORE_SECURITY" "$_kwsp_os" "$_kwsp_boot" "$_kwsp_vendor"
+            _kwsp_status=$?
             ;;
         *)
             unset _kwsp_os _kwsp_boot _kwsp_vendor
@@ -155,6 +158,9 @@ keystore_add_target() {
                 keystore_reload_injector
             fi
             ;;
+        json)
+            _teesim_add_app "$KEYSTORE_TARGETS" "$_kat_pkg"
+            ;;
         *)
             unset _kat_pkg _kat_suffix
             return 1
@@ -178,6 +184,9 @@ keystore_install_keybox() {
     if [ "$_kik_status" -eq 0 ] && [ "$KEYSTORE_BACKEND" = "omk" ]; then
         chmod 0600 "$KEYSTORE_KEYBOX" 2>/dev/null
         keystore_reload_keymint
+    fi
+    if [ "$_kik_status" -eq 0 ] && [ "$KEYSTORE_BACKEND" = "teesim" ]; then
+        _teesim_set_keybox_field "$KEYSTORE_SECURITY"
     fi
 
     unset _kik_src

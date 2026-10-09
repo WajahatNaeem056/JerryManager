@@ -7,6 +7,7 @@ log "PIF2" "Start"
 _count=0
 while IFS= read -r prop; do
   [ -z "$prop" ] && continue
+  _persist_remember "$prop"
   if resetprop -p -d "$prop" 2>/dev/null; then
     _count=$((_count + 1))
   else

@@ -35,6 +35,13 @@ migrate_config_keys
 
 seed_toggle_defaults
 
+# Hide leftover folders of other root solutions (or restore them if off)
+if _feature_enabled toggle_multiroot_hide; then
+    sh "$MODDIR/features/multiroot_hide.sh" --hide 2>/dev/null || true
+else
+    sh "$MODDIR/features/multiroot_hide.sh" --restore 2>/dev/null || true
+fi
+
 _teesim_auto_marker="$JERRYMANAGER_CONFIG_DIR/.teesim_auto_enabled"
 if [ ! -f "$_teesim_auto_marker" ] && \
    { [ -d "/data/adb/modules/teesim" ] || [ -d "/data/adb/modules_update/teesim" ]; }; then
