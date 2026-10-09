@@ -1,5 +1,5 @@
 # Changelog
-## What's New in v4.4
+## What's New in v4.5
 
 Added
 
