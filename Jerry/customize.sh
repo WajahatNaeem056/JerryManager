@@ -16,10 +16,50 @@ mkdir -p "$JERRYMANAGER_CONFIG_DIR" 2>/dev/null
 resolve_keystore_backend
 ui_print "- Keystore backend: $KEYSTORE_NAME"
 
+# Purge known-conflicting modules (PIF handled separately, so not listed here)
+PURGE_IDS="Yurikey xiaocaiye safetynet-fix vbmeta-fixer integrity_box \
+SukiSU_module Reset_BootHash Tricky_store-bm Hide_Bootloader ShamikoManager \
+extreme_hide_root Tricky_Store-xiaoyi tricky_store_assistant \
+extreme_hide_bootloader wjw_hiderootauxiliarymod Yamabukiko TA_utl .TA_utl"
+_purged=0
+for _pid in $PURGE_IDS; do
+  [ -d "/data/adb/modules/$_pid" ] || continue
+  rm -rf "/data/adb/modules/$_pid"
+  ui_print "- Purged conflicting module: $_pid"
+  _purged=$((_purged + 1))
+done
+unset _pid PURGE_IDS
+[ "$_purged" -eq 0 ] && ui_print "- No conflicting modules found"
+unset _purged
+
 if [ -d "/data/adb/modules/jerrykey" ]; then
   touch /data/adb/modules/jerrykey/remove
   ui_print "- Removed outdated module (lowercase 'jerrykey')"
 fi
+
+# ---- Built-in Play Integrity Fix (INJECT) ----
+ui_print "- Built-in Play Integrity Fix (INJECT) included"
+
+# Zygisk is required for injection; warn only, the rest of Jerry works without it
+if ! find /data/adb/modules /data/adb/modules_update -name "libzygisk.so" 2>/dev/null | grep -q . \
+   && [ ! -d /data/adb/magisk ]; then
+  ui_print "! Zygisk not found. Install Zygisk Next / ReZygisk (or enable Zygisk in Magisk)"
+  ui_print "! Built-in PIF will not work until Zygisk is active"
+fi
+
+# A standalone PIF/Fork would inject twice into GMS (pif.prop is shared and kept)
+if [ -d /data/adb/modules/playintegrityfix ]; then
+  touch /data/adb/modules/playintegrityfix/remove 2>/dev/null
+  ui_print "- Standalone Play Integrity Fix/Fork found: scheduled for removal on reboot"
+fi
+
+# Leftovers from older PIF versions, and a script-only flag the UI can no longer clear
+for _dir in /data/user_de/0/com.google.android.gms /data/data/com.google.android.gms \
+            /data/user_de/0/com.android.vending /data/data/com.android.vending; do
+  rm -f "$_dir/libinject.so" "$_dir/classes.dex" "$_dir/pif.prop" 2>/dev/null
+done
+rm -f /data/adb/pif_script_only 2>/dev/null
+unset _dir
 
 if [ ! -d "/data/adb/modules/tricky_store" ] && [ ! -d "/data/adb/modules_update/tricky_store" ] && \
    [ ! -d "/data/adb/modules/oh_my_keymint" ] && [ ! -d "/data/adb/modules_update/oh_my_keymint" ]; then

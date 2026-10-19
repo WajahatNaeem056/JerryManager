@@ -9,8 +9,10 @@ MODDIR=${0%/*}
 log "SERVICE" "Resolving module conflicts..."
 resolve_conflicts
 
-log "SERVICE" "Setting boot properties"
-apply_boot_props
+if _feature_enabled toggle_boot_props; then
+    log "SERVICE" "Setting boot properties"
+    apply_boot_props
+fi
 
 if [ "$(toybox cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then
     chmod 640 /sys/fs/selinux/enforce 2>/dev/null || true
@@ -63,7 +65,7 @@ done
 . "$MODDIR/lib/rom_detect.sh"
 cfg_set "cached_rom_status" "$(detect_rom)"
 
-apply_critical_hiding_props
+_feature_enabled toggle_boot_props && apply_critical_hiding_props
 
 if _feature_enabled toggle_boot_hardening; then
     apply_boot_hardening
@@ -134,6 +136,30 @@ if _feature_enabled toggle_action_pif; then
         done
         unset _pif_tries
     ) &
+fi
+
+# Real-time Auto Target: inotify on /data/app (instant) + packages.xml, plus a 60s poll as safety net
+if _feature_enabled toggle_auto_target; then
+    if command -v inotifyd >/dev/null 2>&1 && [ -d "/data/app" ]; then
+        chmod 755 "$MODDIR/features/auto_target_notify.sh" 2>/dev/null
+        _at_watch="/data/app:ny"
+        # Android replaces packages.xml by rename, so also watch the directory for moved-in files
+        [ -f "/data/system/packages.xml" ] && _at_watch="$_at_watch /data/system/packages.xml:w /data/system:y"
+        # shellcheck disable=SC2086
+        inotifyd "$MODDIR/features/auto_target_notify.sh" $_at_watch >/dev/null 2>&1 &
+        log "SERVICE" "Auto Target: real-time watch active (inotify: $_at_watch)"
+        unset _at_watch
+    else
+        log "SERVICE" "Auto Target: inotify unavailable"
+    fi
+    (
+        while true; do
+            sleep 60
+            _feature_enabled toggle_auto_target || continue
+            sh "$MODDIR/features/auto_target.sh" 2>/dev/null
+        done
+    ) &
+    log "SERVICE" "Auto Target: polling every 60s as backup"
 fi
 
 resetprop -n ro.boot.verifiedbootstate green

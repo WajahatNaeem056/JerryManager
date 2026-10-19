@@ -17,9 +17,10 @@
       var saved = null;
       try { saved = localStorage.getItem('themeMode'); } catch(e) {}
       var isFirstInstall = (saved === null || saved === undefined);
-      var mode = isFirstInstall ? 'auto' : saved;
+      // First run always starts in dark mode; after that the user's choice wins
+      var mode = isFirstInstall ? 'dark' : saved;
       if (isFirstInstall) {
-        try { localStorage.setItem('themeMode', 'auto'); } catch(e) {}
+        try { localStorage.setItem('themeMode', 'dark'); } catch(e) {}
       }
       var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       var resolved = mode === 'auto' ? (systemDark ? 'dark' : 'light') : mode;
@@ -82,8 +83,8 @@
     }
   };
   document.addEventListener('DOMContentLoaded', function() {
-    var saved = 'auto';
-    try { saved = localStorage.getItem('themeMode') || 'auto'; } catch(e) {}
+    var saved = 'dark';
+    try { saved = localStorage.getItem('themeMode') || 'dark'; } catch(e) {}
     setTimeout(function() {
       ['dark','auto','light'].forEach(function(m) {
         var btn = document.getElementById('theme-btn-' + m);
@@ -94,6 +95,28 @@
   </script>
   <script type="module" crossorigin src="./assets/index-_IADiWVz.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-OrLJGpIL.css">
+  <link rel="stylesheet" href="./assets/pif-panel.css">
+  <style>
+    /* Actions page: tighter spacing */
+    #actions-page .list-item{padding:8px 14px!important;min-height:50px!important;gap:10px!important}
+    #actions-page .list-item-content{gap:2px!important}
+    #actions-page .list-container{margin-bottom:4px!important}
+    #actions-page .list-title{padding:4px 16px 2px!important}
+    /* Community cards: shorter */
+    .community-card{padding:16px!important;min-height:122px!important;gap:4px!important}
+    .community-card__icon{margin-bottom:6px!important}
+    .community-card__desc{padding-right:0!important;line-height:1.35!important}
+    .community-card__arrow{top:14px!important;bottom:auto!important;width:26px!important;height:26px!important}
+    /* Arabic: fallback Arabic font renders larger; scale down on Control + Other pages only */
+    :root[lang=ar] #control-page .list-title,:root[lang=ar] #settings-page .list-title{font-size:.9rem!important}
+    :root[lang=ar] .ctrl-row-title,:root[lang=ar] .ctrl-card-title{font-size:.82rem!important;line-height:1.3!important}
+    :root[lang=ar] .ctrl-row-desc,:root[lang=ar] .ctrl-card-desc{font-size:.64rem!important;line-height:1.35!important}
+    :root[lang=ar] .ctrl-badge,:root[lang=ar] .ctrl-heading-badge{font-size:.62rem!important}
+    :root[lang=ar] .community-card__title{font-size:.86rem!important}
+    :root[lang=ar] .community-card__desc{font-size:.67rem!important;line-height:1.35!important}
+    :root[lang=ar] .theme-btn-label{font-size:.64rem!important}
+    :root[lang=ar] #settings-page .jerry-lang-trigger{font-size:.9em!important}
+  </style>
 </head>
 <body>
   <div class="app-layout">
@@ -216,11 +239,27 @@
               <md-icon>settings</md-icon>
               <div class="list-item-content">
                 <div class="toggle-text" data-i18n="menu_custom_keybox">Set Custom Keybox</div>
-                <span class="supporting-text" data-i18n="menu_custom_keybox_desc">Use your own keybox file, URL, or device path</span>
+                <span class="supporting-text" data-i18n="menu_custom_keybox_desc">Select your own keybox XML file from your device</span>
               </div>
               <div class="spacer"></div>
               <md-ripple></md-ripple>
             </div>
+          </div>
+
+          <div class="list-title" data-i18n="menu_pif_configs">PIF Configs</div>
+          <div class="list-container">
+
+            <div class="list-item" id="pif-settings-btn" onclick="openPifSettings()">
+              <md-icon>fingerprint</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_pif_settings">PIF Settings</div>
+                <span class="supporting-text" data-i18n="menu_pif_settings_desc">Fetch fingerprint and spoof toggles</span>
+              </div>
+              <div class="spacer"></div>
+              <md-icon style="opacity:0.4;font-size:20px;">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+
           </div>
 
           <div class="list-title" data-i18n="menu_tricky_store">Keystore Backend</div>
@@ -307,17 +346,6 @@
               <div class="list-item-content">
                 <div class="toggle-text" data-i18n="advance_set_zygisk_next_configs">Set Zygisk Next Configs</div>
                 <span class="supporting-text" data-i18n="advance_set_zygisk_desc">Configures enforce-denylist, memory-type, linker settings</span>
-              </div>
-              <div class="spacer"></div>
-              <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
-              <md-ripple></md-ripple>
-            </div>
-
-            <div class="list-item" data-script="pif.sh">
-              <md-icon>fingerprint</md-icon>
-              <div class="list-item-content">
-                <div class="toggle-text" data-i18n="advance_set_pif">Set Fingerprint (PIF)</div>
-                <span class="supporting-text" data-i18n="advance_set_pif_desc">Runs Play Integrity Fix auto-update scripts</span>
               </div>
               <div class="spacer"></div>
               <md-circular-progress indeterminate class="action-spinner hidden"></md-circular-progress>
@@ -489,6 +517,99 @@
       </div>
     </div>
 
+    <div id="pif-settings-panel" class="at-panel pif-page">
+      <div class="at-header">
+        <button onclick="closePifSettings()" class="at-back-btn">
+          <md-icon style="font-family:'Material Icons';font-size:20px;">arrow_back</md-icon>
+        </button>
+        <span class="at-title">PIF Settings</span>
+      </div>
+      <div id="pif-panel" class="pif-scroll">
+
+        <div class="pif-btn-row">
+          <button type="button" id="pif-fetch" class="pif-btn pif-btn--primary"><md-icon>cloud_download</md-icon><span class="pif-btn-label">Fetch</span></button>
+          <button type="button" id="pif-view" class="pif-btn pif-btn--primary"><md-icon>visibility</md-icon><span class="pif-btn-label">View pif.prop</span></button>
+        </div>
+
+        <div class="ctrl-heading-row">
+          <div class="list-title">Spoofing</div>
+          <span class="ctrl-heading-badge" id="pif-badge-spoof">0/6</span>
+        </div>
+        <div class="list-container">
+          <div class="pif-row">
+            <md-icon>build</md-icon>
+            <div class="pif-row-text">
+              <div class="pif-row-title">Spoof Build</div>
+              <span class="pif-row-desc">Play Services fingerprint</span>
+            </div>
+            <md-switch icons data-pif="spoofBuild"></md-switch>
+          </div>
+          <div class="pif-row">
+            <md-icon>dataset</md-icon>
+            <div class="pif-row-text">
+              <div class="pif-row-title">Spoof Props</div>
+              <span class="pif-row-desc">System properties</span>
+            </div>
+            <md-switch icons data-pif="spoofProps"></md-switch>
+          </div>
+          <div class="pif-row">
+            <md-icon>shop</md-icon>
+            <div class="pif-row-text">
+              <div class="pif-row-title">Spoof Build (Play Store)</div>
+              <span class="pif-row-desc">Play Store fingerprint</span>
+            </div>
+            <md-switch icons data-pif="spoofVendingBuild"></md-switch>
+          </div>
+          <div class="pif-row">
+            <md-icon>key</md-icon>
+            <div class="pif-row-text">
+              <div class="pif-row-title">Spoof Provider</div>
+              <span class="pif-row-desc">Keystore provider</span>
+            </div>
+            <md-switch icons data-pif="spoofProvider"></md-switch>
+          </div>
+          <div class="pif-row">
+            <md-icon>draw</md-icon>
+            <div class="pif-row-text">
+              <div class="pif-row-title">Spoof Signature</div>
+              <span class="pif-row-desc">App signature</span>
+            </div>
+            <md-switch icons data-pif="spoofSignature"></md-switch>
+          </div>
+          <div class="pif-row">
+            <md-icon>android</md-icon>
+            <div class="pif-row-text">
+              <div class="pif-row-title">Spoof SDK (Play Store)</div>
+              <span class="pif-row-desc">SDK level for Play Store</span>
+            </div>
+            <md-switch icons data-pif="spoofVendingSdk"></md-switch>
+          </div>
+        </div>
+
+        <div class="pif-term">
+          <div class="pif-term-bar">
+            <md-icon>terminal</md-icon>
+            <span class="pif-term-title">Terminal</span>
+            <span class="pif-spacer"></span>
+            <button type="button" class="pif-term-clear" id="pif-term-clear"><md-icon>delete</md-icon><span>clear</span></button>
+          </div>
+          <div id="pif-console" class="pif-term-body"></div>
+        </div>
+      </div>
+      <div id="pif-picker" class="pif-picker" hidden>
+        <div class="pif-picker-sheet" role="dialog" aria-label="Select Device">
+          <div class="pif-picker-title">Select Device</div>
+          <div class="pif-picker-list" id="pif-picker-list"></div>
+          <div class="pif-picker-actions">
+            <button type="button" class="pif-btn pif-btn--text" id="pif-pick-cancel">Cancel</button>
+            <span class="pif-spacer"></span>
+            <button type="button" class="pif-btn pif-btn--outline" id="pif-pick-autopif">Autopif</button>
+            <button type="button" class="pif-btn pif-btn--primary" id="pif-pick-github">GitHub</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     </main>
 
     <nav id="nav-bar" class="jerry-nav">
@@ -556,5 +677,6 @@
   <script type="module" src="./assets/swipe-nav.js"></script>
   <script type="module" src="./assets/app-core.js"></script>
   <script type="module" src="./assets/app-targeting.js"></script>
+  <script type="module" src="./assets/pif-panel.js"></script>
 </body>
 </html>

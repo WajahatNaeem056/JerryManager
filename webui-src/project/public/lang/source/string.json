@@ -37,6 +37,8 @@
   "home_pif_status": "PIF Status",
   "control_toggle_recovery": "Auto-Hide Recovery Folders",
   "control_toggle_recovery_desc": "Hide TWRP, OrangeFox, FOX recovery folders from /sdcard at boot",
+  "control_toggle_boot_props": "Boot Props Spoof",
+  "control_toggle_boot_props_desc": "Set verified-boot, vbmeta, SELinux and warranty props to a locked, stock state at boot",
   "control_toggle_boot_hardening": "Boot Hardening",
   "control_toggle_boot_hardening_desc": "Apply security prop hardening (ro.secure, ro.debuggable, etc.) at boot",
   "control_toggle_bootloader_spoofer": "Bootloader Spoofer Block",
@@ -126,7 +128,6 @@
   "theme_preset_violet": "Violet",
   "theme_preset_monet": "System",
   "update_title": "Update & Support",
-
   "update_github": "View on GitHub",
   "update_telegram": "Join Telegram",
   "update_note": "Join Telegram or check GitHub for contributions and technical discussions.",
@@ -147,9 +148,12 @@
   "menu_import_keybox_offline": "Install Jerry Keybox (Offline)",
   "menu_import_keybox_offline_desc": "Installs bundled keybox from module — no internet needed",
   "menu_custom_keybox": "Set Custom Keybox",
-  "menu_custom_keybox_desc": "Use your own keybox file, URL, or device path",
+  "menu_custom_keybox_desc": "Select your own keybox XML file from your device",
   "menu_app_targeting": "App Targeting",
   "menu_app_targeting_desc": "Manage per-app targeting states interactively",
   "menu_banking_mode": "Banking Mode",
-  "menu_banking_mode_desc": "Clears GMS cache, fixes banking & payment app detection"
+  "menu_banking_mode_desc": "Clears GMS cache, fixes banking & payment app detection",
+  "menu_pif_configs": "PIF Configs",
+  "menu_pif_settings": "PIF Settings",
+  "menu_pif_settings_desc": "Fetch fingerprint and spoof toggles"
 }

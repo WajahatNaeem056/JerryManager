@@ -22,11 +22,13 @@ unset _cl_wait
 
 _rm() { [ -n "$1" ] && rm -rf "$1" 2>/dev/null; }
 
-log "CLEANUP" "Hiding recovery folders..."
-if hide_recovery_folders; then
-  log "CLEANUP" "Recovery folders hidden"
-else
-  log "CLEANUP" "Warning: one or more recovery folders could not be removed"
+if _feature_enabled toggle_recovery; then
+  log "CLEANUP" "Hiding recovery folders..."
+  if hide_recovery_folders; then
+    log "CLEANUP" "Recovery folders hidden"
+  else
+    log "CLEANUP" "Warning: one or more recovery folders could not be removed"
+  fi
 fi
 
 log "CLEANUP" "Removing detector app data directories..."
@@ -92,8 +94,10 @@ pm clear com.juom >/dev/null 2>&1 || true
 log "CLEANUP" "Checking bootloader spoofer conflicts..."
 _feature_enabled toggle_bootloader_spoofer && disable_bootloader_spoofer
 
-log "CLEANUP" "Applying prop hardening..."
-apply_boot_props || true
+if _feature_enabled toggle_boot_props; then
+  log "CLEANUP" "Applying prop hardening..."
+  apply_boot_props || true
+fi
 
 log "CLEANUP" "Deleting persist props..."
 sp_persist_delete persist.service.adb.enable

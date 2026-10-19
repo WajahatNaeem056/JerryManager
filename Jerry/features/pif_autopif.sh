@@ -1,0 +1,176 @@
+#!/system/bin/sh
+# Adapted from Play Integrity Fix autopif.sh (chiteroman / KOWX712) for JerryManager's built-in PIF.
+# Differences: no system.prop handling (that file is JerryManager's own), no module.prop/common_func,
+# no GMS kill (features/pif.sh does it). Pick a device with: PRODUCT=<codename>_beta sh pif_autopif.sh
+
+PATH=/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:/data/data/com.termux/files/usr/bin:$PATH
+MODDIR="${0%/*}"
+MODDIR="${MODDIR%/*}"
+
+download_fail() {
+	echo "[!] download failed: $1"
+	rm -rf "$TEMPDIR"
+	exit 1
+}
+download() { busybox wget -T 10 --no-check-certificate -qO - "$1" > "$2" || download_fail "$1"; }
+if command -v curl > /dev/null 2>&1; then
+	download() { curl --connect-timeout 10 -s "$1" > "$2" || download_fail "$1"; }
+fi
+
+TEMPDIR="/data/local/tmp/jerry_pif_auto"
+[ -w /dev ] && TEMPDIR="/dev/jerry_pif_auto"
+rm -rf "$TEMPDIR"
+mkdir -p "$TEMPDIR"
+cd "$TEMPDIR" || exit 1
+
+echo "[+] JerryManager built-in autopif"
+printf "\n"
+
+set_random_beta() {
+	if [ "$(echo "$MODEL_LIST" | wc -l)" -ne "$(echo "$PRODUCT_LIST" | wc -l)" ]; then
+		echo "Warning: MODEL_LIST and PRODUCT_LIST have different lengths, using Pixel 6 fallback"
+		MODEL="Pixel 6"
+		PRODUCT="oriole_beta"
+	else
+		count=$(echo "$MODEL_LIST" | wc -l)
+		rand_index=$(( $$ % count ))
+		MODEL=$(echo "$MODEL_LIST" | sed -n "$((rand_index + 1))p")
+		PRODUCT=$(echo "$PRODUCT_LIST" | sed -n "$((rand_index + 1))p")
+	fi
+}
+
+get_model_product_list() {
+	printf "{\"model\":["
+	count=0
+	total=$(echo "$MODEL_LIST" | wc -l)
+	echo "$MODEL_LIST" | while read -r model; do
+		count=$((count + 1))
+		printf "\"%s\"" "$model"
+		[ $count -lt $total ] && printf ","
+	done
+	printf "],\"product\":["
+	count=0
+	total=$(echo "$PRODUCT_LIST" | wc -l)
+	echo "$PRODUCT_LIST" | while read -r product; do
+		count=$((count + 1))
+		printf "\"%s\"" "$product"
+		[ $count -lt $total ] && printf ","
+	done
+	printf "]}"
+
+	rm -rf "$TEMPDIR"
+	exit 0
+}
+
+# Get latest Pixel Canary information
+download https://developer.android.com/about/versions PIXEL_VERSIONS_HTML
+LATEST_BETA=$(grep -B4 -A2 'data-icon="preview' PIXEL_VERSIONS_HTML | grep -o 'href="/about/versions/.*[0-9]"' | cut -d\" -f2)
+[ "$LATEST_BETA" ] || LATEST_BETA=$(grep -oE 'href="/about/versions/[0-9]{2}"' PIXEL_VERSIONS_HTML | cut -d\" -f2 | sort -ru | head -n1)
+download "https://developer.android.com$LATEST_BETA" PIXEL_LATEST_HTML
+
+# Get FI and OTA information and use the longer device list
+FI_URL="https://developer.android.com$(grep -o 'href=".*download.*"' PIXEL_LATEST_HTML | cut -d\" -f2 | sort -ru | head -n1)"
+download "$FI_URL" PIXEL_FI_HTML
+OTA_URL="https://developer.android.com$(grep -o 'href=".*download-ota.*"' PIXEL_LATEST_HTML | cut -d\" -f2 | sort -ru | head -n1)"
+download "$OTA_URL" PIXEL_OTA_HTML
+SRC=FI; [ "$(grep 'tr id=' PIXEL_FI_HTML | sed 's;.*<tr id="\(.*\)">.*;\1;' | wc -w)" -lt "$(grep 'tr id=' PIXEL_OTA_HTML | sed 's;.*<tr id="\(.*\)">.*;\1;' | wc -w)" ] && SRC=OTA
+
+# Extract device information
+MODEL_LIST="$(grep -A1 'tr id=' PIXEL_${SRC}_HTML | grep 'td' | sed 's;.*<td>\(.*\)</td>.*;\1;')";
+PRODUCT_LIST="$(grep 'tr id=' PIXEL_${SRC}_HTML | sed 's;.*<tr id="\(.*\)">.*;\1_beta;')";
+
+# List available devices
+if [ "$1" = "--list" ] || [ "$1" = "-l" ]; then
+	get_model_product_list
+fi
+
+# Select and configure device
+echo "- Selecting Pixel Canary device ..."
+if [ -z "$PRODUCT" ] || ! echo "$PRODUCT_LIST" | grep -q "$PRODUCT"; then
+	set_random_beta
+fi
+echo "$MODEL ($PRODUCT)"
+
+# Get device fingerprint and security patch from Flash Tool and bulletins
+DEVICE="$(echo "$PRODUCT" | sed 's/_beta//')"
+download https://flash.android.com PIXEL_FLASH_HTML
+FLASH_KEY=$(grep -o '<body data-client-config=.*' PIXEL_FLASH_HTML | cut -d\; -f2 | cut -d\& -f1)
+if command -v curl > /dev/null 2>&1; then
+	curl --connect-timeout 10 -H "Referer: https://flash.android.com" -s "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$FLASH_KEY" > PIXEL_STATION_JSON || download_fail "https://flash.android.com"
+else
+	busybox wget -T 10 --header "Referer: https://flash.android.com" -qO - "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$FLASH_KEY" > PIXEL_STATION_JSON || download_fail "https://flash.android.com"
+fi
+busybox tac PIXEL_STATION_JSON | busybox grep -m1 -A13 '"canary": true' > PIXEL_CANARY_JSON
+ID="$(grep 'releaseCandidateName' PIXEL_CANARY_JSON | cut -d\" -f4)"
+INCREMENTAL="$(grep 'buildId' PIXEL_CANARY_JSON | cut -d\" -f4)"
+FINGERPRINT="google/$PRODUCT/$DEVICE:CANARY/$ID/$INCREMENTAL:user/release-keys"
+download https://source.android.com/docs/security/bulletin/pixel PIXEL_SECBULL_HTML
+CANARY_ID="$(grep '"id"' PIXEL_CANARY_JSON | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;')"
+SECURITY_PATCH="$(grep "<td>$CANARY_ID" PIXEL_SECBULL_HTML | sed 's;.*<td>\(.*\)</td>;\1;')"
+
+# Validate required field to prevent empty pif.prop
+if [ -z "$ID" ] || [ -z "$INCREMENTAL" ]; then
+	echo "! Failed to get pif.prop"
+	exit 1
+fi
+
+if [ -z "$SECURITY_PATCH" ]; then
+	echo "! Failed to determine exact security patch level"
+	echo "- Assuming probable security patch level from Canary build info"
+	SECURITY_PATCH="${CANARY_ID}-05"
+fi
+
+# Add corresponding first API level
+case $DEVICE in
+	bluejay) DEVICE_INITIAL_SDK_INT=32;; # Pixel 6a
+	panther|cheetah) DEVICE_INITIAL_SDK_INT=33;; # Pixel 7 Series
+	lynx) DEVICE_INITIAL_SDK_INT=33;; # Pixel 7a
+	felix) DEVICE_INITIAL_SDK_INT=33;; # Pixel Fold
+	tangorpro) DEVICE_INITIAL_SDK_INT=33;; # Pixel Tablet
+	shiba|husky) DEVICE_INITIAL_SDK_INT=34;; # Pixel 8 Series
+	akita) DEVICE_INITIAL_SDK_INT=34;; # Pixel 8a
+	tokay|caiman|komodo|comet) DEVICE_INITIAL_SDK_INT=34;; # Pixel 9 Series
+	tegu) DEVICE_INITIAL_SDK_INT=35;; # Pixel 9a
+	frankel|blazer|mustang|rango) DEVICE_INITIAL_SDK_INT=36;; # Pixel 10 Series
+	stallion) DEVICE_INITIAL_SDK_INT=35;; # Pixel 10a; Actual 36
+	cubs|grizzly|kodiak|yogi) DEVICE_INITIAL_SDK_INT=37;; # Pixel 11 Series
+	*) DEVICE_INITIAL_SDK_INT=37;;
+esac
+
+# Preserve previous setting
+pifProp="$MODDIR/pif.prop"
+[ -f "/data/adb/pif.prop" ] && pifProp="/data/adb/pif.prop"
+spoofConfig="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingBuild spoofVendingSdk DEBUG"
+for config in $spoofConfig; do
+	if grep -q "$config=true" "$pifProp"; then
+		eval "$config=true"
+	else
+		eval "$config=false"
+	fi
+done
+
+echo "- Dumping values to pif.prop ..."
+echo ""
+cat <<EOF | tee pif.prop
+FINGERPRINT=$FINGERPRINT
+MANUFACTURER=Google
+MODEL=$MODEL
+SECURITY_PATCH=$SECURITY_PATCH
+DEVICE_INITIAL_SDK_INT=$DEVICE_INITIAL_SDK_INT
+spoofBuild=$spoofBuild
+spoofProps=$spoofProps
+spoofProvider=$spoofProvider
+spoofSignature=$spoofSignature
+spoofVendingBuild=$spoofVendingBuild
+spoofVendingSdk=$spoofVendingSdk
+DEBUG=$DEBUG
+EOF
+
+cat "$TEMPDIR/pif.prop" > /data/adb/pif.prop
+echo ""
+echo "- new pif.prop saved to /data/adb/pif.prop"
+
+echo "- Cleaning up ..."
+rm -rf "$TEMPDIR"
+echo "- Done!"
+exit 0

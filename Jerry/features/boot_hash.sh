@@ -40,7 +40,60 @@ if [ -z "$boot_hash" ]; then
     unset _bh_prop
 fi
 
-# 3) last resort: generate our own instead of ever falling back to zeros
+# 3) real device digest: hash the actual vbmeta partition (not bit-exact to
+# Google's AVB chain digest, but real device data instead of random)
+_bh_partition_digest() {
+    _bpd_tool=""
+    if command -v sha256sum >/dev/null 2>&1; then
+        _bpd_tool=sha256sum
+    elif command -v openssl >/dev/null 2>&1; then
+        _bpd_tool=openssl
+    else
+        return 1
+    fi
+
+    _bpd_slot=$(getprop ro.boot.slot_suffix 2>/dev/null)
+    _bpd_path=""
+    for _bpd_cand in \
+        "/dev/block/bootdevice/by-name/vbmeta${_bpd_slot}" \
+        "/dev/block/by-name/vbmeta${_bpd_slot}" \
+        /dev/block/platform/*/by-name/vbmeta"${_bpd_slot}" \
+        /dev/block/platform/*/*/by-name/vbmeta"${_bpd_slot}"
+    do
+        if [ -e "$_bpd_cand" ]; then
+            _bpd_path="$_bpd_cand"
+            break
+        fi
+    done
+    if [ -z "$_bpd_path" ]; then
+        unset _bpd_tool _bpd_slot _bpd_path _bpd_cand
+        return 1
+    fi
+
+    # Read just first 64KB (header/signature), skip trailing zero-padding
+    if [ "$_bpd_tool" = "sha256sum" ]; then
+        _bpd_hash=$(dd if="$_bpd_path" bs=4096 count=16 2>/dev/null | sha256sum 2>/dev/null | cut -d' ' -f1)
+    else
+        _bpd_hash=$(dd if="$_bpd_path" bs=4096 count=16 2>/dev/null | openssl dgst -sha256 2>/dev/null | sed 's/^.*= *//')
+    fi
+    _bpd_hash=$(printf '%s' "$_bpd_hash" | tr -d ' \r\n' | tr '[:upper:]' '[:lower:]')
+    unset _bpd_tool _bpd_slot _bpd_path _bpd_cand
+
+    if _is_valid_hash "$_bpd_hash"; then
+        boot_hash="$_bpd_hash"
+        hash_source="vbmeta-partition"
+        unset _bpd_hash
+        return 0
+    fi
+    unset _bpd_hash
+    return 1
+}
+
+if [ -z "$boot_hash" ]; then
+    _bh_partition_digest || true
+fi
+
+# 4) last resort: generate our own instead of ever falling back to zeros
 if [ -z "$boot_hash" ]; then
     _bh_rand=$(od -v -An -tx1 -N32 /dev/urandom 2>/dev/null | tr -d ' \r\n' | tr '[:upper:]' '[:lower:]')
     if _is_valid_hash "$_bh_rand"; then

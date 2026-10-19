@@ -37,6 +37,8 @@
   "home_pif_status": "حالة PIF",
   "control_toggle_recovery": "إخفاء مجلدات الاسترداد تلقائيًا",
   "control_toggle_recovery_desc": "إخفاء مجلدات استرداد TWRP وOrangeFox وFOX من /sdcard عند الإقلاع",
+  "control_toggle_boot_props": "تزييف خصائص الإقلاع",
+  "control_toggle_boot_props_desc": "ضبط خصائص التمهيد المُتحقَّق وvbmeta وSELinux والضمان على حالة مقفلة أصلية عند الإقلاع",
   "control_toggle_boot_hardening": "تحصين الإقلاع",
   "control_toggle_boot_hardening_desc": "تطبيق تحصين خصائص الأمان (ro.secure، ro.debuggable، إلخ) عند الإقلاع",
   "control_toggle_bootloader_spoofer": "حظر أدوات تزييف Bootloader",
@@ -146,9 +148,12 @@
   "menu_import_keybox_offline": "تثبيت Jerry Keybox (بدون اتصال)",
   "menu_import_keybox_offline_desc": "تثبيت Keybox المرفق مع الوحدة — لا حاجة للإنترنت",
   "menu_custom_keybox": "تعيين Keybox مخصص",
-  "menu_custom_keybox_desc": "استخدم ملف Keybox أو رابط URL أو مسار جهاز خاص بك",
+  "menu_custom_keybox_desc": "اختر ملف Keybox بصيغة XML الخاص بك من جهازك",
   "menu_app_targeting": "استهداف التطبيقات",
   "menu_app_targeting_desc": "إدارة حالات استهداف كل تطبيق بشكل تفاعلي",
   "menu_banking_mode": "وضع البنوك",
-  "menu_banking_mode_desc": "مسح ذاكرة التخزين المؤقت لـ GMS، وإصلاح اكتشاف تطبيقات البنوك والدفع"
+  "menu_banking_mode_desc": "مسح ذاكرة التخزين المؤقت لـ GMS، وإصلاح اكتشاف تطبيقات البنوك والدفع",
+  "menu_pif_configs": "تكوينات PIF",
+  "menu_pif_settings": "إعدادات PIF",
+  "menu_pif_settings_desc": "جلب البصمة ومفاتيح التزييف"
 }

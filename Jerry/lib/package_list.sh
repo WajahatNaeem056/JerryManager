@@ -17,6 +17,47 @@ REMOTE_CONTROL_APPS="com.anydesk.anydeskandroid com.teamviewer.teamviewer.market
 
 TOOL_APPS="com.omarea.vtools moe.shizuku.privileged.api com.estrongs.android.pop com.sevtinge.hyperceiler com.coderstory.toolkit"
 
+# Packages Auto Target must never target (root managers, Xposed/LSPosed managers)
+AUTO_TARGET_EXCLUDE="\
+com.topjohnwu.magisk
+io.github.vvb2060.magisk
+io.github.huskydg.magisk
+me.weishu.kernelsu
+com.rifsxd.ksunext
+com.sukisu.ultra
+com.resukisu.resukisu
+me.bmax.apatch
+me.garfieldhan.apatch.next
+com.android.patch
+org.lsposed.manager
+org.meowcat.edxposed.manager
+de.robv.android.xposed.installer
+com.solohsu.android.edxp.manager
+com.coderstory.toolkit
+moe.shizuku.privileged.api"
+
+# True if $1 is excluded or already cached as an Xposed module
+is_auto_target_excluded() {
+  _iae_pkg="$1"
+  for _iae_e in $AUTO_TARGET_EXCLUDE; do
+    [ "$_iae_pkg" = "$_iae_e" ] && { unset _iae_pkg _iae_e; return 0; }
+  done
+  unset _iae_e
+  case "$MODDIR" in
+    */features) _iae_root="${MODDIR%/*}" ;;
+    *)          _iae_root="$MODDIR" ;;
+  esac
+  _iae_xp="$_iae_root/webroot/tmp/xposed_found"
+  unset _iae_root
+  if [ -f "$_iae_xp" ] && grep -Fxq "$_iae_pkg" "$_iae_xp" 2>/dev/null; then
+    unset _iae_xp
+    unset _iae_pkg
+    return 0
+  fi
+  unset _iae_pkg
+  return 1
+}
+
 SUSPICIOUS_PROPS="\
 persist.hyperceiler.log.level|warning|HyperCeiler modding tool persistent log
 persist.sys.vold_app_data_isolation_enabled|warning|App data isolation leak from modding tool

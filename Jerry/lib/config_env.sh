@@ -70,7 +70,7 @@ update_description() {
     esac
 
     _ud_pif="Not Installed"
-    _ud_pif_dir="/data/adb/modules/playintegrityfix"
+    _ud_pif_dir="/data/adb/modules/JerryManager"
     if [ -d "$_ud_pif_dir" ]; then
         _ud_pif="Unknown"
         for _ud_pif_cfg in "/data/adb/pif.prop" "$_ud_pif_dir/custom.pif.prop" "$_ud_pif_dir/pif.json" "$_ud_pif_dir/pif.prop"; do

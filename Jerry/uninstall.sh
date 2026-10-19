@@ -58,4 +58,12 @@ if [ -f "$IDFILE" ]; then
     log "UNINSTALL" "Removed RKA ID file"
 fi
 
+# Built-in PIF leftovers (app-data copies, LeafOS spoof prop)
+for _dir in /data/user_de/0/com.google.android.gms /data/data/com.google.android.gms \
+            /data/user_de/0/com.android.vending /data/data/com.android.vending; do
+    rm -f "$_dir/libinject.so" "$_dir/classes.dex" "$_dir/pif.prop" 2>/dev/null
+done
+unset _dir
+[ -f /data/system/gms_certified_props.json ] && resetprop -p --delete persist.sys.spoof.gms 2>/dev/null
+
 exit 0

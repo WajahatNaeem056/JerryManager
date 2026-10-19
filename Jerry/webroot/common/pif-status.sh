@@ -9,8 +9,8 @@ PIF_STATUS_PATH="$MODDIR/webroot/json/pif_status.json"
 _pif_prop=""
 for _candidate in \
     "/data/adb/pif.prop" \
-    "/data/adb/modules/playintegrityfix/custom.pif.prop" \
-    "/data/adb/modules/playintegrityfix/pif.prop" \
+    "/data/adb/modules/JerryManager/custom.pif.prop" \
+    "/data/adb/modules/JerryManager/pif.prop" \
     "/data/adb/custom.pif.prop"
 do
     if [ -f "$_candidate" ]; then

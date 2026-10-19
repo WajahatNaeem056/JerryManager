@@ -6,6 +6,7 @@
         descKey: 'control_boot_desc', desc: 'Choose which boot-time hardening and cleanup steps to apply.',
         toggles: [
           { key: 'toggle_recovery',           icon: 'folder_off',          def: '1', titleKey: 'control_toggle_recovery', title: 'Auto-Hide Recovery Folders',  descKey: 'control_toggle_recovery_desc', desc: 'Hide TWRP, OrangeFox, FOX recovery folders from /sdcard at boot' },
+          { key: 'toggle_boot_props',         icon: 'verified_user',       def: '1', titleKey: 'control_toggle_boot_props', title: 'Boot Props Spoof',            descKey: 'control_toggle_boot_props_desc', desc: 'Set verified-boot, vbmeta, SELinux and warranty props to a locked, stock state at boot' },
           { key: 'toggle_boot_hardening',     icon: 'security',            def: '1', titleKey: 'control_toggle_boot_hardening', title: 'Boot Hardening',              descKey: 'control_toggle_boot_hardening_desc', desc: 'Apply security prop hardening (ro.secure, ro.debuggable, etc.) at boot' },
           { key: 'toggle_bootloader_spoofer', icon: 'lock',                def: '1', titleKey: 'control_toggle_bootloader_spoofer', title: 'Bootloader Spoofer Block',    descKey: 'control_toggle_bootloader_spoofer_desc', desc: 'Remove conflicting bootloader spoofer packages at boot' },
           { key: 'toggle_rom_spoof',          icon: 'smartphone',          def: '1', titleKey: 'control_toggle_rom_spoof', title: 'Block ROM Spoof Engines',     descKey: 'control_toggle_rom_spoof_desc', desc: 'Disable ROM-level spoof engines (PixelProps, PIHooks, etc.)' },

@@ -1,5 +1,11 @@
 # shellcheck shell=sh
 
+# TEESimulator helpers live in lib/teesim.sh (MODDIR is the module root or features/)
+for _ks_dir in "$MODDIR/lib" "$MODDIR/../lib"; do
+    [ -f "$_ks_dir/teesim.sh" ] && { . "$_ks_dir/teesim.sh"; break; }
+done
+unset _ks_dir
+
 _module_enabled() {
     _me_id="$1"
     for _me_dir in "/data/adb/modules/$_me_id" "/data/adb/modules_update/$_me_id"; do

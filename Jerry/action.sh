@@ -78,11 +78,13 @@ _format_fact() {
             unset _ff_n
             ;;
         "Writing "*" via "*)
-            _ff_date=$(echo "$_ff_line" | sed -n 's/^Writing \([^ ]*\) via .*/\1/p')
+            _ff_date=$(echo "$_ff_line" | sed -n 's/^Writing \([^ ]*\) .*/\1/p' | sed 's/^system=//')
+            _ff_source=$(echo "$_ff_line" | sed -n 's/.*(source: \([^)]*\)).*/\1/p')
             _ff_backend=$(echo "$_ff_line" | sed -n 's/^Writing .* via \(.*\)$/\1/p')
             [ -n "$_ff_date" ] && echo "Applied: $_ff_date"
+            [ -n "$_ff_source" ] && echo "Source: $_ff_source"
             [ -n "$_ff_backend" ] && echo "Backend: $_ff_backend"
-            unset _ff_date _ff_backend
+            unset _ff_date _ff_source _ff_backend
             ;;
         "Wrote hash to "*)
             echo "Hash written successfully"

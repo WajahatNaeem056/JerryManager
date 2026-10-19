@@ -34,7 +34,7 @@ SECURITY_PATCH SUSPICIOUS TARGET TEESIM UNINSTALL WIDEVINE ZYGISK_NEXT"
     echo "(not available — run the WebUI once to generate webroot/json/info.json)"
   fi
 
-  _pif_dir="/data/adb/modules/playintegrityfix"
+  _pif_dir="/data/adb/modules/JerryManager"
   if [ -d "$_pif_dir" ]; then
     _pif="unknown"
     for _pif_cfg in "$_pif_dir/custom.pif.prop" "$_pif_dir/pif.json" "$_pif_dir/pif.prop"; do

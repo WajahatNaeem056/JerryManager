@@ -6,7 +6,7 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/config_env.sh"
 
 TSIM_CONFIG="$TEESIM_CONFIG"
-PIF_DIR="/data/adb/modules/playintegrityfix"
+PIF_DIR="/data/adb/modules/JerryManager"
 
 [ -f "$TSIM_CONFIG" ] || exit 0
 

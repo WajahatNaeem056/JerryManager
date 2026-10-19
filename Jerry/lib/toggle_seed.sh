@@ -2,6 +2,7 @@
 
 _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
     toggle_recovery:1 \
+    toggle_boot_props:1 \
     toggle_rom_spoof:1 \
     toggle_bootloader_spoofer:1 \
     toggle_adb_disabler:0 \
@@ -15,9 +16,11 @@ _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
     toggle_action_gms_clear_data:0 \
     toggle_action_target:1 \
     toggle_auto_target:1 \
+    toggle_auto_target_notify:1 \
     toggle_target_system:0 \
     toggle_teesim_sync:0 \
     toggle_action_security_patch:1 \
+    toggle_security_patch_bulletin:1 \
     toggle_action_boot_hash:1 \
     toggle_action_pif:1 \
     toggle_lineage_identity_cleanup:0 \
