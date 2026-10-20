@@ -17,7 +17,6 @@
       var saved = null;
       try { saved = localStorage.getItem('themeMode'); } catch(e) {}
       var isFirstInstall = (saved === null || saved === undefined);
-      // First run always starts in dark mode; after that the user's choice wins
       var mode = isFirstInstall ? 'dark' : saved;
       if (isFirstInstall) {
         try { localStorage.setItem('themeMode', 'dark'); } catch(e) {}
@@ -66,8 +65,6 @@
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', window.__autoThemeListener);
     }
   };
-  // Open a community link (Telegram channel) via root shell intent when available,
-  // falling back to a normal browser tab otherwise.
   window.__openCommunityLink = function(url) {
     try {
       if (window.ksu && typeof window.ksu.exec === 'function') {

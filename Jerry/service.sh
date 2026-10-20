@@ -62,6 +62,13 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
     sleep 1
 done
 
+# Early-boot hash is a stopgap; re-resolve from the TEE probe once keystore is up
+if _feature_enabled toggle_action_boot_hash \
+   && [ "$(cat /data/adb/boot_hash.src 2>/dev/null)" != "tee" ]; then
+    sh "$MODDIR/features/boot_hash.sh" --refresh 2>/dev/null \
+        || log "SERVICE" "Warning: post-boot boot_hash refresh failed"
+fi
+
 . "$MODDIR/lib/rom_detect.sh"
 cfg_set "cached_rom_status" "$(detect_rom)"
 

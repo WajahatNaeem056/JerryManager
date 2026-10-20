@@ -90,12 +90,11 @@ _format_fact() {
             echo "Hash written successfully"
             echo "${_ff_line#Wrote hash to }"
             ;;
-        "ro.boot.vbmeta.digest -> "*)
-            _ff_hash=$(printf '%s' "$_ff_line" | sed -n 's/^ro\.boot\.vbmeta\.digest -> \([^ ]*\) .*/\1/p')
-            _ff_src=$(printf '%s' "$_ff_line" | sed -n 's/.*(source: \(.*\))$/\1/p')
-            [ -n "$_ff_hash" ] && echo "Hash: ${_ff_hash%"${_ff_hash#????????}"}…"
+        "Stored Jerry boot hash (source: "*)
+            _ff_src=$(printf '%s' "$_ff_line" | sed -n 's/^Stored Jerry boot hash (source: \(.*\))$/\1/p')
+            echo "Jerry hash cache updated"
             [ -n "$_ff_src" ] && echo "Source: $_ff_src"
-            unset _ff_hash _ff_src
+            unset _ff_src
             ;;
         "Custom keybox installed from "*)
             echo "Source: custom"

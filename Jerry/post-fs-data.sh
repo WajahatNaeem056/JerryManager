@@ -22,9 +22,3 @@ fi
 [ -s /data/adb/pif.prop ] || cp "$MODDIR/pif.prop" /data/adb/pif.prop 2>/dev/null
 
 resolve_conflicts 2>/dev/null || log "POSTFS" "Warning: resolve_conflicts failed"
-
-# Run early — service.sh is too late, TrickyStore's certgen daemon
-# already loaded by then, forcing an extra reboot to pick up the fix.
-if _feature_enabled "toggle_action_boot_hash"; then
-    sh "$MODDIR/features/boot_hash.sh" 2>/dev/null || log "POSTFS" "Warning: early boot_hash run failed"
-fi

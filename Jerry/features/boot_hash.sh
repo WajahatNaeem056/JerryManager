@@ -20,17 +20,40 @@ _bh_force=0
 boot_hash=""
 hash_source=""
 
-# 1) reuse last good hash so boot doesn't redo work every time
+# Trust the cache only if it came from the TEE probe; weak fallbacks must not stick.
+BOOT_HASH_SRC_FILE="${BOOT_HASH_FILE}.src"
+_bh_booted=0
+[ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ] && _bh_booted=1
+
 if [ "$_bh_force" -eq 0 ] && [ -f "$BOOT_HASH_FILE" ]; then
     _bh_cached=$(tr -d ' \r\n' < "$BOOT_HASH_FILE" 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    _bh_csrc=$(cat "$BOOT_HASH_SRC_FILE" 2>/dev/null)
     if _is_valid_hash "$_bh_cached"; then
-        boot_hash="$_bh_cached"
-        hash_source="cache"
+        case "$_bh_csrc" in
+            tee)
+                boot_hash="$_bh_cached"
+                hash_source="cache"
+                ;;
+        esac
     fi
-    unset _bh_cached
+    unset _bh_cached _bh_csrc
 fi
 
-# 2) bootloader-provided digest, when the device actually populates it
+# TEE probe: needs keystore, so only after boot_completed.
+if [ -z "$boot_hash" ] && [ "$_bh_booted" -eq 1 ]; then
+    _bh_dex="${MODDIR%/features}/dex/attest.dex"
+    if [ -f "$_bh_dex" ]; then
+        _bh_out=$(CLASSPATH="$_bh_dex" app_process / com.jerry.attest.Main 2>/dev/null | tr -d ' \r\n' | tr '[:upper:]' '[:lower:]')
+        if _is_valid_hash "$_bh_out"; then
+            boot_hash="$_bh_out"
+            hash_source="tee"
+        fi
+        unset _bh_out
+    fi
+    unset _bh_dex
+fi
+
+# Bootloader digest
 if [ -z "$boot_hash" ]; then
     _bh_prop=$(getprop ro.boot.vbmeta.digest 2>/dev/null | tr -d ' \r\n' | tr '[:upper:]' '[:lower:]')
     if _is_valid_hash "$_bh_prop"; then
@@ -40,8 +63,7 @@ if [ -z "$boot_hash" ]; then
     unset _bh_prop
 fi
 
-# 3) real device digest: hash the actual vbmeta partition (not bit-exact to
-# Google's AVB chain digest, but real device data instead of random)
+# vbmeta partition hash (approximation, not the AVB chain digest)
 _bh_partition_digest() {
     _bpd_tool=""
     if command -v sha256sum >/dev/null 2>&1; then
@@ -70,7 +92,7 @@ _bh_partition_digest() {
         return 1
     fi
 
-    # Read just first 64KB (header/signature), skip trailing zero-padding
+    # First 64KB only: header and signature, skipping zero padding
     if [ "$_bpd_tool" = "sha256sum" ]; then
         _bpd_hash=$(dd if="$_bpd_path" bs=4096 count=16 2>/dev/null | sha256sum 2>/dev/null | cut -d' ' -f1)
     else
@@ -93,7 +115,7 @@ if [ -z "$boot_hash" ]; then
     _bh_partition_digest || true
 fi
 
-# 4) last resort: generate our own instead of ever falling back to zeros
+# Last resort: never fall back to zeros
 if [ -z "$boot_hash" ]; then
     _bh_rand=$(od -v -An -tx1 -N32 /dev/urandom 2>/dev/null | tr -d ' \r\n' | tr '[:upper:]' '[:lower:]')
     if _is_valid_hash "$_bh_rand"; then
@@ -108,28 +130,42 @@ fi
 ensure_dir "$(dirname "$BOOT_HASH_FILE")"
 if [ "$hash_source" != "cache" ]; then
     echo "$boot_hash" > "$BOOT_HASH_FILE" || die "Failed to write $BOOT_HASH_FILE"
+    case "$hash_source" in
+        tee) echo tee > "$BOOT_HASH_SRC_FILE" ;;
+        *) echo "weak" > "$BOOT_HASH_SRC_FILE" ;;   # re-resolved after boot
+    esac
 fi
 chmod 644 "$BOOT_HASH_FILE" || log "BOOT_HASH" "Warning: Failed to set permissions on $BOOT_HASH_FILE"
 
-sp_try ro.boot.vbmeta.digest "$boot_hash"
+# Only TEE-sourced hashes may touch props or Tricky Store; weak ones stay in Jerry's cache.
+case "$hash_source" in
+    tee|cache)
+        # resetprop does not persist; re-applied every boot
+        _bh_cur=$(getprop ro.boot.vbmeta.digest 2>/dev/null | tr -d ' \r\n' | tr '[:upper:]' '[:lower:]')
+        if [ "$_bh_cur" != "$boot_hash" ]; then
+            resetprop -n ro.boot.vbmeta.digest "$boot_hash" 2>/dev/null \
+                && log "BOOT_HASH" "Aligned ro.boot.vbmeta.digest with attested hash" \
+                || log "BOOT_HASH" "Warning: failed to align ro.boot.vbmeta.digest"
+        fi
+        unset _bh_cur
 
-# Keep TrickyStore's attested boot_hash.bin in sync — it goes stale on
-# its own whenever this digest changes, breaking attestation.
-_bh_ts_file="/data/adb/tricky_store/boot_hash.bin"
-if [ -d "/data/adb/tricky_store" ]; then
-    _bh_ts_current=""
-    [ -f "$_bh_ts_file" ] && _bh_ts_current=$(od -An -tx1 "$_bh_ts_file" 2>/dev/null | tr -d ' \n')
-    if [ "$_bh_ts_current" != "$boot_hash" ]; then
-        _bh_ts_bytes=$(printf '%s' "$boot_hash" | sed 's/../\\x&/g')
-        printf '%b' "$_bh_ts_bytes" > "$_bh_ts_file" 2>/dev/null \
-            && log "BOOT_HASH" "Synced TrickyStore boot_hash.bin to $boot_hash" \
-            || log "BOOT_HASH" "Warning: Failed to sync TrickyStore boot_hash.bin"
-    fi
-    unset _bh_ts_current _bh_ts_bytes
-fi
-unset _bh_ts_file
+        _bh_ts_file="/data/adb/tricky_store/boot_hash.bin"
+        if [ -d "/data/adb/tricky_store" ]; then
+            _bh_ts_current=""
+            [ -f "$_bh_ts_file" ] && _bh_ts_current=$(od -An -tx1 "$_bh_ts_file" 2>/dev/null | tr -d ' \n')
+            if [ "$_bh_ts_current" != "$boot_hash" ]; then
+                _bh_ts_bytes=$(printf '%s' "$boot_hash" | sed 's/../\\x&/g')
+                printf '%b' "$_bh_ts_bytes" > "$_bh_ts_file" 2>/dev/null \
+                    && log "BOOT_HASH" "Synced Tricky Store boot_hash.bin with attested hash" \
+                    || log "BOOT_HASH" "Warning: failed to sync Tricky Store boot_hash.bin"
+            fi
+            unset _bh_ts_current _bh_ts_bytes
+        fi
+        unset _bh_ts_file
+        ;;
+esac
 
-log "BOOT_HASH" "ro.boot.vbmeta.digest -> $boot_hash (source: $hash_source)"
+log "BOOT_HASH" "Stored Jerry boot hash (source: $hash_source)"
 log "BOOT_HASH" "Finish"
 unset boot_hash hash_source _bh_force
 exit 0

@@ -24,7 +24,7 @@ _reliable_patterns_for_tag() {
         GMS) echo "Force-stopped * package(s)" ;;
         TARGET) echo "OhMyKeymint active *|OhMyKeymint: processed * FIXED_TARGETS entries|TEESimulator — generating *|Merge pass: added *" ;;
         SECURITY_PATCH) echo "Writing * via *" ;;
-        BOOT_HASH) echo "ro.boot.vbmeta.digest -> * (source: *)" ;;
+        BOOT_HASH) echo "Stored Jerry boot hash (source: *)" ;;
         KEYBOX) echo "OhMyKeymint active *|Custom keybox installed from *|Checking Google revocation for serial *|Keybox is not revoked — clean|locked.xml written to *|Placeholder locked.xml written|Keybox installed successfully" ;;
         PIF) echo "Start|Detected * variant|Selected device: *|Finish" ;;
         CLEANUP) echo "Finish" ;;
