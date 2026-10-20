@@ -1,0 +1,37 @@
+name: Build attest.dex
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Main.java'
+      - '.github/workflows/build-dex.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compile and dex
+        run: |
+          set -e
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          AJ=$(ls -d "$ANDROID_HOME"/platforms/android-* | sort -V | tail -1)/android.jar
+          echo "build-tools: $BT"
+          echo "android.jar: $AJ"
+          rm -rf out && mkdir out
+          javac --release 8 -cp "$AJ" -d out Main.java
+          "$BT/d8" --min-api 26 --lib "$AJ" --output out out/com/jerry/attest/*.class
+          mv out/classes.dex attest.dex
+          ls -l attest.dex
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: attest-dex
+          path: attest.dex
