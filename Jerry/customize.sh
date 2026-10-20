@@ -16,7 +16,37 @@ mkdir -p "$JERRYMANAGER_CONFIG_DIR" 2>/dev/null
 resolve_keystore_backend
 ui_print "- Keystore backend: $KEYSTORE_NAME"
 
+# Ask whether to install the built-in PIF: Vol+ = yes, Vol- = no.
+# Default is yes: no key within 5 seconds, or no getevent/timeout, installs it.
+_jm_ask_pif() {
+  if ! { command -v getevent >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; }; then
+    ui_print "- Key input unavailable: installing built-in PIF (default)"
+    return 0
+  fi
+  ui_print "- Install built-in PIF?"
+  ui_print "  Vol+ = Yes, install"
+  ui_print "  Vol- = No, skip"
+  ui_print "  Default: Yes (5 seconds)"
+  _ap_end=$(( $(date +%s) + 5 ))
+  while [ "$(date +%s)" -lt "$_ap_end" ]; do
+    _ap_key=$(timeout 1 getevent -lc 1 2>/dev/null | grep -m1 'KEY_VOLUME.* DOWN')
+    case "$_ap_key" in
+      *VOLUMEUP*)   unset _ap_end _ap_key; ui_print "- Vol+ pressed: installing built-in PIF"; return 0 ;;
+      *VOLUMEDOWN*) unset _ap_end _ap_key; ui_print "- Vol- pressed: skipping built-in PIF"; return 1 ;;
+    esac
+  done
+  unset _ap_end _ap_key
+  ui_print "- No key pressed: installing built-in PIF (default)"
+  return 0
+}
+
 _jm_pif() {
+  if ! _jm_ask_pif; then
+    rm -rf "$MODPATH/zygisk" "$MODPATH/dex/classes.dex" "$MODPATH/pif.prop" 2>/dev/null
+    ui_print "- Built-in PIF skipped. To add it later, flash Jerry again and press Vol+"
+    return 0
+  fi
+
   if [ -f "$MODPATH/dex/classes.dex" ] && ls "$MODPATH"/zygisk/*.so >/dev/null 2>&1; then
     ui_print "- Built-in PIF included"
   else
@@ -110,7 +140,6 @@ else
   fi
 fi
 
-# Last: built-in PIF
 _jm_pif
 
 mkdir -p "$MODPATH/webroot/json"

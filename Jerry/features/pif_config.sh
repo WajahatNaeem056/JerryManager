@@ -12,6 +12,11 @@ PIF_ROOT="${MODDIR%/*}"
 . "$MODDIR/../lib/pif_lib.sh"
 . "$MODDIR/../lib/pif_devices.sh"
 
+# Built-in PIF skipped at install (no zygisk/ in the module): leave any other PIF's /data/adb/pif.prop alone.
+if [ ! -d "$PIF_ROOT/zygisk" ]; then
+  case "$1" in devices) ;; *) echo "Built-in PIF not installed"; exit 0 ;; esac
+fi
+
 _json_bool() { [ "$(pif_prop_get "$PIF_PROP" "$1")" = "true" ] && printf true || printf false; }
 
 case "$1" in
