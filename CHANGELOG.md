@@ -9,7 +9,7 @@ Added
 - Smart Target Exclusions: Root managers, LSPosed/EdXposed managers, and detected Xposed modules are automatically excluded from targeting.
 - System Notifications: Added native system notifications without requiring a companion app.
 - Live Security Patch Detection: Fetches the actual Pixel security bulletin patch level, retries failed requests, caches the result for 20 hours, and falls back to date-based calculation when necessary.
-- Device-derived VBHash: Calculates the SHA-256 hash of the actual "vbmeta" partition, using a randomly generated hash only as a last resort.
+- TEE-attested VBHash: Reads the verified boot hash from the device's hardware-backed attestation and refreshes it after boot, so it always matches the real device.
 
 Improved
 
