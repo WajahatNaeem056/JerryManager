@@ -10,14 +10,18 @@ Added
 - System Notifications: Added native system notifications without requiring a companion app.
 - Live Security Patch Detection: Fetches the actual Pixel security bulletin patch level, retries failed requests, caches the result for 20 hours, and falls back to date-based calculation when necessary.
 - TEE-attested VBHash: Reads the verified boot hash from the device's hardware-backed attestation and refreshes it after boot, so it always matches the real device.
+- Added fingerprint import from local storage.
+- Added AERA Recovery support to Auto-Hide Recovery Folders
 
 Improved
 
 - Improved Security Patch, "boot_hash", and package-list handling.
 - Boot property modifications now respect the Boot Props toggle.
 - WebUI now opens in dark mode on first launch.
-- Refined spacing across the Actions and Community cards.
-- Improved Arabic font scaling and updated Arabic and Chinese translations.
+- Refined spacing across the Actions and Community cards
+- Added AERA Recovery support to Auto-Hide Recovery Folders.
+- Improved the language selector and Arabic layout.
+- Improved file browser handling and language file organization.
 
 Cleanup
 
