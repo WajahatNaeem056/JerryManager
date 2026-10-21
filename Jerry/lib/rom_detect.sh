@@ -1,5 +1,31 @@
 #!/system/bin/sh
 
+# Oplus family (OnePlus / Oppo / realme): is this the China ROM (ColorOS)?
+# Any one China marker is enough. These come from the firmware images and the
+# build id, so a user-changed region prop (e.g. PK) cannot hide them.
+_rd_oplus_is_cn() {
+    _rd_o=$(resetprop ro.oplus.image.my_stock.type 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    case "$_rd_o" in domestic*) return 0 ;; esac
+    _rd_o=$(resetprop ro.vendor.oplus.regionmark 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    [ "$_rd_o" = "cn" ] && return 0
+    _rd_o=$(resetprop ro.oplus.image.my_region.type 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    case "$_rd_o" in cn|cn_*) return 0 ;; esac
+    case "$(resetprop ro.build.display.id 2>/dev/null)" in *"(CN"*) return 0 ;; esac
+    _rd_o=$(resetprop persist.sys.oplus.region 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    [ "$_rd_o" = "cn" ] && return 0
+    return 1
+}
+
+# OnePlus retired OxygenOS: from ColorOS 17 (Android 17) every OnePlus device
+# runs ColorOS, global ones included. oplusrom looks like "V17.0.0"; major
+# version 17 or higher means ColorOS, 16 and below can still be OxygenOS.
+_rd_oplusrom_ge17() {
+    _rd_v="${1#[Vv]}"
+    _rd_v="${_rd_v%%.*}"
+    case "$_rd_v" in ''|*[!0-9]*) return 1 ;; esac
+    [ "$_rd_v" -ge 17 ]
+}
+
 detect_rom() {
     for _rd_pair in \
         "ro.lineage.version:LineageOS" \
@@ -63,18 +89,24 @@ detect_rom() {
         esac
     done
 
-    # ro.build.version.oplusrom exists on both ColorOS and OxygenOS builds,
-    # so it can't tell them apart alone — persist.sys.oplus.region can:
-    # "CN" = ColorOS, anything else = OxygenOS.
+    # ro.build.version.oplusrom exists on ColorOS and OxygenOS alike, so it
+    # tells us the device is Oplus family. Oppo / realme ship ColorOS
+    # everywhere. OnePlus is ColorOS on the China ROM and from ColorOS 17
+    # onwards; below that, without China markers, it is OxygenOS.
     _rd_oplusrom=$(resetprop ro.build.version.oplusrom 2>/dev/null)
     if [ -n "$_rd_oplusrom" ]; then
-        _rd_region=$(resetprop persist.sys.oplus.region 2>/dev/null | tr '[:upper:]' '[:lower:]')
-        if [ "$_rd_region" = "cn" ]; then
-            printf '%s' "ColorOS"
-        else
-            printf '%s' "OxygenOS"
-        fi
-        unset _rd_oplusrom _rd_region
+        _rd_pb=$(resetprop ro.product.brand 2>/dev/null | tr '[:upper:]' '[:lower:]')
+        case "$_rd_pb" in
+            oppo|realme) printf '%s' "ColorOS" ;;
+            *)
+                if _rd_oplus_is_cn || _rd_oplusrom_ge17 "$_rd_oplusrom"; then
+                    printf '%s' "ColorOS"
+                else
+                    printf '%s' "OxygenOS"
+                fi
+                ;;
+        esac
+        unset _rd_oplusrom _rd_pb
         return
     fi
     unset _rd_oplusrom
@@ -97,15 +129,12 @@ detect_rom() {
             return
             ;;
         *oneplus*)
-            # No ro.build.version.oplusrom above, so fall back to the
-            # region prop directly.
-            _rd_region2=$(resetprop persist.sys.oplus.region 2>/dev/null | tr '[:upper:]' '[:lower:]')
-            if [ "$_rd_region2" = "cn" ]; then
+            # No ro.build.version.oplusrom (older builds): same China check.
+            if _rd_oplus_is_cn; then
                 printf '%s' "ColorOS"
             else
                 printf '%s' "OxygenOS"
             fi
-            unset _rd_region2
             return
             ;;
         *oppo*|*realme*)
