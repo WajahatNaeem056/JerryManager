@@ -155,5 +155,7 @@
   "menu_banking_mode_desc": "Clears GMS cache, fixes banking & payment app detection",
   "menu_pif_configs": "PIF Configs",
   "menu_pif_settings": "PIF Settings",
-  "menu_pif_settings_desc": "Fetch fingerprint and spoof toggles"
+  "menu_pif_settings_desc": "Fetch fingerprint and spoof toggles",
+  "pif_import_title": "Import fingerprint",
+  "pif_import_desc": "Load a pif.json or pif.prop file"
 }

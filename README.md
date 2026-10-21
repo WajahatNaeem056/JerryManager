@@ -32,7 +32,7 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - **Detection Cleanup**: removes detector logs, temp dirs, caches
 - **Widevine L1**: attestation keys via KmInstallKeybox
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
-- **Multi-language Web UI** — translations live in `webroot/lang/` (`source/string.json` is the key list)
+- **Multi-language Web UI** — translations live in `webroot/lang/` (`en.json` is the key list)
 
 ## Installation
 

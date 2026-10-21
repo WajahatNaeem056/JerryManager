@@ -5,16 +5,22 @@
 #   view                        print /data/adb/pif.prop
 #   devices                     "Model|product" list for the device picker
 #   fetch [device] [source]     device: random | <codename>_beta, source: github | autopif | auto
+#   import <file>               import a pif.json / pif.prop (prints IMPORT_OK or IMPORT_ERR: <why>)
 MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/config_env.sh"
 PIF_ROOT="${MODDIR%/*}"
 . "$MODDIR/../lib/pif_lib.sh"
 . "$MODDIR/../lib/pif_devices.sh"
+. "$MODDIR/../lib/pif_import.sh"
 
 # Built-in PIF skipped at install (no zygisk/ in the module): leave any other PIF's /data/adb/pif.prop alone.
 if [ ! -d "$PIF_ROOT/zygisk" ]; then
-  case "$1" in devices) ;; *) echo "Built-in PIF not installed"; exit 0 ;; esac
+  case "$1" in
+    devices) ;;
+    import) echo "IMPORT_ERR: Built-in PIF not installed"; exit 1 ;;
+    *) echo "Built-in PIF not installed"; exit 0 ;;
+  esac
 fi
 
 _json_bool() { [ "$(pif_prop_get "$PIF_PROP" "$1")" = "true" ] && printf true || printf false; }
@@ -60,8 +66,17 @@ case "$1" in
     fi
     exit "$_rc"
     ;;
+  import)
+    pif_import_file "$2"
+    _rc=$?
+    if [ "$_rc" -eq 0 ]; then
+      # Home screen "PIF Status" reads MODEL from pif.prop, refresh it
+      [ -f "$PIF_ROOT/webroot/common/pif-status.sh" ] && sh "$PIF_ROOT/webroot/common/pif-status.sh" >/dev/null 2>&1
+    fi
+    exit "$_rc"
+    ;;
   *)
-    echo "usage: pif_config.sh get|set|view|devices|fetch"
+    echo "usage: pif_config.sh get|set|view|devices|fetch|import"
     exit 1
     ;;
 esac

@@ -5,7 +5,7 @@ var fallbackTranslations = {};
 window.__jerryGetTranslation = getTranslation;
 export async function initI18n() {
     try {
-        fallbackTranslations = await (await fetch(`lang/source/string.json?ts=${Date.now()}`)).json();
+        fallbackTranslations = await (await fetch(`lang/en.json?ts=${Date.now()}`)).json();
     }
     catch {
         fallbackTranslations = {};
@@ -15,7 +15,7 @@ export async function initI18n() {
     setupLanguageMenu(lang);
 }
 async function applyLanguage(lang) {
-    let url = lang === `en` ? `lang/source/string.json?ts=${Date.now()}` : `lang/${lang}.json?ts=${Date.now()}`;
+    let url = lang === `en` ? `lang/en.json?ts=${Date.now()}` : `lang/${lang}.json?ts=${Date.now()}`;
     try {
         translations = await (await fetch(url)).json();
     }
@@ -61,9 +61,18 @@ function setupLanguageMenu(e) {
     let menu = document.getElementById(`jerry-lang-menu`);
     if (!trig || !menu)
         return;
-    function nameFor(code) {
+    function setLabel(code) {
         let m = _LANGS.find(l => l[0] === code);
-        return m ? (m[2] ? m[2] + ` ` + m[1] : m[1]) : code;
+        label.textContent = ``;
+        if (m && m[2]) {
+            let flagSpan = document.createElement(`span`);
+            flagSpan.className = `jerry-lang-option-flag`;
+            flagSpan.textContent = m[2];
+            label.appendChild(flagSpan);
+        }
+        let nameSpan = document.createElement(`span`);
+        nameSpan.textContent = m ? m[1] : code;
+        label.appendChild(nameSpan);
     }
     function closeMenu() {
         menu.hidden = true;
@@ -105,7 +114,7 @@ function setupLanguageMenu(e) {
             menu.appendChild(item);
         });
     }
-    label.textContent = nameFor(e);
+    setLabel(e);
     renderMenu(e);
     trig.addEventListener(`click`, ev => {
         ev.stopPropagation();
@@ -116,7 +125,7 @@ function setupLanguageMenu(e) {
     });
     document.addEventListener(`languageChanged`, ev => {
         let code = ev.detail && ev.detail.langCode || e;
-        label.textContent = nameFor(code);
+        setLabel(code);
         renderMenu(code);
     });
 }

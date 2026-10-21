@@ -155,5 +155,7 @@
   "menu_banking_mode_desc": "مسح ذاكرة التخزين المؤقت لـ GMS، وإصلاح اكتشاف تطبيقات البنوك والدفع",
   "menu_pif_configs": "تكوينات PIF",
   "menu_pif_settings": "إعدادات PIF",
-  "menu_pif_settings_desc": "جلب البصمة ومفاتيح التزييف"
+  "menu_pif_settings_desc": "جلب البصمة ومفاتيح التزييف",
+  "pif_import_title": "استيراد البصمة",
+  "pif_import_desc": "تحميل ملف pif.json أو pif.prop"
 }

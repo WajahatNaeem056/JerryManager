@@ -54,8 +54,17 @@
       });
     }
 
-    function openFileBrowser(callback) {
-      var currentPath = '/sdcard';
+    function shellQuote(s) {
+      return "'" + String(s).replace(/'/g, "'\\''") + "'";
+    }
+
+    // opts (all optional): exts ['.xml','.bak'], label 'XML', start '/sdcard'.
+    // The callback only runs when the user taps Select; closing the dialog changes nothing.
+    function openFileBrowser(callback, opts) {
+      opts = opts || {};
+      var exts = (opts.exts || ['.xml', '.bak']).map(function(x) { return x.toLowerCase(); });
+      var kindLabel = opts.label || 'XML';
+      var currentPath = opts.start || '/sdcard';
       var selectedPath = null;
       var showAll = false;
       var entries = [];
@@ -76,7 +85,8 @@
       function renderBrowser() {
         var folders = entries.filter(function(e) { return e.isFolder; });
         var files = entries.filter(function(e) {
-          return !e.isFolder && (showAll || e.name.endsWith('.xml') || e.name.endsWith('.bak'));
+          var lower = e.name.toLowerCase();
+          return !e.isFolder && (showAll || exts.some(function(x) { return lower.endsWith(x); }));
         });
 
         fbDialog.innerHTML =
@@ -87,7 +97,7 @@
           '<div slot="content" class="fb-content">' +
             (currentPath !== '/' && currentPath !== '/sdcard' ? buildRow('..', 'folder_open', '..', true, false) : '') +
             folders.map(function(e) { return buildRow(e.path, 'folder', e.name, true, false); }).join('') +
-            (files.length === 0 && folders.length === 0 ? '<div class="fb-empty">No XML files found</div>' : files.length === 0 ? '<div class="fb-empty" style="font-size:0.8rem;padding:16px">No XML files here — open a subfolder or tap Show all files</div>' : '') +
+            (files.length === 0 && folders.length === 0 ? '<div class="fb-empty">No ' + escHtml(kindLabel) + ' files found</div>' : files.length === 0 ? '<div class="fb-empty" style="font-size:0.8rem;padding:16px">No ' + escHtml(kindLabel) + ' files here — open a subfolder or tap Show all files</div>' : '') +
             files.map(function(e) { return buildRow(e.path, 'description', e.name, false, selectedPath === e.path); }).join('') +
             (!showAll && files.length < entries.filter(function(e){return !e.isFolder;}).length ?
               '<div class="fb-show-all"><span id="fb-show-all-btn">Show all files</span></div>' : '') +
@@ -156,7 +166,7 @@
           fbDialog.show();
         }
 
-        shAsync('ls -1p ' + path + ' 2>/dev/null | head -200').then(function(result) {
+        shAsync('ls -1p ' + shellQuote(path) + ' 2>/dev/null | head -1000').then(function(result) {
           var lines = (result.stdout || '').split('\n').filter(Boolean);
           entries = lines.map(function(line) {
             var isFolder = line.endsWith('/');
@@ -174,6 +184,7 @@
 
       loadDir(currentPath);
     }
+    window.jerryOpenFileBrowser = openFileBrowser;
 
     var _customKeyboxDialogOpen = false;
     function openCustomKeyboxDialog() {

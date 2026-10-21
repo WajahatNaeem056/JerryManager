@@ -155,5 +155,7 @@
   "menu_banking_mode_desc": "清除 GMS 缓存，修复银行与支付应用检测",
   "menu_pif_configs": "PIF 配置",
   "menu_pif_settings": "PIF 设置",
-  "menu_pif_settings_desc": "获取指纹并切换伪装开关"
+  "menu_pif_settings_desc": "获取指纹并切换伪装开关",
+  "pif_import_title": "导入指纹",
+  "pif_import_desc": "加载 pif.json 或 pif.prop 文件"
 }

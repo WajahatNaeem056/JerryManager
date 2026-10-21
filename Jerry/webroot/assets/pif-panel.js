@@ -270,6 +270,93 @@
     doFetch(pickedDevice, source);
   }
 
+  /* ---------- import fingerprint (pif.json / pif.prop) ---------- */
+
+  function shq(text) { return "'" + String(text).replace(/'/g, "'\\''") + "'"; }
+
+  // Snackbar with its own styles (.pif-toast) so it never depends on theme tokens
+  function toast(message, isError) {
+    var el = document.createElement('div');
+    el.className = 'pif-toast' + (isError ? ' pif-toast--err' : '');
+    el.setAttribute('role', 'status');
+    el.textContent = message;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add('pif-toast--open'); });
+    setTimeout(function () {
+      el.classList.remove('pif-toast--open');
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }, isError ? 5000 : 3000);
+  }
+
+  function setImportBusy(on) {
+    var row = $('pif-import');
+    if (row) row.classList.toggle('pif-busy', !!on);
+  }
+
+  // The backend prints human lines and ends with IMPORT_OK or IMPORT_ERR: <reason>.
+  // Success is only reported when IMPORT_OK came back with exit code 0.
+  async function doImport(path) {
+    if (busy) return;
+    busy = true;
+    setImportBusy(true);
+    var name = path.split('/').pop();
+    cmdLine('pif import ' + name);
+    var pending = termLog('Importing…', 'muted');
+    var ok = false;
+    var reason = '';
+    var res = await run(cfg('import ' + shq(path)));
+    var out = String(res.stdout || '');
+
+    if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
+
+    if (/No such file/.test(res.stderr || '')) {
+      reason = 'PIF backend not active yet. Reboot after flashing, then try again.';
+    } else if (res.code === -1) {
+      reason = 'Import did not finish (' + ((res.stderr || '').trim() || 'bridge error') + '). Use View pif.prop to check the current config.';
+    } else {
+      var m = /^IMPORT_ERR: (.*)$/m.exec(out);
+      ok = res.code === 0 && /^IMPORT_OK\s*$/m.test(out);
+      if (!ok) reason = m ? m[1] : ('Import failed (code ' + res.code + ')');
+    }
+
+    out.split('\n').forEach(function (l) {
+      if (!l.trim() || /^IMPORT_(OK|ERR)/.test(l)) return;
+      termLog(l, /^(Note|Ignored|Spoof toggles)/.test(l) ? 'muted' : classify(l));
+    });
+
+    if (ok) {
+      var model = (/^MODEL=(.*)$/m.exec(out) || [])[1] || '';
+      termLog('Fingerprint imported' + (model ? ': ' + model : ''), 'ok');
+      var desc = $('pif-import-desc');
+      if (desc) desc.textContent = (model ? model + ' · ' : '') + name;
+      toast('Fingerprint imported' + (model ? ': ' + model : ''), false);
+    } else {
+      termLog('Import failed: ' + reason, 'err');
+      toast('Import failed: ' + reason, true);
+    }
+
+    setImportBusy(false);
+    busy = false;
+    refresh();
+  }
+
+  // Android has no picker for a WebUI, so (like AlwaysStrong and the keybox page) the
+  // app's own file browser lists storage through the root shell. Closing it does nothing.
+  function openImport() {
+    if (busy) return;
+    if (!hasBridge()) {
+      termLog('Preview mode: no device connected.', 'muted');
+      toast('Preview mode: no device connected', true);
+      return;
+    }
+    if (typeof window.jerryOpenFileBrowser !== 'function') {
+      termLog('File browser not available, reload the page.', 'err');
+      toast('File browser not available, reload the page', true);
+      return;
+    }
+    window.jerryOpenFileBrowser(doImport, { exts: ['.json', '.prop'], label: 'pif.json / pif.prop' });
+  }
+
   /* ---------- page ---------- */
 
   window.openPifSettings = function () {
@@ -298,6 +385,13 @@
 
     $('pif-fetch').addEventListener('click', openPicker);
     $('pif-view').addEventListener('click', doView);
+    var importRow = $('pif-import');
+    if (importRow) {
+      importRow.addEventListener('click', openImport);
+      importRow.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openImport(); }
+      });
+    }
     $('pif-term-clear').addEventListener('click', clearTerm);
     $('pif-pick-cancel').addEventListener('click', closePicker);
     $('pif-pick-github').addEventListener('click', function () { startFetch('github'); });

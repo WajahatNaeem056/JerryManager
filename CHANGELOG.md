@@ -1,4 +1,12 @@
 # Changelog
+## Unreleased
+
+Added
+
+- Import Fingerprint (Action > PIF Configs > PIF Settings): load a "pif.json" or "pif.prop" from local storage. The file is validated (format, FINGERPRINT, patch date, SDK level, duplicates), the current "pif.prop" is backed up (last 5 kept in "/data/adb/JerryManager/PifBackup"), the new one is written atomically and read back, and Play Services is restarted. Your spoof toggles are kept. Any failure leaves the previous configuration in place.
+- The in-app file browser is now reusable and quotes paths with spaces.
+- Arabic: the bottom navigation bar and the Other / Control pages no longer grow taller than in English (fixed label line-heights).
+
 ## What's New in v4.6
 
 Added

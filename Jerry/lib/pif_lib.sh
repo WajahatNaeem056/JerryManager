@@ -2,7 +2,7 @@
 # Callers must already have sourced lib/common.sh and lib/config_env.sh.
 
 PIF_ROOT="${PIF_ROOT:-/data/adb/modules/JerryManager}"
-PIF_PROP="/data/adb/pif.prop"
+PIF_PROP="${JERRY_PIF_PROP:-/data/adb/pif.prop}"
 PIF_FLAG_KEYS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingBuild spoofVendingSdk DEBUG"
 
 pif_prop_get() {
