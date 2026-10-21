@@ -36,7 +36,7 @@
   "control_custom_rom_title": "Custom Rom",
   "home_pif_status": "PIF Status",
   "control_toggle_recovery": "Auto-Hide Recovery Folders",
-  "control_toggle_recovery_desc": "Hide TWRP, OrangeFox, FOX recovery folders from /sdcard at boot",
+  "control_toggle_recovery_desc": "Hide TWRP, OrangeFox, FOX and AERA recovery folders at boot",
   "control_toggle_boot_props": "Boot Props Spoof",
   "control_toggle_boot_props_desc": "Set verified-boot, vbmeta, SELinux and warranty props to a locked, stock state at boot",
   "control_toggle_boot_hardening": "Boot Hardening",

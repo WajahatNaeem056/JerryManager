@@ -36,7 +36,7 @@
   "control_custom_rom_title": "روم مخصص",
   "home_pif_status": "حالة PIF",
   "control_toggle_recovery": "إخفاء مجلدات الاسترداد تلقائيًا",
-  "control_toggle_recovery_desc": "إخفاء مجلدات استرداد TWRP وOrangeFox وFOX من /sdcard عند الإقلاع",
+  "control_toggle_recovery_desc": "إخفاء مجلدات استرداد TWRP وOrangeFox وFOX وAERA عند الإقلاع",
   "control_toggle_boot_props": "تزييف خصائص الإقلاع",
   "control_toggle_boot_props_desc": "ضبط خصائص التمهيد المُتحقَّق وvbmeta وSELinux والضمان على حالة مقفلة أصلية عند الإقلاع",
   "control_toggle_boot_hardening": "تحصين الإقلاع",

@@ -36,7 +36,7 @@
   "control_custom_rom_title": "自定义 ROM",
   "home_pif_status": "PIF 状态",
   "control_toggle_recovery": "自动隐藏 Recovery 文件夹",
-  "control_toggle_recovery_desc": "启动时从 /sdcard 隐藏 TWRP、OrangeFox、FOX recovery 文件夹",
+  "control_toggle_recovery_desc": "启动时隐藏 TWRP、OrangeFox、FOX、AERA recovery 文件夹",
   "control_toggle_boot_props": "启动属性伪装",
   "control_toggle_boot_props_desc": "在启动时将 verified boot、vbmeta、SELinux 和保修相关属性设为已锁定的原厂状态",
   "control_toggle_boot_hardening": "启动加固",

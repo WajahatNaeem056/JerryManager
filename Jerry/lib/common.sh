@@ -328,10 +328,10 @@ hide_recovery_folders() {
     _hrf_random="" _hrf_subdirs=0 _hrf_path=""
     _hrf_found=0 _hrf_failed=0
 
-    for _hrf_base in /sdcard /storage/emulated/0 /mnt/vendor/persist /persist /cache /data/adb; do
+    for _hrf_base in /sdcard /storage/emulated/0 /mnt/vendor/persist /persist /cache /data/adb /data/recovery; do
         [ -d "$_hrf_base" ] || continue
 
-        for _hrf_folder in TWRP twrp Twrp OrangeFox orangefox Fox FOX fox PBRP pbrp PitchBlack pitchblack Recovery recovery SHRP shrp Redwolf redwolf; do
+        for _hrf_folder in TWRP twrp Twrp OrangeFox orangefox Fox FOX fox PBRP pbrp PitchBlack pitchblack Recovery recovery SHRP shrp Redwolf redwolf AERA aera Aera; do
             _hrf_path="$_hrf_base/$_hrf_folder"
             [ ! -d "$_hrf_path" ] && continue
             _hrf_found=$((_hrf_found + 1))
