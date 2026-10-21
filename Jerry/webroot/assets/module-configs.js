@@ -52,12 +52,18 @@
         titleKey: 'control_adb_title', title: 'ADB & Debug Disabler',
         icon: 'usb_off',
         descKey: 'control_adb_desc', desc: 'Master switch plus fine-grained control over what gets hidden at boot.',
-        masterKey: 'toggle_adb_disabler',
         toggles: [
-          { key: 'toggle_adb_disabler',             icon: 'usb_off',        def: '0', titleKey: 'control_toggle_adb_disabler', title: 'Disable ADB & Debugging',    descKey: 'control_toggle_adb_disabler_desc', desc: 'Master switch for hiding USB debugging, developer options, and OEM unlock' },
-          { key: 'toggle_adb_disabler_dev_options', icon: 'developer_mode', def: '0', titleKey: 'control_toggle_adb_disabler_dev_options', title: 'Hide Developer Options',     descKey: 'control_toggle_adb_disabler_dev_options_desc', desc: 'Disable development_settings_enabled at boot' },
-          { key: 'toggle_adb_disabler_usb_debug',   icon: 'usb',            def: '0', titleKey: 'control_toggle_adb_disabler_usb_debug', title: 'Hide USB Debugging',         descKey: 'control_toggle_adb_disabler_usb_debug_desc', desc: 'Reset ro.debuggable, adb.secure and related debug props at boot' },
-          { key: 'toggle_adb_disabler_oem_unlock',  icon: 'lock_person',    def: '0', titleKey: 'control_toggle_adb_disabler_oem_unlock', title: 'Hide OEM Unlock Support',    descKey: 'control_toggle_adb_disabler_oem_unlock_desc', desc: 'Report OEM unlock as unsupported at boot' }
+          { key: 'toggle_adb_disabler',             icon: 'usb_off',        def: '0', titleKey: 'control_toggle_adb_disabler', title: 'Disable ADB & Debugging',    descKey: 'control_toggle_adb_disabler_desc', desc: 'Master switch for hiding USB debugging, developer options, and OEM unlock',
+            detail: {
+              titleKey: 'control_adb_detail_title', title: 'ADB & Debug Options',
+              descKey: 'control_adb_detail_desc', desc: 'Choose what gets hidden at boot.',
+              items: [
+                { key: 'toggle_adb_disabler_dev_options', icon: 'developer_mode', def: '0', titleKey: 'control_toggle_adb_disabler_dev_options', title: 'Hide Developer Options',     descKey: 'control_toggle_adb_disabler_dev_options_desc', desc: 'Disable development_settings_enabled at boot' },
+                { key: 'toggle_adb_disabler_usb_debug',   icon: 'usb',            def: '0', titleKey: 'control_toggle_adb_disabler_usb_debug', title: 'Hide USB Debugging',         descKey: 'control_toggle_adb_disabler_usb_debug_desc', desc: 'Reset ro.debuggable, adb.secure and related debug props at boot' },
+                { key: 'toggle_adb_disabler_oem_unlock',  icon: 'lock_person',    def: '0', titleKey: 'control_toggle_adb_disabler_oem_unlock', title: 'Hide OEM Unlock Support',    descKey: 'control_toggle_adb_disabler_oem_unlock_desc', desc: 'Report OEM unlock as unsupported at boot' }
+              ]
+            }
+          }
         ]
       },
       action: {
@@ -65,9 +71,17 @@
         icon: 'list_alt',
         descKey: 'control_action_desc', desc: 'Steps run automatically at boot after the core module init.',
         toggles: [
-          { key: 'toggle_action_gms',            icon: 'block',                 def: '1', titleKey: 'control_toggle_action_gms', title: 'Kill Play Store',        descKey: 'control_toggle_action_gms_desc', desc: 'Force-stop and clear Play Store, GMS, and DroidGuard processes' },
-          { key: 'toggle_action_gms_force_stop',  icon: 'stop_circle',           def: '1', titleKey: 'control_toggle_action_gms_force_stop', title: 'Force-Stop GMS Apps',    descKey: 'control_toggle_action_gms_force_stop_desc', desc: 'Kill DroidGuard, GMS, and Play Store processes; clear Play Store cache' },
-          { key: 'toggle_action_gms_clear_data',  icon: 'delete_sweep',          def: '0', titleKey: 'control_toggle_action_gms_clear_data', title: 'Clear Play Store Data',  descKey: 'control_toggle_action_gms_clear_data_desc', desc: 'Full data wipe of Play Store — signs you out, more aggressive than cache clear. Off by default.' },
+          { key: 'toggle_action_gms',            icon: 'block',                 def: '1', titleKey: 'control_toggle_action_gms', title: 'Kill Play Store',        descKey: 'control_toggle_action_gms_desc', desc: 'Force-stop and clear Play Store, GMS, and DroidGuard processes',
+            detail: {
+              cascade: false,
+              titleKey: 'control_gms_detail_title', title: 'Play Store & GMS',
+              descKey: 'control_gms_detail_desc', desc: 'Choose what runs when Kill Play Store is on.',
+              items: [
+                { key: 'toggle_action_gms_force_stop',  icon: 'stop_circle',           def: '1', titleKey: 'control_toggle_action_gms_force_stop', title: 'Force-Stop GMS Apps',    descKey: 'control_toggle_action_gms_force_stop_desc', desc: 'Kill DroidGuard, GMS, and Play Store processes; clear Play Store cache' },
+                { key: 'toggle_action_gms_clear_data',  icon: 'delete_sweep',          def: '0', titleKey: 'control_toggle_action_gms_clear_data', title: 'Clear Play Store Data',  descKey: 'control_toggle_action_gms_clear_data_desc', desc: 'Full data wipe of Play Store — signs you out, more aggressive than cache clear. Off by default.' }
+              ]
+            }
+          },
           { key: 'toggle_action_target',         icon: 'list_alt',              def: '1', titleKey: 'control_toggle_action_target', title: 'Regenerate Target',      descKey: 'control_toggle_action_target_desc', desc: 'Regenerate the app target list for the active keystore backend' },
           { key: 'toggle_action_security_patch', icon: 'security_update_good',  def: '1', titleKey: 'control_toggle_action_security_patch', title: 'Set Security Patch',     descKey: 'control_toggle_action_security_patch_desc', desc: 'Write spoofed security patch date to the active keystore backend' },
           { key: 'toggle_action_boot_hash',       icon: 'verified',              def: '1', titleKey: 'control_toggle_action_boot_hash', title: 'Set Verified Boot Hash', descKey: 'control_toggle_action_boot_hash_desc', desc: 'Read and write verified boot hash for attestation' },
@@ -156,7 +170,7 @@
 
         sw.addEventListener('change', function() {
           writeAa(key, sw.selected ? '1' : '0');
-          if (toggleDef.detail) {
+          if (toggleDef.detail && toggleDef.detail.cascade !== false) {
             toggleDef.detail.items.forEach(function(item) {
               writeAa(item.key, sw.selected ? '1' : '0');
             });
@@ -262,10 +276,12 @@
       masterSwitch.addEventListener('change', function() {
         writeAa(toggleDef.key, masterSwitch.selected ? '1' : '0');
         if (outerSwitch) outerSwitch.selected = masterSwitch.selected;
-        itemSwitches.forEach(function(sw) {
-          sw.selected = masterSwitch.selected;
-          writeAa(sw.getAttribute('data-key'), masterSwitch.selected ? '1' : '0');
-        });
+        if (detail.cascade !== false) {
+          itemSwitches.forEach(function(sw) {
+            sw.selected = masterSwitch.selected;
+            writeAa(sw.getAttribute('data-key'), masterSwitch.selected ? '1' : '0');
+          });
+        }
         updateBadge(groupId);
       });
 
