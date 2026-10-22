@@ -5,7 +5,7 @@ Added
 
 - Built-in PIF Integration: Integrated Play Integrity Fix directly into JerryManager, with Zygisk required for injection.
 - PIF Settings WebUI: Added a dedicated settings page to fetch fingerprints from GitHub or AutoPIF, select random or device-specific fingerprints, manage spoofing options, view "pif.prop", and access the terminal.
-- Real-time Auto Target: Newly installed apps are automatically added to "target.txt" within seconds using "inotifyd", with a 60-second polling fallback for unsupported devices.
+- Add Auto Target Immediately toggle: Real-time Auto Target Newly installed apps are automatically added to "target.txt" within seconds using "inotifyd", with a 60-second polling fallback for unsupported devices.
 - Smart Target Exclusions: Root managers, LSPosed/EdXposed managers, and detected Xposed modules are automatically excluded from targeting.
 - System Notifications: Added native system notifications without requiring a companion app.
 - Live Security Patch Detection: Fetches the actual Pixel security bulletin patch level, retries failed requests, caches the result for 20 hours, and falls back to date-based calculation when necessary.
@@ -29,7 +29,6 @@ Cleanup
 - Moved the Set Fingerprint (PIF) action to the dedicated PIF Settings page.
 - Added installation-time cleanup for conflicting modules to reduce compatibility issues.
 - Added handling for standalone PIF/Fork modules to prevent duplicate injection.
-
 
 ## What's New in v4.5
 
