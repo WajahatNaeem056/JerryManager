@@ -7,20 +7,43 @@ _AT_SELF="$0"
 . "$MODDIR/../lib/keystore.sh"
 . "$MODDIR/../lib/package_list.sh"
 . "$MODDIR/../lib/notify.sh"
+. "$MODDIR/../lib/toggle_seed.sh"
 
-[ "$(cfg_get toggle_auto_target 1)" = "0" ] && exit 0
+# Usage: auto_target.sh [boot|install|poll]   (no argument = boot)
+# The scan itself is identical in every mode; the mode only decides which toggle
+# may start it, so the two settings can never enable each other:
+#   boot     the one scan per boot, started by service.sh after sys.boot_completed
+#            (plus bounded retries if that scan could not complete).
+#            Gate: toggle_auto_target ONLY.
+#   install  install-triggered scan: inotify events via auto_target_notify.sh and
+#            their delayed stages.   Gate: toggle_auto_target_immediate ONLY.
+#   poll     60s recovery poll backing up missed inotify events. It finds apps that
+#            appeared since the last scan, i.e. it IS install detection.
+#            Gate: toggle_auto_target_immediate ONLY.
+# Exit status: 0, except boot mode returns 75 when the scan did not complete
+# (lock busy, no backend yet, pm failed) so service.sh can retry it.
+AT_MODE="${1:-boot}"
+case "$AT_MODE" in
+  boot)         _AT_GATE="toggle_auto_target" ;;
+  install|poll) _AT_GATE="toggle_auto_target_immediate" ;;
+  *) log "AUTO_TARGET" "Unknown scan mode '$AT_MODE' — skipping"; exit 0 ;;
+esac
+_feature_enabled "$_AT_GATE" || exit 0
+
+# Boot mode reports "could not complete" to its caller; other modes stay silent
+_at_incomplete() { [ "$AT_MODE" = "boot" ] && exit 75; exit 0; }
 
 # Idle scans (nothing new) stay silent; set auto_target_verbose=1 to log every scan
 _AT_VERBOSE=$(cfg_get auto_target_verbose 0)
 _at_vlog() { [ "$_AT_VERBOSE" = "1" ] && log "$@"; return 0; }
 
-_at_vlog "AUTO_TARGET" "Start"
+_at_vlog "AUTO_TARGET" "Start ($AT_MODE)"
 
 resolve_keystore_backend
 
 if [ "$KEYSTORE_BACKEND" = "none" ]; then
   _at_vlog "AUTO_TARGET" "No active keystore backend found — skipping"
-  exit 0
+  _at_incomplete
 fi
 
 ensure_dir "$JERRYMANAGER_DIR"
@@ -59,7 +82,7 @@ _at_lock_acquire() {
 touch "$AT_PENDING" 2>/dev/null
 if ! _at_lock_acquire; then
   _at_vlog "AUTO_TARGET" "Another scan is running — re-scan queued"
-  exit 0
+  _at_incomplete
 fi
 rm -f "$AT_PENDING" 2>/dev/null
 
@@ -67,7 +90,7 @@ _at_cleanup() {
   rm -f "$TEMP_LIST" "$NEW_LIST" "$ADDED_LIST" 2>/dev/null
   rm -rf "$AT_LOCK" 2>/dev/null
   if [ -f "$AT_PENDING" ] && [ "${AUTO_TARGET_DEPTH:-0}" -lt 3 ]; then
-    AUTO_TARGET_DEPTH=$(( ${AUTO_TARGET_DEPTH:-0} + 1 )) sh "$_AT_SELF" 2>/dev/null
+    AUTO_TARGET_DEPTH=$(( ${AUTO_TARGET_DEPTH:-0} + 1 )) sh "$_AT_SELF" "$AT_MODE" 2>/dev/null
   fi
 }
 trap _at_cleanup EXIT
@@ -109,7 +132,7 @@ $_p"
 done
 if [ -z "$pkgs" ]; then
   log "AUTO_TARGET" "Warning: pm list packages failed"
-  exit 0
+  _at_incomplete
 fi
 echo "$pkgs" | cut -d ":" -f 2 | sed '/^$/d' | sort -u > "$TEMP_LIST"
 
@@ -177,9 +200,9 @@ if [ -s "$NEW_LIST" ]; then
 
   if [ "$_added" -gt 0 ]; then
     if [ "$KEYSTORE_BACKEND" = "omk" ] || [ "$KEYSTORE_BACKEND" = "teesim" ]; then
-      log "AUTO_TARGET" "Added $_added new app(s) via $KEYSTORE_NAME"
+      log "AUTO_TARGET" "Added $_added new app(s) via $KEYSTORE_NAME [$AT_MODE]"
     else
-      log "AUTO_TARGET" "Added $_added new app(s) to target.txt"
+      log "AUTO_TARGET" "Added $_added new app(s) to target.txt [$AT_MODE]"
     fi
     if [ "$_baseline" = "1" ]; then
       log "AUTO_TARGET" "First scan (baseline) — notification skipped"

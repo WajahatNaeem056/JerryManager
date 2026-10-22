@@ -127,6 +127,23 @@ do
     [ -n "$_sv_label" ] && log "SERVICE" "$_sv_label"
     if [ "$_sv_toggle" = "toggle_suspicious_props" ]; then
         sh "$MODDIR/features/${_sv_script}.sh" >/dev/null 2>&1 || true
+    elif [ "$_sv_script" = "auto_target" ]; then
+        # Boot scan (toggle_auto_target only). Exit 75 = could not complete (lock
+        # busy, backend not ready, pm failed): retry up to 5x in the background.
+        # Stops at the first completed scan, so it can never act as install detection.
+        sh "$MODDIR/features/auto_target.sh" boot 2>/dev/null
+        if [ "$?" = "75" ]; then
+            (
+                _at_retry=0
+                while [ "$_at_retry" -lt 5 ]; do
+                    sleep 60
+                    _at_retry=$((_at_retry + 1))
+                    sh "$MODDIR/features/auto_target.sh" boot 2>/dev/null
+                    [ "$?" = "75" ] || exit 0
+                done
+                log "SERVICE" "Auto Target: boot scan did not complete after 5 retries"
+            ) &
+        fi
     else
         sh "$MODDIR/features/${_sv_script}.sh" 2>/dev/null || true
     fi
@@ -145,8 +162,12 @@ if _feature_enabled toggle_action_pif; then
     ) &
 fi
 
-# Real-time Auto Target: inotify on /data/app (instant) + packages.xml, plus a 60s poll as safety net
-if _feature_enabled toggle_auto_target; then
+# Install-triggered Auto Target (toggle_auto_target_immediate, independent of the boot
+# scan above): inotify on /data/app + packages.xml, plus a 60s poll as safety net for
+# missed events. Both are install detection, so both follow toggle_auto_target_immediate;
+# the boot scan follows toggle_auto_target. As before, the watcher/poll start at boot only
+# if the toggle is ON then; once running, every event/tick re-checks the toggle.
+if _feature_enabled toggle_auto_target_immediate; then
     if command -v inotifyd >/dev/null 2>&1 && [ -d "/data/app" ]; then
         chmod 755 "$MODDIR/features/auto_target_notify.sh" 2>/dev/null
         _at_watch="/data/app:ny"
@@ -162,8 +183,8 @@ if _feature_enabled toggle_auto_target; then
     (
         while true; do
             sleep 60
-            _feature_enabled toggle_auto_target || continue
-            sh "$MODDIR/features/auto_target.sh" 2>/dev/null
+            _feature_enabled toggle_auto_target_immediate || continue
+            sh "$MODDIR/features/auto_target.sh" poll 2>/dev/null
         done
     ) &
     log "SERVICE" "Auto Target: polling every 60s as backup"

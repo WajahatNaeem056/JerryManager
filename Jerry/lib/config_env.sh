@@ -31,8 +31,25 @@ _cfg_migrate_pair() {
     unset _cmp_old _cmp_new _cmp_old_file _cmp_new_file
 }
 
+# One-time split of a setting: the NEW key starts with the value the user already
+# has in the old key, so splitting one toggle in two changes nothing for an
+# existing install. No-op once the new key exists; a fresh install (no old key
+# yet) falls through to the seeded default.
+_cfg_inherit_pair() {
+    _cip_old_file="$JERRYMANAGER_CONFIG_DIR/$1.val"
+    _cip_new_file="$JERRYMANAGER_CONFIG_DIR/$2.val"
+    if [ -f "$_cip_old_file" ] && [ ! -f "$_cip_new_file" ]; then
+        cp "$_cip_old_file" "$_cip_new_file" 2>/dev/null \
+            && log "SERVICE" "Config key $2 inherited from $1"
+    fi
+    unset _cip_old_file _cip_new_file
+}
+
 migrate_config_keys() {
     [ -d "$JERRYMANAGER_CONFIG_DIR" ] || return 0
+    # Auto Target was split: toggle_auto_target now means "on boot" only and
+    # toggle_auto_target_immediate controls install-triggered targeting.
+    _cfg_inherit_pair toggle_auto_target toggle_auto_target_immediate
     # Add "old_key:new_key" pairs here as toggles/settings get renamed:
     for _mck_pair in \
         _placeholder_none:_placeholder_none

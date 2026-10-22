@@ -16,6 +16,7 @@ _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
     toggle_action_gms_clear_data:0 \
     toggle_action_target:1 \
     toggle_auto_target:1 \
+    toggle_auto_target_immediate:1 \
     toggle_auto_target_notify:1 \
     toggle_target_system:0 \
     toggle_teesim_sync:0 \
