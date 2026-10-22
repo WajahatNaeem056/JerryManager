@@ -25,14 +25,18 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 ## Features
 
 - **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
-- **Keybox Management** — supply your own keybox or pull one automatically
-- **Auto Target**: inotify + polling for new apps
+- **Built-in PIF** — powered by JerryManager itself, no separate standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
+- **Keybox Management** — supply your own keybox or pull one automatically, with a bundled offline fallback
+- **TEE Simulator Support** — detects TrickyStore / TEESimulator and adapts keybox handling accordingly
+- **Auto Target**: inotify + polling for new apps, interactive app targeting, and "Unselect Unnecessary Apps" with protected-package logic
+- **Root Tracer**: in-app scan for bootloader, USB debugging, SELinux, and Play Integrity status
 - **Banking Mode**: dedicated handling for banking and payment apps
 - **ADB Disabler**: dev options, USB debugging, OEM unlock
 - **Detection Cleanup**: removes detector logs, temp dirs, caches
 - **Widevine L1**: attestation keys via KmInstallKeybox
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
-- **Multi-language Web UI** — translations live in `webroot/lang/` (`en.json` is the key list)
+- **Multi-language Web UI** — Material You design with dark and light themes; translations live in `webroot/lang/` (`en.json` is the key list)
+- **Clean Action Log** — plain, readable output on the Action button; full detailed log is kept in `boot.log`
 
 ## Installation
 
