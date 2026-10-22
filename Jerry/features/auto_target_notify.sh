@@ -22,13 +22,15 @@ case "$2" in
     ;;
 esac
 
-_feature_enabled toggle_auto_target || exit 0
+# Install-triggered targeting follows toggle_auto_target_immediate only;
+# toggle_auto_target (boot scan) must not enable or disable it.
+_feature_enabled toggle_auto_target_immediate || exit 0
 
 # Return to inotifyd at once; overlapping scans are coalesced by auto_target.sh's own lock
 (
   for _s in $_stages; do
     sleep "$_s"
-    sh "$MODDIR/auto_target.sh" >/dev/null 2>&1
+    sh "$MODDIR/auto_target.sh" install >/dev/null 2>&1
   done
 ) >/dev/null 2>&1 &
 exit 0

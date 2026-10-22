@@ -43,7 +43,8 @@
         icon: 'radar',
         descKey: 'control_automation_desc', desc: 'Background automation for keystore backend targeting.',
         toggles: [
-          { key: 'toggle_auto_target', icon: 'radar', def: '1', titleKey: 'control_toggle_auto_target', title: 'Auto Target New Apps', descKey: 'control_toggle_auto_target_desc', desc: 'Automatically detect newly installed apps and add them to target.txt' },
+          { key: 'toggle_auto_target', icon: 'radar', def: '1', titleKey: 'control_toggle_auto_target', title: 'Auto Target on Boot', descKey: 'control_toggle_auto_target_desc', desc: 'At every boot, add apps installed since the last scan to the target list' },
+          { key: 'toggle_auto_target_immediate', icon: 'bolt', def: '1', titleKey: 'control_toggle_auto_target_immediate', title: 'Auto Target Immediately', descKey: 'control_toggle_auto_target_immediate_desc', desc: 'Automatically add newly installed apps to the target list shortly after installation.' },
           { key: 'toggle_target_system', icon: 'apps', def: '0', titleKey: 'control_toggle_target_system', title: 'Include System Apps', descKey: 'control_toggle_target_system_desc', desc: 'Also scan and auto-target pre-installed system apps, not just user-installed ones' },
           { key: 'toggle_teesim_sync', icon: 'sync', def: '0', titleKey: 'control_toggle_teesim_sync', title: 'Sync TEESimulator Config', descKey: 'control_toggle_teesim_sync_desc', desc: 'If TEESimulator is installed, keep its device identity (brand/device/product/manufacturer/model) in sync with your PIF config' }
         ]

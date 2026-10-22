@@ -22,9 +22,11 @@ It includes an integrated **Web UI** that makes Root Hiding and integrity-relate
 
 Built for users who need a practical, centralized solution for **Root Hiding, Play Integrity, banking apps, payment apps, DRM services, and other security-sensitive applications**.
 
+
 ## Features
 
 - **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
+- **Built-in PIF** — powered by JerryManager itself, no separate standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
 - **Keybox Management** — supply your own keybox or pull one automatically
 - **Auto Target**: inotify + polling for new apps
 - **Banking Mode**: dedicated handling for banking and payment apps
@@ -33,6 +35,7 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - **Widevine L1**: attestation keys via KmInstallKeybox
 - **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
 - **Multi-language Web UI** — translations live in `webroot/lang/` (`en.json` is the key list)
+
 
 ## Installation
 
