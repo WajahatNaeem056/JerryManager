@@ -26,7 +26,7 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 ## Features
 
 - **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
-- - **Built-in PIF** — powered by JerryManager itself, no separate standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
+- **Built-in PIF** — powered by JerryManager itself, no separate standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
 - **Keybox Management** — supply your own keybox or pull one automatically
 - **Auto Target**: inotify + polling for new apps
 - **Banking Mode**: dedicated handling for banking and payment apps
