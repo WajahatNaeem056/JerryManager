@@ -17,7 +17,6 @@ Improved
 
 - Improved Security Patch, "boot_hash", and package-list handling.
 - Boot property modifications now respect the Boot Props toggle.
-- WebUI now opens in dark mode on first launch.
 - Refined spacing across the Actions and Community cards
 - Added AERA Recovery support to Auto-Hide Recovery Folders.
 - Improved the language selector and Arabic layout.
