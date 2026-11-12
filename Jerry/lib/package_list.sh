@@ -36,6 +36,25 @@ com.solohsu.android.edxp.manager
 com.coderstory.toolkit
 moe.shizuku.privileged.api"
 
+# User blacklist: one package per line (blank lines and # comments ignored).
+# Auto Target never adds these apps and removes them from the target list.
+AUTO_TARGET_BLACKLIST_FILE="/data/adb/JerryManager/blacklist.txt"
+
+# True if the blacklist is switched on and has at least one entry
+auto_target_blacklist_active() {
+  [ "$(cfg_get toggle_auto_target_blacklist 1)" != "0" ] || return 1
+  [ -s "$AUTO_TARGET_BLACKLIST_FILE" ] || return 1
+  grep -qvE '^[[:space:]]*(#|$)' "$AUTO_TARGET_BLACKLIST_FILE" 2>/dev/null
+}
+
+# True if $1 is in the blacklist (call auto_target_blacklist_active first)
+is_auto_target_blacklisted() {
+  [ -n "$1" ] || return 1
+  tr -d '\r' < "$AUTO_TARGET_BLACKLIST_FILE" 2>/dev/null \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+    | grep -Fxq -- "$1"
+}
+
 # True if $1 is excluded or already cached as an Xposed module
 is_auto_target_excluded() {
   _iae_pkg="$1"

@@ -1,0 +1,433 @@
+/* PIF Settings page: spoof toggles, device picker, terminal (backend: features/pif_config.sh) */
+(function () {
+  'use strict';
+
+  var ROOT = '/data/adb/modules/JerryManager';
+
+  function tr(key, fallback, vars) {
+    var s = (typeof window.__jerryGetTranslation === 'function' && window.__jerryGetTranslation(key)) || fallback;
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  }
+  var FETCH_LOG = '/data/local/tmp/jerry_pif_fetch.log';
+  var SPOOF_KEYS = ['spoofBuild', 'spoofVendingBuild', 'spoofProps', 'spoofProvider', 'spoofSignature', 'spoofVendingSdk'];
+  function labelFor(id) {
+    return id === 'pif-fetch' ? tr('pif_fetch', 'Fetch') : tr('pif_view', 'View pif.prop');
+  }
+
+  // Fallback for previews without a device; on a device the list comes from `pif_config.sh devices`
+  var DEVICES = [
+    ['Random', 'random'],
+    ['Pixel 6', 'oriole_beta'], ['Pixel 6 Pro', 'raven_beta'], ['Pixel 6a', 'bluejay_beta'],
+    ['Pixel 7', 'panther_beta'], ['Pixel 7 Pro', 'cheetah_beta'], ['Pixel 7a', 'lynx_beta'],
+    ['Pixel Fold', 'felix_beta'], ['Pixel Tablet', 'tangorpro_beta'],
+    ['Pixel 8', 'shiba_beta'], ['Pixel 8 Pro', 'husky_beta'], ['Pixel 8a', 'akita_beta'],
+    ['Pixel 9', 'tokay_beta'], ['Pixel 9 Pro', 'caiman_beta'], ['Pixel 9 Pro XL', 'komodo_beta'],
+    ['Pixel 9 Pro Fold', 'comet_beta'], ['Pixel 9a', 'tegu_beta'],
+    ['Pixel 10', 'frankel_beta'], ['Pixel 10 Pro', 'blazer_beta'], ['Pixel 10 Pro XL', 'mustang_beta'],
+    ['Pixel 10 Pro Fold', 'rango_beta'], ['Pixel 10a', 'stallion_beta'],
+    ['Pixel 11', 'cubs_beta'], ['Pixel 11 Pro', 'grizzly_beta'], ['Pixel 11 Pro XL', 'kodiak_beta'],
+    ['Pixel 11 Pro Fold', 'yogi_beta']
+  ];
+
+  var busy = false;
+  var devicesLoaded = false;
+  var pickedDevice = 'random';
+  var lastOnce = '';
+
+  function $(id) { return document.getElementById(id); }
+
+  function hasBridge() {
+    return !!(window.ksu && typeof window.ksu.exec === 'function');
+  }
+
+  // Runs a shell command through JerryBridge (same channel as the rest of the app).
+  // "@ROOT@" in cmd is replaced with the module directory.
+  async function run(cmd) {
+    var bridge = window.JerryBridge;
+    try {
+      if (bridge && typeof bridge.exec === 'function') {
+        await bridge.initBridge();
+        if (typeof bridge.getModuleDir === 'function' && bridge.getModuleDir()) ROOT = bridge.getModuleDir();
+        var r = await bridge.exec(cmd.split('@ROOT@').join(ROOT));
+        return { code: typeof r.code === 'number' ? r.code : 0, stdout: r.stdout || '', stderr: r.stderr || '' };
+      }
+      if (typeof window.shAsync === 'function') {
+        var s = await window.shAsync(cmd.split('@ROOT@').join(ROOT));
+        return { code: s.code, stdout: s.stdout || '', stderr: s.stderr || '' };
+      }
+    } catch (e) {
+      return { code: -1, stdout: '', stderr: String((e && e.message) || e) };
+    }
+    return { code: -1, stdout: '', stderr: 'no bridge' };
+  }
+
+  function cfg(args) { return 'sh @ROOT@/features/pif_config.sh ' + args; }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  /* ---------- terminal ---------- */
+
+  function termLog(text, kind) {
+    var el = $('pif-console');
+    if (!el) return null;
+    var line = document.createElement('div');
+    line.className = 'pif-line' + (kind ? ' ' + kind : '');
+    line.textContent = text;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+    return line;
+  }
+
+  function classify(text) {
+    if (/error|fail|could not|no such file|not active|invalid|unavailable|warning/i.test(text)) return 'err';
+    if (/done|finish|saved|selected device|=true|=false/i.test(text)) return 'ok';
+    return '';
+  }
+
+  function show(text) {
+    String(text).split('\n').forEach(function (l) { if (l.trim()) termLog(l, classify(l)); });
+  }
+
+  function cmdLine(text) { termLog('$ ' + text, 'cmd'); }
+
+  // Same message repeated (e.g. on every page open) is logged once
+  function logOnce(text, kind) {
+    if (text === lastOnce) return;
+    lastOnce = text;
+    termLog(text, kind);
+  }
+
+  function clearTerm() {
+    var el = $('pif-console');
+    if (el) el.textContent = '';
+    lastOnce = '';
+  }
+
+  function report(res, fallback) {
+    if (/No such file/.test(res.stderr)) {
+      termLog(tr('pif_backend_inactive', 'PIF backend not active yet. Reboot after flashing, then try again.'), 'err');
+      return;
+    }
+    show((res.stdout + '\n' + res.stderr).trim() || fallback || '');
+  }
+
+  /* ---------- toggles ---------- */
+
+  function switches() { return document.querySelectorAll('#pif-panel md-switch'); }
+
+  function updateBadge() {
+    var on = 0;
+    switches().forEach(function (sw) { if (sw.selected) on++; });
+    var badge = $('pif-badge-spoof');
+    if (badge) badge.textContent = on + '/' + SPOOF_KEYS.length;
+  }
+
+  function parseState(out) {
+    var start = out.indexOf('{"spoofBuild"');
+    var end = out.indexOf('}', start);
+    if (start < 0 || end < 0) return null;
+    try { return JSON.parse(out.slice(start, end + 1)); } catch (e) { return null; }
+  }
+
+  async function refresh() {
+    if (!hasBridge()) {
+      logOnce(tr('pif_preview_saved', 'Preview mode: no device connected, changes are not saved.'), 'muted');
+      updateBadge();
+      return;
+    }
+    var res = await run(cfg('get'));
+    var state = parseState(res.stdout);
+    if (!state) {
+      logOnce(/No such file/.test(res.stderr)
+        ? tr('pif_backend_inactive_open', 'PIF backend not active yet. Reboot after flashing, then open this page again.')
+        : tr('pif_state_read_failed', 'Could not read PIF state (code {code})', { code: res.code }), 'err');
+      return;
+    }
+    switches().forEach(function (sw) { sw.selected = !!state[sw.getAttribute('data-pif')]; });
+    updateBadge();
+  }
+
+  function bindSwitches() {
+    switches().forEach(function (sw) {
+      sw.addEventListener('change', async function () {
+        updateBadge();
+        if (!hasBridge()) return;
+        var key = sw.getAttribute('data-pif');
+        var value = sw.selected ? 'true' : 'false';
+        var row = sw.closest('.pif-row');
+        if (row) row.classList.add('pif-busy');
+        cmdLine('set ' + key + '=' + value);
+        var res = await run(cfg('set ' + key + ' ' + (sw.selected ? 1 : 0)));
+        if (row) row.classList.remove('pif-busy');
+        report(res, key + '=' + value);
+        if (res.code !== 0) refresh();
+      });
+    });
+  }
+
+  /* ---------- buttons ---------- */
+
+  function setBtn(id, on) {
+    var btn = $(id);
+    if (!btn) return;
+    btn.disabled = !!on;
+    var label = btn.querySelector('.pif-btn-label');
+    if (label) label.textContent = on ? (id === 'pif-fetch' ? tr('pif_fetching', 'Fetching…') : tr('pif_loading', 'Loading…')) : labelFor(id);
+  }
+
+  async function doView() {
+    if (busy) return;
+    setBtn('pif-view', true);
+    cmdLine('cat /data/adb/pif.prop');
+    if (hasBridge()) {
+      report(await run(cfg('view')), 'empty');
+    } else {
+      show('FINGERPRINT=google/…\nMODEL=Pixel 6a\nspoofBuild=true\n(preview)');
+    }
+    setBtn('pif-view', false);
+  }
+
+  // The fetch can outlast the bridge timeout, so it runs detached and its log is polled
+  async function doFetch(device, source) {
+    if (busy) return;
+    busy = true;
+    setBtn('pif-fetch', true);
+    cmdLine('pif fetch ' + device + ' --' + source);
+
+    if (!hasBridge()) {
+      termLog(tr('pif_preview', 'Preview mode: no device connected.'), 'muted');
+      await sleep(800);
+    } else {
+      var pending = termLog(tr('pif_fetching', 'Fetching…'), 'muted');
+      await run('rm -f ' + FETCH_LOG + '; (sh @ROOT@/features/pif_config.sh fetch ' + device + ' ' + source +
+        ' > ' + FETCH_LOG + ' 2>&1; echo "__END__$?" >> ' + FETCH_LOG + ') >/dev/null 2>&1 &');
+
+      var out = '';
+      for (var i = 0; i < 45 && out.indexOf('__END__') < 0; i++) {
+        await sleep(2000);
+        out = (await run('cat ' + FETCH_LOG + ' 2>/dev/null')).stdout;
+      }
+      run('rm -f ' + FETCH_LOG);
+
+      var exit = /__END__(\d*)/.exec(out);
+      var ok = !!exit && exit[1] === '0';
+      var text = out.replace(/__END__\d*\s*$/, '').trim();
+      if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
+      if (/No such file/.test(text)) {
+        termLog(tr('pif_backend_inactive', 'PIF backend not active yet. Reboot after flashing, then try again.'), 'err');
+      } else {
+        show(text || tr('pif_no_output', 'No output (timed out)'));
+        termLog(ok ? tr('pif_done', 'Done') : tr('pif_failed_internet', 'Failed (check internet)'), ok ? 'ok' : 'err');
+      }
+    }
+
+    setBtn('pif-fetch', false);
+    busy = false;
+    refresh();
+  }
+
+  /* ---------- device picker ---------- */
+
+  async function loadDevices() {
+    if (devicesLoaded || !hasBridge()) return;
+    var res = await run(cfg('devices'));
+    var list = res.stdout.split('\n').map(function (l) { return l.trim().split('|'); })
+      .filter(function (p) { return p.length === 2 && /_beta$/.test(p[1]); });
+    if (!list.length) return;
+    DEVICES = [['Random', 'random']].concat(list);
+    devicesLoaded = true;
+    $('pif-picker-list').textContent = '';
+  }
+
+  function buildPicker() {
+    var list = $('pif-picker-list');
+    if (!list || list.childNodes.length) return;
+    DEVICES.forEach(function (d) {
+      var row = document.createElement('div');
+      row.className = 'pif-dev' + (d[1] === pickedDevice ? ' sel' : '');
+      row.setAttribute('data-dev', d[1]);
+      var name = document.createElement('span');
+      name.textContent = d[1] === 'random' ? tr('pif_device_random', 'Random') : d[0];
+      var radio = document.createElement('span');
+      radio.className = 'pif-radio';
+      row.appendChild(name);
+      row.appendChild(radio);
+      row.addEventListener('click', function () {
+        pickedDevice = d[1];
+        list.querySelectorAll('.pif-dev').forEach(function (r) {
+          r.classList.toggle('sel', r.getAttribute('data-dev') === pickedDevice);
+        });
+      });
+      list.appendChild(row);
+    });
+  }
+
+  async function openPicker() {
+    if (busy) return;
+    await loadDevices();
+    buildPicker();
+    $('pif-picker').hidden = false;
+    var selected = document.querySelector('#pif-picker-list .pif-dev.sel');
+    if (selected && selected.scrollIntoView) selected.scrollIntoView({ block: 'center' });
+  }
+
+  function closePicker() { $('pif-picker').hidden = true; }
+
+  function startFetch(source) {
+    closePicker();
+    doFetch(pickedDevice, source);
+  }
+
+  /* ---------- import fingerprint (pif.json / pif.prop) ---------- */
+
+  function shq(text) { return "'" + String(text).replace(/'/g, "'\\''") + "'"; }
+
+  function toast(message, isError, plain) {
+    var el = document.createElement('div');
+    el.className = 'pif-toast' + (isError ? ' pif-toast--err' : '');
+    el.setAttribute('role', 'status');
+    var tx = document.createElement('span');
+    tx.textContent = message;
+    if (!plain) {
+      var ic = document.createElement('md-icon');
+      ic.className = 'pif-toast__icon';
+      ic.textContent = isError ? 'error' : 'check_circle';
+      el.appendChild(ic);
+    }
+    el.appendChild(tx);
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add('pif-toast--open'); });
+    setTimeout(function () {
+      el.classList.remove('pif-toast--open');
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }, isError ? 5000 : 3000);
+  }
+
+  function setImportBusy(on) {
+    var row = $('pif-import');
+    if (row) row.classList.toggle('pif-busy', !!on);
+  }
+
+  // The backend prints human lines and ends with IMPORT_OK or IMPORT_ERR: <reason>.
+  // Success is only reported when IMPORT_OK came back with exit code 0.
+  async function doImport(path) {
+    if (busy) return;
+    busy = true;
+    setImportBusy(true);
+    var name = path.split('/').pop();
+    cmdLine('pif import ' + name);
+    var pending = termLog(tr('pif_importing', 'Importing…'), 'muted');
+    var ok = false;
+    var reason = '';
+    var res = await run(cfg('import ' + shq(path)));
+    var out = String(res.stdout || '');
+
+    if (pending && pending.parentNode) pending.parentNode.removeChild(pending);
+
+    if (/No such file/.test(res.stderr || '')) {
+      reason = tr('pif_backend_inactive', 'PIF backend not active yet. Reboot after flashing, then try again.');
+    } else if (res.code === -1) {
+      reason = tr('pif_import_unfinished', 'Import did not finish ({err}). Use View pif.prop to check the current config.', { err: ((res.stderr || '').trim() || tr('pif_bridge_error', 'bridge error')) });
+    } else {
+      var m = /^IMPORT_ERR: (.*)$/m.exec(out);
+      ok = res.code === 0 && /^IMPORT_OK\s*$/m.test(out);
+      if (!ok) reason = m ? m[1] : tr('pif_import_failed_code', 'Import failed (code {code})', { code: res.code });
+    }
+
+    out.split('\n').forEach(function (l) {
+      if (!l.trim() || /^IMPORT_(OK|ERR)/.test(l)) return;
+      termLog(l, /^(Note|Ignored|Spoof toggles)/.test(l) ? 'muted' : classify(l));
+    });
+
+    if (ok) {
+      var model = (/^MODEL=(.*)$/m.exec(out) || [])[1] || '';
+      var okMsg = model ? tr('pif_imported_model', 'Fingerprint imported: {model}', { model: model }) : tr('pif_imported', 'Fingerprint imported');
+      termLog(okMsg, 'ok');
+      var desc = $('pif-import-desc');
+      if (desc) desc.textContent = (model ? model + ' · ' : '') + name;
+      toast(okMsg, false);
+    } else {
+      var failMsg = tr('pif_import_failed', 'Import failed: {reason}', { reason: reason });
+      termLog(failMsg, 'err');
+      toast(failMsg, true);
+    }
+
+    setImportBusy(false);
+    busy = false;
+    refresh();
+  }
+
+  // Android has no picker for a WebUI, so (like AlwaysStrong and the keybox page) the
+  // app's own file browser lists storage through the root shell. Closing it does nothing.
+  function openImport() {
+    if (busy) return;
+    if (!hasBridge()) {
+      termLog(tr('pif_preview', 'Preview mode: no device connected.'), 'muted');
+      toast(tr('pif_preview', 'Preview mode: no device connected.'), true);
+      return;
+    }
+    if (typeof window.jerryOpenFileBrowser !== 'function') {
+      var fbMsg = tr('pif_file_browser_missing', 'File browser not available, reload the page');
+      termLog(fbMsg, 'err');
+      toast(fbMsg, true);
+      return;
+    }
+    window.jerryOpenFileBrowser(doImport, { exts: ['.json', '.prop'], label: 'pif.json / pif.prop' });
+  }
+
+  /* ---------- page ---------- */
+
+  // Shared with the Security Patch / Boot Hash pages (patch-hash-panel.js)
+  window.jerryRun = run;
+  window.jerryToast = toast;
+
+  window.openPifSettings = function () {
+    var panel = $('pif-settings-panel');
+    if (!panel) return;
+    panel.style.display = 'flex';
+    var main = document.querySelector('main');
+    if (main) main.style.overflow = 'hidden';
+    refresh();
+  };
+
+  window.closePifSettings = function () {
+    var panel = $('pif-settings-panel');
+    if (!panel) return;
+    closePicker();
+    panel.style.display = 'none';
+    var main = document.querySelector('main');
+    if (main) main.style.overflow = '';
+  };
+
+  // Device names use the translated "Random" entry, so rebuild the picker after a language change
+  document.addEventListener('languageChanged', function () {
+    var list = $('pif-picker-list');
+    if (list) list.textContent = '';
+    ['pif-fetch', 'pif-view'].forEach(function (id) {
+      var btn = $(id), label = btn && btn.querySelector('.pif-btn-label');
+      if (label && !btn.disabled) label.textContent = labelFor(id);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!$('pif-panel')) return;
+    bindSwitches();
+    updateBadge();
+    termLog(tr('pif_ready', 'JerryManager PIF ready.'), 'muted');
+
+    $('pif-fetch').addEventListener('click', openPicker);
+    $('pif-view').addEventListener('click', doView);
+    var importRow = $('pif-import');
+    if (importRow) {
+      importRow.addEventListener('click', openImport);
+      importRow.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openImport(); }
+      });
+    }
+    $('pif-term-clear').addEventListener('click', clearTerm);
+    $('pif-pick-cancel').addEventListener('click', closePicker);
+    $('pif-pick-github').addEventListener('click', function () { startFetch('github'); });
+    $('pif-pick-autopif').addEventListener('click', function () { startFetch('autopif'); });
+    $('pif-picker').addEventListener('click', function (e) { if (e.target === this) closePicker(); });
+  });
+})();

@@ -10,19 +10,35 @@ export async function initI18n() {
     catch {
         fallbackTranslations = {};
     }
-    let lang = await getConfig(`lang`, `en`) || `en`;
+    // Until the user picks a language by hand, follow "Module default".
+    let chosen = await getConfig(`lang_chosen`, `0`);
+    let lang = chosen === `1` ? (await getConfig(`lang`, `default`) || `default`) : `default`;
     await applyLanguage(lang, true);
     setupLanguageMenu(lang);
 }
+var SUPPORTED_LANGS = [`en`, `zh`, `ar`, `tr`];
+// "Module default": follow the device language when the module has it, otherwise English.
+function resolveLang(lang) {
+    if (lang !== `default`)
+        return lang;
+    let list = [navigator.language].concat(navigator.languages || []);
+    for (let i = 0; i < list.length; i++) {
+        let code = (list[i] || ``).toLowerCase().split(`-`)[0];
+        if (SUPPORTED_LANGS.includes(code))
+            return code;
+    }
+    return `en`;
+}
 async function applyLanguage(lang) {
-    let url = lang === `en` ? `lang/en.json?ts=${Date.now()}` : `lang/${lang}.json?ts=${Date.now()}`;
+    let resolved = resolveLang(lang);
+    let url = `lang/${resolved}.json?ts=${Date.now()}`;
     try {
         translations = await (await fetch(url)).json();
     }
     catch {
         translations = {};
     }
-    document.documentElement.setAttribute(`lang`, lang);
+    document.documentElement.setAttribute(`lang`, resolved);
     applyTranslationsToDom();
     setConfig(`lang`, lang);
     document.dispatchEvent(new CustomEvent(`languageChanged`, { detail: { langCode: lang } }));
@@ -55,7 +71,7 @@ function applyTranslationsToDom() {
     });
 }
 function setupLanguageMenu(e) {
-    let _LANGS = [[`en`, `English`, `🇬🇧`], [`zh`, `中文`, `🇨🇳`], [`ar`, `العربية`, `🇸🇦`]];
+    let _LANGS = [[`default`, `Module default`, `🌐`], [`en`, `English`, `🇬🇧`], [`zh`, `中文`, `🇨🇳`], [`ar`, `العربية`, `🇸🇦`], [`tr`, `Türkçe`, `🇹🇷`]];
     let trig = document.getElementById(`jerry-lang-trigger`);
     let label = document.getElementById(`jerry-lang-trigger-label`);
     let menu = document.getElementById(`jerry-lang-menu`);
@@ -71,7 +87,7 @@ function setupLanguageMenu(e) {
             label.appendChild(flagSpan);
         }
         let nameSpan = document.createElement(`span`);
-        nameSpan.textContent = m ? m[1] : code;
+        nameSpan.textContent = code === `default` ? (getTranslation(`lang_module_default`) || m[1]) : (m ? m[1] : code);
         label.appendChild(nameSpan);
     }
     function closeMenu() {
@@ -99,12 +115,13 @@ function setupLanguageMenu(e) {
             flagSpan.className = `jerry-lang-option-flag`;
             flagSpan.textContent = flag || ``;
             let nameSpan = document.createElement(`span`);
-            nameSpan.textContent = name;
+            nameSpan.textContent = code === `default` ? (getTranslation(`lang_module_default`) || name) : name;
             item.appendChild(flagSpan);
             item.appendChild(nameSpan);
             item.addEventListener(`click`, async () => {
                 closeMenu();
                 try {
+                    setConfig(`lang_chosen`, `1`);
                     await applyLanguage(code);
                 }
                 catch (err) {

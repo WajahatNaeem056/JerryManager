@@ -15,11 +15,8 @@ cfg_delete() {
     rm -f "$JERRYMANAGER_CONFIG_DIR/$1.val" 2>/dev/null
 }
 
-# Config-key migration: rename an old toggle/setting key to a new one,
-# preserving whatever value the user already had. Safe to call every boot —
-# it's a no-op once the old file is gone. Add "old_key:new_key" pairs to
-# migrate_config_keys() below whenever a key is renamed in an update, so
-# existing users don't lose their saved setting.
+# Config-key migration: rename an old key to a new one, keeping the user's value.
+# No-op once the old key is gone. Add "old_key:new_key" pairs to migrate_config_keys() on rename.
 _cfg_migrate_pair() {
     _cmp_old="$1" _cmp_new="$2"
     _cmp_old_file="$JERRYMANAGER_CONFIG_DIR/$_cmp_old.val"
@@ -75,7 +72,7 @@ update_description() {
     if [ "$KEYSTORE_BACKEND" = "omk" ]; then
         [ -f "$OMK_INJECTOR" ] && _ud_targets=$(awk '/^scoop = \[/{f=1;next} f && /\]/{f=0;next} f{gsub(/[",]/,"");gsub(/^[ \t]+|[ \t]+$/,"");if(length($0))c++} END{print c+0}' "$OMK_INJECTOR" 2>/dev/null)
     else
-        [ -f "$TARGET_TXT" ] && _ud_targets=$(grep -c '.' "$TARGET_TXT" 2>/dev/null | tr -d ' ')
+        _ud_targets=$(keystore_read_targets 2>/dev/null | grep -c '.' | tr -d ' ')
     fi
     [ -z "$_ud_targets" ] && _ud_targets=0
 
@@ -83,6 +80,7 @@ update_description() {
     case "$_ud_valid_raw" in
         Yes) _ud_valid="Valid" ;;
         No)  _ud_valid="Revoked" ;;
+        Expired) _ud_valid="Expired" ;;
         *)   _ud_valid="Unknown" ;;
     esac
 

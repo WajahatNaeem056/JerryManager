@@ -37,21 +37,19 @@ migrate_config_keys
 
 seed_toggle_defaults
 
+# New boot: drop the cached ROM/root so the first WebUI open after boot detects them live once
+# (device-info.sh then caches the result for the rest of this boot).
+cfg_delete "cached_rom_status"
+cfg_delete "cached_root_type"
+
+write_state_snapshot
+
 # Hide leftover folders of other root solutions (or restore them if off)
 if _feature_enabled toggle_multiroot_hide; then
     sh "$MODDIR/features/multiroot_hide.sh" --hide 2>/dev/null || true
 else
     sh "$MODDIR/features/multiroot_hide.sh" --restore 2>/dev/null || true
 fi
-
-_teesim_auto_marker="$JERRYMANAGER_CONFIG_DIR/.teesim_auto_enabled"
-if [ ! -f "$_teesim_auto_marker" ] && \
-   { [ -d "/data/adb/modules/teesim" ] || [ -d "/data/adb/modules_update/teesim" ]; }; then
-    cfg_set toggle_teesim_sync 1
-    touch "$_teesim_auto_marker" 2>/dev/null
-    log "SERVICE" "TEESimulator detected — auto-enabled Sync TEESimulator Config"
-fi
-unset _teesim_auto_marker
 
 if [ "$KSU" != "true" ]; then
     log "SERVICE" "Magisk detected — polling sys.boot_completed"
@@ -63,14 +61,10 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
 done
 
 # Early-boot hash is a stopgap; re-resolve from the TEE probe once keystore is up
-if _feature_enabled toggle_action_boot_hash \
-   && [ "$(cat /data/adb/boot_hash.src 2>/dev/null)" != "tee" ]; then
+if _feature_enabled toggle_action_boot_hash; then
     sh "$MODDIR/features/boot_hash.sh" --refresh 2>/dev/null \
         || log "SERVICE" "Warning: post-boot boot_hash refresh failed"
 fi
-
-. "$MODDIR/lib/rom_detect.sh"
-cfg_set "cached_rom_status" "$(detect_rom)"
 
 _feature_enabled toggle_boot_props && apply_critical_hiding_props
 
@@ -88,7 +82,7 @@ if _feature_enabled toggle_recovery; then
     sh "$MODDIR/features/recovery.sh" 2>/dev/null || true
 fi
 
-if _feature_enabled toggle_rom_spoof; then
+if _feature_enabled toggle_rom_spoof && ! _feature_enabled toggle_rom_builtin_spoof; then
     log "SERVICE" "Blocking ROM spoof engines..."
     if [ "$KSU" != "true" ]; then
         ( block_rom_spoof_engines ) &
@@ -111,11 +105,11 @@ for _sv_entry in \
     "toggle_custom_rom_identity_cleanup:custom_rom_identity_cleanup:Cleaning custom ROM/GApps traces..." \
     "toggle_hide_rom_identifier:hide_rom_identifier:Removing custom ROM properties (24-ROM pattern)..." \
     "toggle_pif_traces:pif2:Cleaning PIF/PixelProps trace properties..." \
+    "toggle_rom_builtin_spoof:rom_builtin_spoof:Enabling ROM built-in spoof hooks (zygiskless)..." \
     "toggle_suspicious_props:suspicious_props:" \
     "toggle_action_gms:gms:" \
     "toggle_action_target:target:" \
     "toggle_auto_target:auto_target:" \
-    "toggle_teesim_sync:teesim_sync:Syncing TEESimulator config..." \
     "toggle_action_security_patch:security_patch:" \
     "toggle_action_boot_hash:boot_hash:"
 do
@@ -165,17 +159,18 @@ fi
 # Install-triggered Auto Target (toggle_auto_target_immediate, independent of the boot
 # scan above): inotify on /data/app + packages.xml, plus a 60s poll as safety net for
 # missed events. Both are install detection, so both follow toggle_auto_target_immediate;
-# the boot scan follows toggle_auto_target. As before, the watcher/poll start at boot only
-# if the toggle is ON then; once running, every event/tick re-checks the toggle.
+# the boot scan follows toggle_auto_target. The watcher/poll start only if the toggle is ON at
+# boot; once running, every event/tick re-checks it.
 if _feature_enabled toggle_auto_target_immediate; then
-    if command -v inotifyd >/dev/null 2>&1 && [ -d "/data/app" ]; then
+    resolve_inotifyd
+    if [ "$INOTIFYD_KIND" != "none" ] && [ -d "/data/app" ]; then
         chmod 755 "$MODDIR/features/auto_target_notify.sh" 2>/dev/null
-        _at_watch="/data/app:ny"
+        _at_watch="/data/app:nyd"
         # Android replaces packages.xml by rename, so also watch the directory for moved-in files
         [ -f "/data/system/packages.xml" ] && _at_watch="$_at_watch /data/system/packages.xml:w /data/system:y"
         # shellcheck disable=SC2086
-        inotifyd "$MODDIR/features/auto_target_notify.sh" $_at_watch >/dev/null 2>&1 &
-        log "SERVICE" "Auto Target: real-time watch active (inotify: $_at_watch)"
+        $INOTIFYD_CMD "$MODDIR/features/auto_target_notify.sh" $_at_watch >/dev/null 2>&1 &
+        log "SERVICE" "Auto Target: real-time watch active ($INOTIFYD_KIND inotifyd: $_at_watch)"
         unset _at_watch
     else
         log "SERVICE" "Auto Target: inotify unavailable"
@@ -190,38 +185,52 @@ if _feature_enabled toggle_auto_target_immediate; then
     log "SERVICE" "Auto Target: polling every 60s as backup"
 fi
 
-resetprop -n ro.boot.verifiedbootstate green
-resetprop -n vendor.boot.verifiedbootstate green
-resetprop -n partition.system.verified 2
-resetprop -n partition.vendor.verified 2
-resetprop -n partition.product.verified 2
-resetprop -n partition.system_ext.verified 2
-resetprop -n partition.odm.verified 2
+# OhMyKeymint / TEESimulator: fully automatic when detected (exits at once otherwise)
+( sh "$MODDIR/features/keystore_watch.sh" >/dev/null 2>&1 ) &
+
+# Auto keybox update: replaces a missing or Google-revoked keybox (toggle_auto_keybox_update)
+( sh "$MODDIR/features/keybox_autoupdate.sh" >/dev/null 2>&1 ) &
+
+if _feature_enabled toggle_boot_props; then
+    sp_try ro.boot.verifiedbootstate green
+    sp_try vendor.boot.verifiedbootstate green
+    sp_try partition.system.verified 2
+    sp_try partition.vendor.verified 2
+    sp_try partition.product.verified 2
+    sp_try partition.system_ext.verified 2
+    sp_try partition.odm.verified 2
+fi
 
 (
     sleep 120
     log "SERVICE" "Delayed re-apply: reapplying critical props"
-    sp_try ro.crypto.state encrypted
-    sp_try ro.build.tags release-keys
-    sp_try ro.boot.veritymode.managed yes
-    sp_try ro.boot.selinux enforcing
-    sp_try ro.build.selinux 1
-    sp_try ro.secure 1
-    sp_try ro.hardware.virtual_device 0
-    sp_try ro.is_ever_orange 0
-    sp_try ro.boot.verifiedbootstate green
-    sp_try vendor.boot.verifiedbootstate green
-    resetprop --delete sys.oem_unlock_allowed 2>/dev/null || true
-    sp_try ro.oem_unlock_supported 0
-    sp_try ro.boot.warranty_bit 0
-    sp_try ro.warranty_bit 0
-    sp_try ro.vendor.warranty_bit 0
-    sp_try ro.vendor.boot.warranty_bit 0
-    sp_try ro.secureboot.lockstate locked
-    sp_try ro.boot.vbmeta.device_state locked
-    sp_try vendor.boot.vbmeta.device_state locked
-    sp_try ro.boot.flash.locked 1
-    sp_try ro.boot.veritymode enforcing
+    # Boot Props Spoof only
+    if _feature_enabled toggle_boot_props; then
+        sp_try ro.crypto.state encrypted
+        sp_try ro.build.tags release-keys
+        sp_try ro.boot.verifiedbootstate green
+        sp_try vendor.boot.verifiedbootstate green
+    fi
+    # Props shared by Boot Props Spoof and Boot Hardening: on if either is on
+    if _feature_enabled toggle_boot_props || _feature_enabled toggle_boot_hardening; then
+        sp_try ro.boot.veritymode.managed yes
+        sp_try ro.boot.selinux enforcing
+        sp_try ro.build.selinux 1
+        sp_try ro.secure 1
+        sp_try ro.hardware.virtual_device 0
+        sp_try ro.is_ever_orange 0
+        resetprop --delete sys.oem_unlock_allowed 2>/dev/null || true
+        sp_try ro.oem_unlock_supported 0
+        sp_try ro.boot.warranty_bit 0
+        sp_try ro.warranty_bit 0
+        sp_try ro.vendor.warranty_bit 0
+        sp_try ro.vendor.boot.warranty_bit 0
+        sp_try ro.secureboot.lockstate locked
+        sp_try ro.boot.vbmeta.device_state locked
+        sp_try vendor.boot.vbmeta.device_state locked
+        sp_force ro.boot.flash.locked 1
+        sp_try ro.boot.veritymode enforcing
+    fi
     _feature_enabled toggle_recovery && hide_recovery_folders
     log "SERVICE" "Delayed re-apply done"
     [ -f "$MODDIR/features/export_logs.sh" ] && sh "$MODDIR/features/export_logs.sh" >/dev/null 2>&1
@@ -234,6 +243,11 @@ if _feature_enabled toggle_suspicious_props; then
             sh "$MODDIR/features/suspicious_props.sh" >/dev/null 2>&1 || true
         done
     ) &
+fi
+
+if _feature_enabled toggle_kernel_buildtime; then
+    log "SERVICE" "Syncing build time to kernel..."
+    sh "$MODDIR/features/build_sanitize.sh" 2>/dev/null || true
 fi
 
 _release=$(getprop ro.build.version.release 2>/dev/null || echo "Unknown")

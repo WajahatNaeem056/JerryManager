@@ -47,6 +47,34 @@ fi
 
 [ -d "$TRICKY_DIR" ] || die "Tricky Store data directory not found"
 
+# Tricky Store with config.ini: add FIXED_TARGETS to [target] through the backend helper
+if [ "$KEYSTORE_FORMAT" = "ini" ]; then
+  teeBroken="false"
+  for _tee_file in "$TEE_STATUS" "${TEE_STATUS}.txt"; do
+    [ -f "$_tee_file" ] || continue
+    teeBroken=$(grep -E '^(teeBroken|tee_broken)=' "$_tee_file" | cut -d= -f2 2>/dev/null || echo "false")
+    break
+  done
+  log "TARGET" "TEE status: teeBroken=$teeBroken (config.ini)"
+  _ini_count=0
+  for entry in $FIXED_TARGETS; do
+    _bare=$(printf '%s' "$entry" | sed 's/[!?]$//')
+    _suffix=""
+    case "$entry" in
+      *!) _suffix="!" ;;
+      *\?) if [ "$teeBroken" != "true" ]; then _suffix="?"; fi ;;
+    esac
+    _had=0
+    keystore_read_targets | sed 's/[!?]$//' | grep -Fxq "$_bare" && _had=1
+    if [ "$_had" = "0" ] && keystore_add_target "$_bare" "$_suffix"; then
+      _ini_count=$((_ini_count + 1))
+    fi
+  done
+  log "TARGET" "Merge pass: added $_ini_count missing FIXED_TARGETS entries to config.ini"
+  log "TARGET" "Finish ($KEYSTORE_NAME)"
+  exit 0
+fi
+
 _count=0
 
 teeBroken="false"

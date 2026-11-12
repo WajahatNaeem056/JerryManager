@@ -5,6 +5,7 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/urls.sh"
 . "$MODDIR/../lib/config_env.sh"
 . "$MODDIR/../lib/keystore.sh"
+. "$MODDIR/../lib/catalog.sh"
 
 resolve_keystore_backend
 KEYBOX_FILE="$KEYSTORE_KEYBOX"
@@ -26,11 +27,26 @@ _version=""
 _latest_version=""
 _up_to_date=false
 _revoked=false
+_softbanned=false
+_expired=false
+_expires_at=""
 
 if [ -f "$KEYBOX_FILE" ]; then
   _installed=true
 
   _device_id=$(grep -o 'DeviceID="[^"]*"' "$KEYBOX_FILE" | head -1 | sed 's/DeviceID="//;s/"//')
+
+  # Certificate expiry is read from the file itself, so it works offline
+  _exp_raw=$(decode_keybox_expiry "$KEYBOX_FILE" 2>/dev/null || true)
+  if [ -n "$_exp_raw" ]; then
+    _expires_at=$(printf '%s' "$_exp_raw" | sed 's/^\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)$/\1-\2-\3T\4:\5:\6Z/')
+    keybox_is_expired "$KEYBOX_FILE" && _expired=true
+    if $_expired; then
+      log "KEYBOX_INFO" "Keybox certificate expired on $_expires_at"
+    else
+      log "KEYBOX_INFO" "Keybox certificate valid until $_expires_at"
+    fi
+  fi
 
   _jerry_marker=$(grep -oE 'jerryroot:[0-9]+|JERRY-KEYBOX:[0-9]+' "$KEYBOX_FILE" | head -1 | sed 's/jerryroot://;s/JERRY-KEYBOX://')
   if [ -n "$_jerry_marker" ]; then
@@ -80,6 +96,27 @@ if [ "$_installed" = "true" ]; then
       fi
     fi
 
+    # Catalog (if reachable) overrides the single latest_keybox number and adds softban status
+    _cat_pick=$(keybox_pick_entry 2>/dev/null) || _cat_pick=""
+    if [ -n "$_cat_pick" ]; then
+      # Never go below the latest_keybox number: if the catalog was not touched for a
+      # newer key, the newer number still wins and the card does not show a false "update".
+      _cat_ver=$(_kc_field "$_cat_pick" version)
+      case "$_cat_ver" in
+        ''|*[!0-9]*) ;;
+        *)
+          case "$_latest_version" in
+            ''|*[!0-9]*) _latest_version="$_cat_ver" ;;
+            *) [ "$_cat_ver" -gt "$_latest_version" ] && _latest_version="$_cat_ver" ;;
+          esac
+          ;;
+      esac
+      if [ -n "$_version" ] && keybox_version_softbanned "$_version"; then
+        _softbanned=true
+        log "KEYBOX_INFO" "Installed keybox v$_version is softbanned in the catalog"
+      fi
+    fi
+
     if [ -n "$_version" ] && [ -n "$_latest_version" ] && [ "$_version" = "$_latest_version" ]; then
       _up_to_date=true
     fi
@@ -105,9 +142,12 @@ cat <<EOF > "$INFO_PATH"
   "latest_version": "$_latest_version",
   "up_to_date": $_up_to_date,
   "revoked": $_revoked,
+  "softbanned": $_softbanned,
+  "expired": $_expired,
+  "expires_at": "$_expires_at",
   "backend": "$KEYSTORE_NAME",
   "generated_at": "$_gen_ts"
 }
 EOF
 
-unset _gen_ts _installed _by_jerry _version _latest_version _up_to_date _revoked _device_id _jerry_marker _revoked_list _b64 _serial_hex _serial_clean _serial_dec _tmp_revoked _tmp_latest _pid_revoked _pid_latest _revoke_reason
+unset _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _device_id _jerry_marker _revoked_list _b64 _serial_hex _serial_clean _serial_dec _tmp_revoked _tmp_latest _pid_revoked _pid_latest _revoke_reason

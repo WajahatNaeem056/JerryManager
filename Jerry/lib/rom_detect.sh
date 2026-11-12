@@ -1,32 +1,78 @@
 #!/system/bin/sh
+# Live ROM detection.
+#
+# Nothing is cached: every detect_rom call reads the device as it is right now.
+#
+# Evidence order, the first match wins:
+#   1. a known custom ROM: its own version prop, or its name in the build strings
+#   2. an OEM ROM, only when its own marker prop is present
+#   3. a neutral label (a ROM name is never guessed from the brand alone)
+#
+# Cleanup features can delete props from the running system, so every lookup
+# falls back to the build.prop files on disk, which those features never touch.
+#
+# Usage:   . lib/rom_detect.sh; detect_rom      (prints the ROM name)
 
-# Oplus family (OnePlus / Oppo / realme): is this the China ROM (ColorOS)?
-# Any one China marker is enough. These come from the firmware images and the
-# build id, so a user-changed region prop (e.g. PK) cannot hide them.
-_rd_oplus_is_cn() {
-    _rd_o=$(resetprop ro.oplus.image.my_stock.type 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    case "$_rd_o" in domestic*) return 0 ;; esac
-    _rd_o=$(resetprop ro.vendor.oplus.regionmark 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    [ "$_rd_o" = "cn" ] && return 0
-    _rd_o=$(resetprop ro.oplus.image.my_region.type 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    case "$_rd_o" in cn|cn_*) return 0 ;; esac
-    case "$(resetprop ro.build.display.id 2>/dev/null)" in *"(CN"*) return 0 ;; esac
-    _rd_o=$(resetprop persist.sys.oplus.region 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    [ "$_rd_o" = "cn" ] && return 0
-    return 1
+_RD_NL='
+'
+_RD_FILES="${_RD_FILES:-/system/build.prop /system_ext/etc/build.prop /product/etc/build.prop}"
+
+# ---- Prop access -------------------------------------------------------------
+
+# Snapshot the running props (one getprop call) and the build.prop files on disk.
+# Both snapshots are newline-delimited so a lookup can anchor on the newline.
+_rd_load() {
+    _RD_LIVE="$_RD_NL$(getprop 2>/dev/null)$_RD_NL"
+    _RD_DISK="$_RD_NL"
+    for _rd_f in $_RD_FILES; do
+        if [ -r "$_rd_f" ]; then
+            _RD_DISK="$_RD_DISK$(cat "$_rd_f" 2>/dev/null)$_RD_NL"
+        fi
+    done
 }
 
-# OnePlus retired OxygenOS: from ColorOS 17 (Android 17) every OnePlus device
-# runs ColorOS, global ones included. oplusrom looks like "V17.0.0"; major
-# version 17 or higher means ColorOS, 16 and below can still be OxygenOS.
-_rd_oplusrom_ge17() {
-    _rd_v="${1#[Vv]}"
-    _rd_v="${_rd_v%%.*}"
-    case "$_rd_v" in ''|*[!0-9]*) return 1 ;; esac
-    [ "$_rd_v" -ge 17 ]
+# $1 = prop. Value from the running system (getprop dump: "[prop]: [value]").
+_rd_live() {
+    case "$_RD_LIVE" in
+        *"$_RD_NL[$1]: ["*)
+            _rd_t="${_RD_LIVE#*"$_RD_NL[$1]: ["}"
+            _rd_t="${_rd_t%%"$_RD_NL"*}"
+            printf '%s' "${_rd_t%]}"
+            ;;
+    esac
 }
 
-detect_rom() {
+# $1 = prop. Value from the build.prop files ("prop=value").
+_rd_disk() {
+    case "$_RD_DISK" in
+        *"$_RD_NL$1="*)
+            _rd_t="${_RD_DISK#*"$_RD_NL$1="}"
+            printf '%s' "${_rd_t%%"$_RD_NL"*}"
+            ;;
+    esac
+}
+
+# $1 = prop. Running system first, disk as the fallback.
+_rd_get() {
+    _rd_v=$(_rd_live "$1")
+    [ -n "$_rd_v" ] || _rd_v=$(_rd_disk "$1")
+    printf '%s' "$_rd_v"
+}
+
+# $1 = prop. Succeeds when the prop has a value.
+_rd_has() {
+    [ -n "$(_rd_get "$1")" ]
+}
+
+# $1 = text. Lowercased.
+_rd_lc() {
+    printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
+}
+
+# ---- 1. Known custom ROMs ----------------------------------------------------
+
+# 1a. ROMs that set their own version / maintainer prop.
+_rd_named_by_prop() {
     for _rd_pair in \
         "ro.lineage.version:LineageOS" \
         "ro.pixelexperience.version:PixelExperience" \
@@ -46,19 +92,28 @@ detect_rom() {
         "ro.rising.version:RisingOS" \
         "ro.syberia.version:SyberiaOS" \
         "ro.superior.version:SuperiorOS" \
+        "ro.yaap.version:YAAP" \
         "ro.lunaris.maintainer:Lunaris AOSP" \
         "ro.axion.maintainer:AxionOS"; do
-        _rd_key="${_rd_pair%%:*}"
-        _rd_disp="${_rd_pair#*:}"
-        _rd_val=$(resetprop "$_rd_key" 2>/dev/null)
-        if [ -n "$_rd_val" ]; then
-            printf '%s' "$_rd_disp"
-            return
+        if _rd_has "${_rd_pair%%:*}"; then
+            printf '%s' "${_rd_pair#*:}"
+            return 0
         fi
     done
+    return 1
+}
 
-    _rd_fp_raw="$(resetprop ro.build.fingerprint 2>/dev/null)|$(resetprop ro.build.description 2>/dev/null)|$(resetprop ro.build.display.id 2>/dev/null)"
-    _rd_fp=$(printf '%s' "$_rd_fp_raw" | tr '[:upper:]' '[:lower:]')
+# 1b. ROMs found by name in the build strings. The running value and the disk
+# value of each prop are both searched.
+_rd_named_by_build() {
+    _rd_hay=""
+    for _rd_k in ro.build.fingerprint ro.build.description ro.build.display.id \
+        ro.build.flavor ro.product.name ro.product.system.name \
+        ro.system.build.fingerprint; do
+        _rd_hay="$_rd_hay|$(_rd_live "$_rd_k")|$(_rd_disk "$_rd_k")"
+    done
+    _rd_hay=$(_rd_lc "$_rd_hay")
+
     for _rd_pair in \
         "lineageos:LineageOS" "crdroid:crDroid" "pixelexperience:PixelExperience" \
         "pixelos:PixelOS" "evolutionx:EvolutionX" "arrowos:ArrowOS" \
@@ -77,91 +132,150 @@ detect_rom() {
         "superioros:SuperiorOS" "syberiaos:SyberiaOS" "tequilaos:TequilaOS" \
         "theandroidproject:TheAndroidProject" "validusos:ValidusOS" \
         "viperos:ViperOS" "xosp:XOSP" "zenithos:ZenithOS" \
-        "zephyrusos:ZephyrusOS" "axion:AxionOS" "lineage:LineageOS" \
-        "lunaris:Lunaris AOSP"; do
-        _rd_needle="${_rd_pair%%:*}"
-        _rd_disp="${_rd_pair#*:}"
-        case "$_rd_fp" in
-            *"$_rd_needle"*)
-                printf '%s' "$_rd_disp"
-                return
+        "zephyrusos:ZephyrusOS" \
+        "yaap:YAAP" "infinity:Infinity-X" "matrixx:MatrixX" "mistos:MistOS" \
+        "halcyon:Halcyon" "alphadroid:AlphaDroid" "avium:Avium" "bliss:Bliss" \
+        "calyx:CalyxOS" "graphene:GrapheneOS" "lmodroid:LMODroid" \
+        "lumine:LumineOS" "clover:CloverOS" \
+        "axion:AxionOS" "lineage:LineageOS" "lunaris:Lunaris AOSP"; do
+        case "$_rd_hay" in
+            *"${_rd_pair%%:*}"*)
+                printf '%s' "${_rd_pair#*:}"
+                return 0
                 ;;
         esac
     done
+    return 1
+}
 
-    # ro.build.version.oplusrom exists on ColorOS and OxygenOS alike, so it
-    # tells us the device is Oplus family. Oppo / realme ship ColorOS
-    # everywhere. OnePlus is ColorOS on the China ROM and from ColorOS 17
-    # onwards; below that, without China markers, it is OxygenOS.
-    _rd_oplusrom=$(resetprop ro.build.version.oplusrom 2>/dev/null)
-    if [ -n "$_rd_oplusrom" ]; then
-        _rd_pb=$(resetprop ro.product.brand 2>/dev/null | tr '[:upper:]' '[:lower:]')
-        case "$_rd_pb" in
-            oppo|realme) printf '%s' "ColorOS" ;;
-            *)
-                if _rd_oplus_is_cn || _rd_oplusrom_ge17 "$_rd_oplusrom"; then
+# ---- 2. OEM ROMs (only with their own marker prop) ---------------------------
+
+# Oplus family: is this the China ROM (ColorOS)? One China marker is enough.
+# The markers come from the firmware images and the build id, so a region prop
+# changed by the user (for example to PK) cannot hide them.
+_rd_oplus_is_cn() {
+    case "$(_rd_lc "$(_rd_get ro.oplus.image.my_stock.type)")" in
+        domestic*) return 0 ;;
+    esac
+    case "$(_rd_lc "$(_rd_get ro.vendor.oplus.regionmark)")" in
+        cn) return 0 ;;
+    esac
+    case "$(_rd_lc "$(_rd_get ro.oplus.image.my_region.type)")" in
+        cn|cn_*) return 0 ;;
+    esac
+    case "$(_rd_get ro.build.display.id)" in
+        *"(CN"*) return 0 ;;
+    esac
+    case "$(_rd_lc "$(_rd_get persist.sys.oplus.region)")" in
+        cn) return 0 ;;
+    esac
+    return 1
+}
+
+# $1 = oplusrom, for example "V17.0.0". OnePlus ships ColorOS everywhere from
+# version 17; version 16 and below is still OxygenOS outside China.
+_rd_oplusrom_ge17() {
+    _rd_n="${1#[Vv]}"
+    _rd_n="${_rd_n%%.*}"
+    case "$_rd_n" in
+        ''|*[!0-9]*) return 1 ;;
+    esac
+    [ "$_rd_n" -ge 17 ]
+}
+
+# $1 = lowercase brand + manufacturer.
+# Prints the OEM ROM, or returns 1 when the OEM marker is missing.
+_rd_oem() {
+    case "$1" in
+        *xiaomi*|*redmi*|*poco*)
+            if _rd_has ro.mi.os.version.name; then
+                printf '%s' "HyperOS"
+            elif _rd_has ro.miui.ui.version.name; then
+                printf '%s' "MIUI"
+            else
+                return 1
+            fi
+            ;;
+        *samsung*)
+            if _rd_has ro.build.version.oneui || _rd_has ro.build.version.sem; then
+                printf '%s' "One UI"
+            else
+                return 1
+            fi
+            ;;
+        *oppo*|*realme*)
+            if _rd_has ro.build.version.oplusrom || _rd_has ro.build.version.opporom; then
+                printf '%s' "ColorOS"
+            else
+                return 1
+            fi
+            ;;
+        *oneplus*)
+            _rd_rom=$(_rd_get ro.build.version.oplusrom)
+            if [ -n "$_rd_rom" ]; then
+                if _rd_oplus_is_cn || _rd_oplusrom_ge17 "$_rd_rom"; then
                     printf '%s' "ColorOS"
                 else
                     printf '%s' "OxygenOS"
                 fi
-                ;;
-        esac
-        unset _rd_oplusrom _rd_pb
-        return
-    fi
-    unset _rd_oplusrom
-
-    _rd_brand=$(resetprop ro.product.brand 2>/dev/null | tr '[:upper:]' '[:lower:]')
-    _rd_mfr=$(resetprop ro.product.manufacturer 2>/dev/null | tr '[:upper:]' '[:lower:]')
-
-    case "$_rd_brand$_rd_mfr" in
-        *samsung*)
-            printf '%s' "One UI"
-            return
-            ;;
-        *xiaomi*|*redmi*|*poco*)
-            _rd_hyper=$(resetprop ro.mi.os.version.name 2>/dev/null)
-            if [ -n "$_rd_hyper" ]; then
-                printf '%s' "HyperOS"
-            else
-                printf '%s' "MIUI"
-            fi
-            return
-            ;;
-        *oneplus*)
-            # No ro.build.version.oplusrom (older builds): same China check.
-            if _rd_oplus_is_cn; then
+            elif _rd_oplus_is_cn; then
                 printf '%s' "ColorOS"
-            else
+            elif _rd_has ro.oxygen.version; then
                 printf '%s' "OxygenOS"
+            else
+                return 1
             fi
-            return
-            ;;
-        *oppo*|*realme*)
-            printf '%s' "ColorOS"
-            return
             ;;
         *nothing*)
-            printf '%s' "Nothing OS"
-            return
+            case "$(_rd_get ro.build.tags)" in
+                *release-keys*) printf '%s' "Nothing OS" ;;
+                *) return 1 ;;
+            esac
             ;;
         *google*)
-            printf '%s' "Stock (Pixel/AOSP)"
-            return
+            case "$(_rd_get ro.build.tags)" in
+                *release-keys*) printf '%s' "Stock (Pixel/AOSP)" ;;
+                *) return 1 ;;
+            esac
+            ;;
+        *)
+            return 1
             ;;
     esac
+}
 
-    _rd_tags=$(resetprop ro.build.tags 2>/dev/null)
-    case "$_rd_tags" in
-        *test-keys*)
+# ---- 3. Neutral label --------------------------------------------------------
+
+# $1 = lowercase brand + manufacturer.
+_rd_fallback() {
+    case "$(_rd_get ro.build.tags)" in
+        *test-keys*|*dev-keys*)
             printf '%s' "AOSP (Unrecognized)"
-            return
+            return 0
             ;;
     esac
-
-    if [ -n "$_rd_brand" ]; then
-        printf '%s' "Stock ($_rd_brand)"
+    case "$1" in
+        *oneplus*|*oppo*|*realme*|*xiaomi*|*redmi*|*poco*|*samsung*|*google*|*nothing*)
+            # An OEM phone without its OEM marker: not the OEM ROM, name unknown.
+            printf '%s' "Custom ROM (Unrecognized)"
+            return 0
+            ;;
+    esac
+    _rd_b=$(_rd_lc "$(_rd_get ro.product.brand)")
+    if [ -n "$_rd_b" ]; then
+        printf '%s' "Stock ($_rd_b)"
     else
         printf '%s' "Stock"
     fi
+}
+
+# ---- Entry point -------------------------------------------------------------
+
+detect_rom() {
+    _rd_load
+    _rd_named_by_prop && return 0
+    _rd_named_by_build && return 0
+    _rd_ident=$(_rd_lc "$(_rd_get ro.product.brand)$(_rd_get ro.product.manufacturer)")
+    _rd_oem "$_rd_ident" && return 0
+    _rd_fallback "$_rd_ident"
 }

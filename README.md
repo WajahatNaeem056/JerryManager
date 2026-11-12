@@ -5,7 +5,7 @@
 **A KernelSU / APatch module for achieving and maintaining Root Hiding and Integrity on Android.**
 
 ![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
-![Version](https://img.shields.io/badge/Version-v4.6-purple)
+![Version](https://img.shields.io/badge/Version-v4.7-purple)
 ![OS](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPL--3.0-orange)
 ![Status](https://img.shields.io/badge/Status-Active-success)
@@ -33,8 +33,8 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 - **ADB Disabler**: dev options, USB debugging, OEM unlock
 - **Detection Cleanup**: removes detector logs, temp dirs, caches
 - **Widevine L1**: attestation keys via KmInstallKeybox
-- **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; unknown ROMs are reported as `Unknown` instead of a wrong guess
-- **Multi-language Web UI** — translations live in `webroot/lang/` (`en.json` is the key list)
+- **ROM Detection** — identifies the running ROM using verified filesystem markers rather than guessing from spoofable build props; ROMs it cannot identify are shown as `AOSP (Unrecognized)` or `Stock (<brand>)` instead of a wrong guess
+- **Multi-language Web UI** — translations live in `webui-src/project/public/lang/` (`en.json` is the key list)
 
 
 ## Installation
@@ -46,14 +46,16 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 
 ## Structure
 
-- `Jerry/`: module (features, lib, pipelines, webroot)
-- `webui-src/project/`: WebUI source (Vite), builds into `Jerry/webroot/`
-- `tools/`: webroot clean and check scripts
-- `build.sh`: packages `Jerry/` into the flashable ZIP
+- `Jerry/`: module (features, lib, pipelines); `dex/classes.dex` and `zygisk/*.so` are the built-in PIF binaries, built from [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
+- `webui-src/project/`: WebUI source (Vite) and static webroot files (`public/`); `webroot/` in the zip is generated from it
+- `package.json`, `vite.config.js`: WebUI build; `npm run build` builds the WebUI and the flashable ZIP
+- `tools/`: icon-font inline, webroot check and zip packaging scripts
+- `Main.java`: source of `Jerry/dex/attest.dex` (boot hash probe), built by `.github/workflows/build-dex.yml`
+- `build.sh`: runs `npm install && npm run build`
 
 ## Build
 
-Requires `git`, `zip` and `unzip`. Node.js and npm are needed only to rebuild the WebUI.
+Requires `git`, `zip`, `unzip`, Node.js 20.19+ and npm.
 
 ```bash
 git clone https://github.com/WajahatNaeem056/JerryManager.git
@@ -61,18 +63,16 @@ cd JerryManager
 sh build.sh
 ```
 
-Output: `dist/JerryManager-v{version}.zip`
-
-To rebuild the WebUI from source first (requires Node.js and npm):
+`sh build.sh` installs the dependencies and builds the module ZIP in one step. To do it step by step, run these from the repo root (`package.json` lives there, not in `webui-src/project`):
 
 ```bash
-cd webui-src/project
 npm install
 npm run build
-cd ../..
-sh build.sh
 ```
 
+`npm run build` builds the WebUI with Vite, moves the base64 icon font into index.html, checks the webroot and packages the ZIP. The WebUI is built into `dist/webroot` (`index.html` with the base64 icon font inline, plus one JS file and one CSS file in `assets/`) and packaged into the ZIP as `webroot/`.
+
+Output: `dist/JerryManager-<version>.zip`, where `<version>` comes from `Jerry/module.prop` (e.g. `dist/JerryManager-v4.7.zip`).
 
 ## Developer
 

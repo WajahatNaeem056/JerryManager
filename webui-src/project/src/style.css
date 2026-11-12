@@ -44,8 +44,8 @@ body {
 }
 
 :root {
-  --md-ref-typeface-brand:"Roboto", system-ui;
-  --md-ref-typeface-plain:"Roboto", system-ui;
+  --md-ref-typeface-brand:system-ui, -apple-system, "Roboto", sans-serif;
+  --md-ref-typeface-plain:system-ui, -apple-system, "Roboto", sans-serif;
   --md-icon-font:"Material Icons Outlined";
   --md-sys-shape-corner-small:8px;
   --md-sys-shape-corner-full:9999px;
@@ -319,36 +319,36 @@ md-outlined-select,md-outlined-segmented-button-set {
 }
 
 .jerry-lang-select {
-  --jerry-lang-accent:#8b45ff;
+  --jerry-lang-accent:var(--color-blue-66);
   --jerry-lang-border:transparent;
-  --jerry-lang-open:rgba(139,69,255,.5);
+  --jerry-lang-open:rgba(41,121,255,.5);
   --jerry-lang-surface:var(--md-sys-color-surface-container-high);
   --jerry-lang-shadow:none;
   --jerry-lang-menu-surface:var(--md-sys-color-surface-container-highest);
   --jerry-lang-menu-border:rgba(255,255,255,.07);
   --jerry-lang-menu-shadow:0 12px 28px rgba(0,0,0,.45);
   --jerry-lang-arrow:var(--md-sys-color-on-surface);
-  --jerry-lang-tint:rgba(139,69,255,.16);
-  --jerry-lang-sel:rgba(139,69,255,.12);
-  --jerry-lang-hover:rgba(139,69,255,.07);
+  --jerry-lang-tint:rgba(41,121,255,.16);
+  --jerry-lang-sel:rgba(41,121,255,.12);
+  --jerry-lang-hover:rgba(41,121,255,.07);
   position:relative;
   display:block;
   z-index:60
 }
 
 :root[data-theme-resolved=light] .jerry-lang-select, :root[data-theme=light] .jerry-lang-select {
-  --jerry-lang-accent:var(--color-violet-58);
+  --jerry-lang-accent:var(--color-accent-58);
   --jerry-lang-border:rgba(0,0,0,.06);
-  --jerry-lang-open:rgba(124,58,237,.45);
+  --jerry-lang-open:rgba(41,121,255,.45);
   --jerry-lang-surface:var(--color-white);
   --jerry-lang-shadow:0 4px 16px rgba(0,0,0,.06);
   --jerry-lang-menu-surface:var(--color-white);
   --jerry-lang-menu-border:rgba(0,0,0,.06);
   --jerry-lang-menu-shadow:0 10px 28px rgba(0,0,0,.12);
-  --jerry-lang-arrow:var(--color-violet-58);
-  --jerry-lang-tint:rgba(124,58,237,.12);
-  --jerry-lang-sel:rgba(124,58,237,.09);
-  --jerry-lang-hover:rgba(124,58,237,.05)
+  --jerry-lang-arrow:var(--color-accent-58);
+  --jerry-lang-tint:rgba(41,121,255,.12);
+  --jerry-lang-sel:rgba(41,121,255,.09);
+  --jerry-lang-hover:rgba(41,121,255,.05)
 }
 
 .jerry-lang-trigger {
@@ -732,21 +732,23 @@ md-filled-tonal-button {
 }
 
 .md-toast {
-  background:var(--md-sys-color-inverse-surface);
-  color:var(--md-sys-color-inverse-on-surface);
-  z-index:10000;
-  border-radius:16px;
+  background:var(--md-sys-color-inverse-surface,#313033);
+  color:var(--md-sys-color-inverse-on-surface,#eff1f4);
+  z-index:10010;
+  border-radius:28px;
   align-items:center;
-  gap:8px;
-  min-width:288px;
-  max-width:600px;
+  gap:10px;
+  box-sizing:border-box;
+  min-width:min(344px,calc(100vw - 24px));
+  max-width:calc(100vw - 24px);
   padding:14px 16px;
   font-size:.875rem;
   line-height:1.25rem;
+  text-align:left;
   transition:transform .3s;
   display:flex;
   position:fixed;
-  bottom:24px;
+  bottom:calc(112px + env(safe-area-inset-bottom,0px));
   left:50%;
   transform:translate(-50%)translateY(100px);
   box-shadow:0 4px 8px #0003
@@ -756,33 +758,19 @@ md-filled-tonal-button {
   transform:translate(-50%)translateY(0)
 }
 
-.md-toast.snackbar-success {
-  position:absolute;
-  top:50%;
-  bottom:auto;
-  left:auto;
-  right:16px;
-  min-width:0;
-  max-width:none;
-  width:auto;
-  padding:4px 10px;
-  gap:4px;
-  font-size:.75rem;
-  line-height:1rem;
-  border-radius:9999px;
-  box-shadow:none;
-  transform:translateY(-50%)translateX(20px);
-  opacity:0
+.md-toast.snackbar-error {
+  background:#8c1d18;
+  color:#fff
 }
 
-.md-toast.snackbar-success.md-toast--open {
-  transform:translateY(-50%)translateX(0);
-  opacity:1
+.md-toast.snackbar-error .md-toast__action {
+  color:#fff
 }
 
-.md-toast.snackbar-success.md-toast--dismiss {
-  transform:translateY(-50%)translateX(20px);
-  opacity:0
+.md-toast__icon {
+  --md-icon-size:20px;
+  font-size:20px;
+  flex:none
 }
 
 .md-toast__message {
@@ -930,11 +918,11 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .network-chip, :root[data-theme=light] .network-chip {
-  color: var(--color-violet-58) !important;
+  color: var(--color-accent-58) !important;
 }
 
 :root[data-theme-resolved=light] .network-chip md-icon, :root[data-theme=light] .network-chip md-icon {
-  color: var(--color-violet-58) !important;
+  color: var(--color-accent-58) !important;
 }
 
 :root[data-theme-resolved=light] md-filled-card, :root[data-theme=light] md-filled-card {
@@ -962,13 +950,13 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] #version-info-card, :root[data-theme=light] #version-info-card {
-  background: rgba(124,58,237,0.08) !important;
-  border: 1px solid rgba(124,58,237,0.16) !important;
+  background: rgba(41,121,255,0.08) !important;
+  border: 1px solid rgba(41,121,255,0.16) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
 
 :root[data-theme-resolved=light] #version-info-card .info-card__label, :root[data-theme-resolved=light] #version-info-card .info-card__value, :root[data-theme=light] #version-info-card .info-card__label, :root[data-theme=light] #version-info-card .info-card__value {
-  color: var(--color-violet-50) !important;
+  color: var(--color-accent-50) !important;
 }
 
 :root[data-theme-resolved=light] #keybox-card.keybox-ok, :root[data-theme=light] #keybox-card.keybox-ok {
@@ -1033,7 +1021,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .list-item md-icon:first-child, :root[data-theme=light] .list-item md-icon:first-child {
-  color: var(--color-violet-58) !important;
+  color: var(--color-accent-58) !important;
 }
 
 :root[data-theme-resolved=light] .supporting-text, :root[data-theme=light] .supporting-text {
@@ -1045,7 +1033,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .list-title, :root[data-theme=light] .list-title {
-  color: var(--color-violet-58) !important;
+  color: var(--color-accent-58) !important;
   font-weight: 800 !important;
   font-size: 1em !important;
 }
@@ -1065,15 +1053,15 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .community-card__arrow, :root[data-theme=light] .community-card__arrow {
-  background: rgba(124,58,237,0.12) !important;
-  color: var(--color-violet-58) !important;
+  background: rgba(41,121,255,0.12) !important;
+  color: var(--color-accent-58) !important;
 }
 
 :root[data-theme-resolved=light] #refresh-btn, :root[data-theme=light] #refresh-btn {
   background: var(--color-white) !important;
   border: 1px solid rgba(0,0,0,0.06) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-  color: var(--color-violet-58) !important;
+  color: var(--color-accent-58) !important;
   font-weight: 700 !important;
 }
 
@@ -1095,7 +1083,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .theme-btn.active, :root[data-theme=light] .theme-btn.active {
-  background: var(--color-violet-58) !important;
+  background: var(--color-accent-58) !important;
   color: var(--color-white) !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
 }
@@ -1205,7 +1193,7 @@ md-dialog {
   width:28px;
   height:28px;
   border-radius:50%;
-  background:rgba(139,69,255,0.16);
+  background:rgba(41,121,255,0.16);
   color:var(--md-sys-color-on-surface);
   display:flex;
   align-items:center;
@@ -1230,11 +1218,11 @@ md-dialog {
 
 :root[data-theme-resolved=light] md-navigation-bar, :root[data-theme=light] md-navigation-bar {
   --md-navigation-bar-label-text-color: var(--color-gray-10) !important;
-  --md-navigation-bar-active-label-text-color: var(--color-violet-58) !important;
+  --md-navigation-bar-active-label-text-color: var(--color-accent-58) !important;
   --md-navigation-bar-inactive-label-text-color: var(--color-gray-46) !important;
-  --md-navigation-bar-active-icon-color: var(--color-violet-58) !important;
+  --md-navigation-bar-active-icon-color: var(--color-accent-58) !important;
   --md-navigation-bar-inactive-icon-color: var(--color-gray-46) !important;
-  --md-navigation-bar-active-indicator-color: rgba(124,58,237,0.10) !important;
+  --md-navigation-bar-active-indicator-color: rgba(41,121,255,0.10) !important;
 }
 
 :root[data-theme-resolved=dark] html, :root[data-theme=dark] html, :root[data-theme-resolved=dark] body, :root[data-theme=dark] body {
@@ -1259,11 +1247,11 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .network-chip, :root[data-theme=dark] .network-chip {
-  color: var(--color-violet-66) !important;
+  color: var(--color-accent-66) !important;
 }
 
 :root[data-theme-resolved=dark] .network-chip md-icon, :root[data-theme=dark] .network-chip md-icon {
-  color: var(--color-violet-66) !important;
+  color: var(--color-accent-66) !important;
 }
 
 :root[data-theme-resolved=dark] #keybox-card.keybox-ok, :root[data-theme=dark] #keybox-card.keybox-ok {
@@ -1393,7 +1381,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .list-item md-icon:first-child, :root[data-theme=dark] .list-item md-icon:first-child {
-  color: var(--color-violet-66) !important;
+  color: var(--color-accent-66) !important;
   opacity: 0.85 !important;
 }
 
@@ -1412,7 +1400,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .list-title, :root[data-theme=dark] .list-title {
-  color: var(--color-violet-66) !important;
+  color: var(--color-accent-66) !important;
   font-weight: 800 !important;
   font-size: 1.0em !important;
   letter-spacing: 0.03em !important;
@@ -1427,7 +1415,7 @@ md-dialog {
   --md-navigation-bar-inactive-label-text-color: var(--color-gray-34) !important;
   --md-navigation-bar-active-icon-color: var(--color-gray-96) !important;
   --md-navigation-bar-inactive-icon-color: var(--color-gray-34) !important;
-  --md-navigation-bar-active-indicator-color: var(--color-violet-58) !important;
+  --md-navigation-bar-active-indicator-color: var(--color-accent-58) !important;
 }
 
 :root[data-theme-resolved=dark] .theme-toggle-card, :root[data-theme=dark] .theme-toggle-card {
@@ -1443,7 +1431,7 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .theme-btn.active, :root[data-theme=dark] .theme-btn.active {
-  background: var(--color-violet-58) !important;
+  background: var(--color-accent-58) !important;
   color: var(--color-white) !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
 }
@@ -1497,26 +1485,26 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .dialog-action-clear, :root[data-theme=light] .dialog-action-clear {
-  --md-text-button-label-text-color: var(--color-violet-50) !important;
-  --md-text-button-hover-label-text-color: var(--color-violet-42) !important;
-  --md-text-button-pressed-label-text-color: var(--color-violet-42) !important;
-  --md-text-button-hover-state-layer-color: var(--color-violet-50) !important;
-  --md-text-button-pressed-state-layer-color: var(--color-violet-50) !important;
-  --md-text-button-disabled-label-text-color: var(--color-violet-50) !important;
+  --md-text-button-label-text-color: var(--color-accent-50) !important;
+  --md-text-button-hover-label-text-color: var(--color-accent-42) !important;
+  --md-text-button-pressed-label-text-color: var(--color-accent-42) !important;
+  --md-text-button-hover-state-layer-color: var(--color-accent-50) !important;
+  --md-text-button-pressed-state-layer-color: var(--color-accent-50) !important;
+  --md-text-button-disabled-label-text-color: var(--color-accent-50) !important;
   --md-text-button-disabled-label-text-opacity: 0.38 !important;
-  color: var(--color-violet-50) !important;
+  color: var(--color-accent-50) !important;
   font-weight: 600 !important;
 }
 
 :root[data-theme-resolved=dark] .dialog-action-clear, :root[data-theme=dark] .dialog-action-clear {
-  --md-text-button-label-text-color: var(--color-violet-76) !important;
+  --md-text-button-label-text-color: var(--color-accent-76) !important;
   --md-text-button-hover-label-text-color: var(--color-blue-85) !important;
   --md-text-button-pressed-label-text-color: var(--color-blue-85) !important;
-  --md-text-button-hover-state-layer-color: var(--color-violet-76) !important;
-  --md-text-button-pressed-state-layer-color: var(--color-violet-76) !important;
-  --md-text-button-disabled-label-text-color: var(--color-violet-76) !important;
+  --md-text-button-hover-state-layer-color: var(--color-accent-76) !important;
+  --md-text-button-pressed-state-layer-color: var(--color-accent-76) !important;
+  --md-text-button-disabled-label-text-color: var(--color-accent-76) !important;
   --md-text-button-disabled-label-text-opacity: 0.38 !important;
-  color: var(--color-violet-76) !important;
+  color: var(--color-accent-76) !important;
   font-weight: 600 !important;
 }
 
@@ -1526,7 +1514,7 @@ md-dialog {
 }
 
 .dialog-action-clear:focus-visible, .dialog-action-close:focus-visible {
-  outline: 2px solid var(--color-violet-58) !important;
+  outline: 2px solid var(--color-accent-58) !important;
   outline-offset: 2px !important;
 }
 

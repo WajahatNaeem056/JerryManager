@@ -100,19 +100,24 @@ if _feature_enabled toggle_boot_props; then
 fi
 
 log "CLEANUP" "Deleting persist props..."
+if adb_hide_enabled toggle_adb_disabler_usb_debug; then
 sp_persist_delete persist.service.adb.enable
 sp_persist_delete persist.service.debuggable
+fi
 sp_persist_delete persist.zygote.app_data_isolation
 sp_persist_delete persist.hyperceiler.log.level
 sp_persist_delete persist.com.luckyzyx.luckytool.log.level
 sp_persist_delete persist.com.luckyzyx.luckytool.debug
 sp_persist_delete persist.com.luckyzyx.luckytool.enable
+if adb_hide_enabled toggle_adb_disabler_dev_options; then
 sp_persist_delete persist.sys.developer_options
 sp_persist_delete persist.sys.dev_mode
 
 resetprop -n persist.sys.developer_options 0 2>/dev/null || true
+resetprop -n persist.sys.development_settings_enabled 0 2>/dev/null || true
 resetprop -n persist.sys.dev_mode 0 2>/dev/null || true
 resetprop -n persist.sys.debuggable 0 2>/dev/null || true
+fi
 
 log "CLEANUP" "Applying boot hardening..."
 if _feature_enabled toggle_boot_hardening; then

@@ -1,14 +1,14 @@
 :root {
-  --color-accent: #7C3AED;
-  --color-accent-pressed: #6D28D9;
+  --color-accent: var(--color-blue-66);
+  --color-accent-pressed: #1C6AE0;
   --color-on-accent: #ffffff;
-  --color-violet-strong: #5b21b6;
-  --color-violet-surface: #f5f3ff;
-  --color-violet-tint: #ede9fe;
+  --color-accent-strong: #1048a8;
+  --color-accent-surface: #eef5ff;
+  --color-accent-tint: #dbe9ff;
   --color-surface-white: #ffffff;
   --color-text-title: #252525;
   --color-text-body: #444444;
-  --color-text-strong: #1a1a2e;
+  --color-text-strong: #1a222e;
   --color-text-muted: #6b7280;
   --color-error-surface: #fee2e2;
   --color-error-text: #b91c1c;
@@ -42,13 +42,13 @@
   --md-dialog-container-color: var(--color-surface-white);
   --md-dialog-headline-color: var(--color-text-title);
   --md-dialog-supporting-text-color: var(--color-text-body);
-  --md-text-button-label-text-color: var(--color-violet-strong);
+  --md-text-button-label-text-color: var(--color-accent-strong);
 }
 :root[data-theme-resolved=light] .activity-card,
 :root[data-theme=light] .activity-card {
-  --md-elevated-card-container-color: var(--color-violet-surface);
+  --md-elevated-card-container-color: var(--color-accent-surface);
   --md-elevated-card-container-elevation: 1;
-  border: 1px solid rgba(91,33,182,0.10);
+  border: 1px solid rgba(21,101,192,0.10);
 }
 :root[data-theme-resolved=light] .activity-card__name,
 :root[data-theme=light] .activity-card__name {
@@ -61,11 +61,11 @@
 }
 :root[data-theme-resolved=light] .activity-card--success .activity-card__leading,
 :root[data-theme=light] .activity-card--success .activity-card__leading {
-  background: var(--color-violet-tint) !important;
+  background: var(--color-accent-tint) !important;
 }
 :root[data-theme-resolved=light] .activity-card--success .activity-card__icon,
 :root[data-theme=light] .activity-card--success .activity-card__icon {
-  color: var(--color-violet-strong) !important;
+  color: var(--color-accent-strong) !important;
 }
 :root[data-theme-resolved=light] .activity-card--error .activity-card__leading,
 :root[data-theme=light] .activity-card--error .activity-card__leading {
@@ -79,3 +79,8 @@
 :root[data-theme=light] .activity-empty p {
   color: var(--color-text-muted) !important;
 }
+
+/* Overflow menu: grouped actions, dividers and a state check on the system-apps toggle. */
+.at-menu-divider { height: 1px; margin: 4px 6px; background: var(--at-border); opacity: 0.6; }
+.at-menu-item .at-menu-state { display: none; margin-left: auto; }
+.at-menu-item[aria-checked="true"] .at-menu-state { display: block; }

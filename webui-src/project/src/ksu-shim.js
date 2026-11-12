@@ -1,6 +1,6 @@
-// Browser-only fallback: when the page is opened outside a root manager there is
-// no window.ksu, so a no-op shim is installed and /json/info.json is faked.
-if (window.ksu === undefined) {
+// Dev-only browser fallback (vite dev): with no window.ksu a no-op shim is installed and /json/info.json is faked.
+// Never in the production build: a shim installed before the root manager injects its bridge would hide the real window.ksu.
+if (import.meta.env.DEV && window.ksu === undefined) {
     const shim = {
         exec(command, options, callbackName) {
             setTimeout(() => {

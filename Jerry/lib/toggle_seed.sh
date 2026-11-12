@@ -6,20 +6,23 @@ _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
     toggle_rom_spoof:1 \
     toggle_bootloader_spoofer:1 \
     toggle_adb_disabler:0 \
-    toggle_adb_disabler_dev_options:0 \
-    toggle_adb_disabler_usb_debug:0 \
-    toggle_adb_disabler_oem_unlock:0 \
+    toggle_adb_disabler_dev_options:1 \
+    toggle_adb_disabler_usb_debug:1 \
+    toggle_adb_disabler_oem_unlock:1 \
     toggle_rom_fingerprint:0 \
     toggle_suspicious_props:1 \
     toggle_action_gms:1 \
     toggle_action_gms_force_stop:1 \
     toggle_action_gms_clear_data:0 \
     toggle_action_target:1 \
+    toggle_auto_keybox_update:1 \
+    toggle_keystore_singleton:1 \
     toggle_auto_target:1 \
     toggle_auto_target_immediate:1 \
     toggle_auto_target_notify:1 \
+    toggle_auto_target_blacklist:1 \
+    toggle_auto_target_cleanup:1 \
     toggle_target_system:0 \
-    toggle_teesim_sync:0 \
     toggle_action_security_patch:1 \
     toggle_security_patch_bulletin:1 \
     toggle_action_boot_hash:1 \
@@ -32,7 +35,11 @@ _TOGGLE_DEFAULTS_LIST="toggle_boot_hardening:1 \
     toggle_rom_prefix_cleanup:0 \
     toggle_build_marker_cleanup:0 \
     toggle_pif_traces:0 \
-    toggle_multiroot_hide:0"
+    toggle_multiroot_hide:0 \
+    toggle_kernel_buildtime:0 \
+    toggle_rom_builtin_spoof:0 \
+    toggle_rom_builtin_gms:1 \
+    toggle_rom_builtin_vending:1"
 
 seed_toggle_defaults() {
   for _std_pair in $_TOGGLE_DEFAULTS_LIST; do

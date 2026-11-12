@@ -1,0 +1,17 @@
+{
+  "name": "jerrymanager-webui",
+  "private": true,
+  "version": "4.7",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node tools/inline-font.mjs && node tools/check-webroot.mjs && sh tools/package.sh",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@material/web": "^2.4.0"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

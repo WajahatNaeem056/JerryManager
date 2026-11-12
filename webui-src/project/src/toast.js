@@ -2,10 +2,12 @@
 export function showToast(message, options = {}) {
     let { action: action, autoCloseDelay: autoCloseDelay = 3e3, onActionClick: onActionClick, className: className } = options;
     let toast = document.createElement(`div`);
+    let icon = className === `snackbar-success` ? `check_circle` : className === `snackbar-error` ? `error` : ``;
     return toast.className = `md-toast` + (className ? ` ` + className : ``), toast.innerHTML = `
+    ${icon ? `<md-icon class="md-toast__icon">${icon}</md-icon>` : ``}
     <span class="md-toast__message">${message}</span>
     ${action ? `<button class="md-toast__action">${action}</button>` : ``}
-  `, (className === `snackbar-success` ? document.getElementById(`top-bar`) || document.body : document.body).appendChild(toast), requestAnimationFrame(() => toast.classList.add(`md-toast--open`)), action && onActionClick && (toast.querySelector(`.md-toast__action`).onclick = () => {
+  `, document.body.appendChild(toast), requestAnimationFrame(() => toast.classList.add(`md-toast--open`)), action && onActionClick && (toast.querySelector(`.md-toast__action`).onclick = () => {
         dismissToast(toast);
         onActionClick();
     }), autoCloseDelay > 0 && (toast._autoTimer = setTimeout(() => dismissToast(toast), autoCloseDelay)), setTimeout(() => {

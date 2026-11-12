@@ -1,19 +1,40 @@
-import { runScript, spawnScript } from './bridge.js';
+import { spawnScript } from './bridge.js';
 
 var INFO_JSON = `/json/info.json`;
 var KEYBOX_INFO_JSON = `/json/keybox_info.json`;
 export async function loadInitialInfo() {
+    // Startup: json fetch only. Scripts run later via spawn, so they cannot block the page.
     await showCachedDeviceInfo();
-    refreshDeviceInfo();
     applyVersionInfo();
-    refreshKeyboxInfo();
+    loadKeyboxCard();
+    setTimeout(() => { refreshDeviceInfo(); refreshKeyboxInfo(); }, 2500);
+}
+var LIVE_INTERVAL_MS = 120e3;
+var lastLiveRun = 0;
+export function startLiveDeviceInfo() {
+    let busy = false;
+    let tick = async () => {
+        if (busy || document.hidden || Date.now() - lastLiveRun < 60e3)
+            return;
+        busy = true;
+        lastLiveRun = Date.now();
+        try {
+            await refreshDeviceInfo();
+        }
+        finally {
+            busy = false;
+        }
+    };
+    setInterval(tick, LIVE_INTERVAL_MS);
+    document.addEventListener(`visibilitychange`, tick);
 }
 export async function refreshDeviceInfo() {
-    try {
-        await runScript(`device-info.sh`, `common`);
-    }
-    catch {
-    }
+    await new Promise(resolve => {
+        let done = () => resolve();
+        let p = spawnScript(`device-info.sh`, `common`);
+        p.on(`exit`, done);
+        p.on(`error`, done);
+    });
     await pollDeviceInfo();
 }
 export async function refreshKeyboxInfo() {
@@ -55,6 +76,7 @@ async function pollDeviceInfo(timeoutMs = 6e3, intervalMs = 400) {
 function applyDeviceInfo(info) {
     setTextById(`android-value`, info.android || `—`);
     setTextById(`root-value`, info.root || `—`);
+    setTextById(`rom-value`, info.rom || `—`);
     let backendEl = document.getElementById(`keystore-backend-value`);
     backendEl && info.keystore_backend && (backendEl.textContent = info.keystore_backend);
 }
@@ -119,6 +141,12 @@ function renderKeyboxCard(info) {
             setLabel(`Not Installed`);
             return;
         }
+        if (info.expired) {
+            card.classList.add(`keybox-revoked`);
+            icon.textContent = `event_busy`;
+            setLabel(`Expired`);
+            return;
+        }
         if (!info.by_jerry) {
             card.classList.add(`keybox-unknown`);
             icon.textContent = `key`;
@@ -129,6 +157,12 @@ function renderKeyboxCard(info) {
             card.classList.add(`keybox-revoked`);
             icon.textContent = `gpp_bad`;
             setLabel(`Revoked`);
+            return;
+        }
+        if (info.softbanned) {
+            card.classList.add(`keybox-outdated`);
+            icon.textContent = `warning`;
+            setLabel(`Softbanned`);
             return;
         }
         if (info.up_to_date) {

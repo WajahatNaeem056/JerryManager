@@ -1,4 +1,51 @@
 # Changelog
+## What's New in v4.7
+
+This update brings a redesigned WebUI, backend improvements and several new configuration options. A lot of work has gone into making things easier to manage and improving compatibility between different backends.
+
+### WebUI
+- Redesigned the WebUI with a cleaner and more modern interface.
+- Added a dedicated page for OhMyKeymint (OMK) configuration.
+- Added a separate Custom Keybox page, including active backend information during uploads.
+- Improved App Targeting with better search and selection controls.
+- Added Turkish language support.
+
+### Backend
+- Improved OhMyKeymint and TEESimulator support.
+- Added automatic OMK configuration sync, trust configuration and Injector settings.
+- Added automatic backend conflict detection and cleanup when multiple keybox backends are installed.
+- Improved keystore backend detection and boot-time configuration.
+
+### Keybox
+- Added automatic keybox update checks every 12 hours.
+- Added real-time keybox status: Valid, Expired or Softbanned.
+- Improved custom keybox installation, backup handling and support for more keybox formats.
+
+### Boot & Device Info
+- Added manual Security Patch entry.
+- Added manual Boot Hash entry for users facing Boot Hash issues.
+- Added VBMeta information to the Boot Hash UI.
+- Root and ROM status now show their actual detected values.
+- Improved root manager detection across supported solutions.
+
+### ROM & Build
+- Added ROM Built-in Spoofing with separate GMS and Play Store controls.
+- Added Kernel Build Time synchronization with system build properties.
+
+### App Targeting
+- Improved Select All, Deselect All and Deselect Unnecessary controls with a cleaner button UI.
+- Added custom app blacklist.
+- Added custom Security Patch date for app targeting.
+- Added automatic removal of uninstalled apps from the target list.
+
+### PIF Settings
+- Improved Custom PIF import. Spoof settings (Build, Props, Provider, Signature and Play Store) are now applied automatically, with toggles updating on their own.
+
+### Other
+- Updated language files and WebUI assets.
+- Various backend fixes and optimizations.
+- Fixed various bugs and improved overall stability.
+
 ## What's New in v4.6
 
 Added

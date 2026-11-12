@@ -16,6 +16,13 @@ _old_ifs="$IFS"; IFS="$(printf '\n')"
 for _entry in $SUSPICIOUS_PROPS; do
   _prop=$(echo "$_entry" | cut -d'|' -f1)
   _severity=$(echo "$_entry" | cut -d'|' -f2)
+  # ADB / developer-option props are only cleaned when the ADB Disabler asks for it
+  case "$_prop" in
+    persist.service.adb.enable|persist.service.debuggable)
+      adb_hide_enabled toggle_adb_disabler_usb_debug || continue ;;
+    persist.sys.developer_options)
+      adb_hide_enabled toggle_adb_disabler_dev_options || continue ;;
+  esac
   _value=$(resetprop "$_prop" 2>/dev/null || echo "")
 
   if [ -n "$_value" ]; then

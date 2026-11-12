@@ -1,14 +1,14 @@
-import { getConfig, migrateLegacyConfig, setConfig, setModuleDir } from './config.js';
+import { getConfig, migrateLegacyConfig, prefetchConfig, setConfig, setModuleDir } from './config.js';
 import { getTranslation, initI18n } from './i18n.js';
 import { startNetworkMonitor } from './network.js';
-import { loadInitialInfo, refreshDeviceInfo, refreshKeyboxInfo } from './device-info.js';
-import { addHistoryEntry } from './history.js';
+import { loadInitialInfo, refreshDeviceInfo, refreshKeyboxInfo, startLiveDeviceInfo } from './device-info.js';
+import { addHistoryEntry, readHistory, clearHistory } from './history.js';
 import { showToast } from './toast.js';
 import { escapeHtml } from './utils.js';
 import { spawnScript, getModuleDir, initBridge, runScript, exec } from './bridge.js';
 
-// Shared with the hand-written scripts in public/assets (pif-status.js, app-targeting.js),
-// which cannot import from the bundle. Replaces the old dynamic import of bridge-*.js.
+// Shared with the hand-written scripts in src/ui (pif-status.js, app-targeting.js),
+// which do not import from main.js. Replaces the old dynamic import of bridge-*.js.
 window.JerryBridge = { initBridge, runScript, exec, spawnScript, getModuleDir };
 
 var friendlyNames = {};
@@ -16,12 +16,14 @@ document.addEventListener(`DOMContentLoaded`, async () => {
     try {
         await initBridge();
         setModuleDir(getModuleDir());
-        await migrateLegacyConfig();
+        prefetchConfig();
+        // Migration uses the shell: run it after startup.
+        setTimeout(() => migrateLegacyConfig(), 5000);
     }
     catch (e) {
         console.warn(`Bridge init failed, running without module path:`, e);
     }
-    // Public names used by the hand-written scripts in public/assets (module-configs.js etc.)
+    // Public names used by the hand-written scripts in src/ui (module-configs.js etc.)
     window.ka = getConfig;
     window.Aa = setConfig;
     setupTopBarScroll();
@@ -29,10 +31,12 @@ document.addEventListener(`DOMContentLoaded`, async () => {
     setupActionItems();
     setupExtras();
     setupRefreshButton();
-    await initI18n();
+    // Device info first: it only needs fetch() of the json files already on disk, so it must not wait for the language/config shell reads.
     startNetworkMonitor();
     loadInitialInfo();
+    startLiveDeviceInfo();
     collectFriendlyNames();
+    await initI18n();
 });
 function setupTopBarScroll() {
     let e = document.getElementById(`top-bar`);
@@ -89,6 +93,15 @@ function setupActionItems() {
         });
     });
 }
+// Pick the one line that says what went wrong: last error-looking line, else the last line.
+// Drops the log timestamp, [TAG] and "Error:" prefix so the toast reads like "Failed: <reason>"
+function errorSummary(chunks, fallback) {
+    let lines = chunks.join(`\n`).split(/\r?\n/).map(l => l.replace(/^\[!\]\s*/, ``).trim()).filter(Boolean);
+    let hit = [...lines].reverse().find(l => /\b(error|failed|invalid|not found|cannot|unable|denied)\b/i.test(l)) || lines[lines.length - 1];
+    if (!hit) return fallback;
+    hit = hit.replace(/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}\s*/, ``).replace(/^\[[^\]]*\]\s*/, ``).replace(/^(error|failed)\s*:\s*/i, ``).trim();
+    return hit.length > 140 ? hit.slice(0, 137) + `...` : (hit || fallback);
+}
 async function runAction(e, n, r) {
     let i = getTranslation;
     let a = friendlyNameFor(e);
@@ -109,9 +122,9 @@ async function runAction(e, n, r) {
     });
     d.on(`exit`, t => {
         if (addHistoryEntry(e, s.join(`
-`)), c.close(), t !== 0) {
-            let e = s.find(e => e.includes(`Error`)) || s[s.length - 1] || o;
-            showToast(`${i(`simple_toast_error`) || `Failed`}: ${e}`, {
+`), t), c.close(), t !== 0) {
+            let e = errorSummary(s, o);
+            showToast(`${i(`simple_toast_error`) || `Failed`}: ${escapeHtml(e)}`, {
                 action: i(`simple_toast_view_details`) || `View Details`, autoCloseDelay: 8e3, className: `snackbar-error`, onActionClick: () => {
                     let e = document.createElement(`md-dialog`);
                     e.innerHTML = `
@@ -130,15 +143,15 @@ async function runAction(e, n, r) {
             });
         }
         else
-            showToast(i(`toast_success`) || `Done ✓`, {
+            showToast((i(`toast_success`) || `Done`).replace(/\s*✓\s*$/, ``), {
                 autoCloseDelay: 3e3, className: `snackbar-success`
             });
     });
     d.on(`error`, t => {
         let n = t.message || `Unknown error`;
-        addHistoryEntry(e, n);
+        addHistoryEntry(e, n, 1);
         c.close();
-        showToast(`${i(`simple_toast_error`) || `Failed`}: ${o}`, {
+        showToast(`${i(`simple_toast_error`) || `Failed`}: ${escapeHtml(n)}`, {
             action: i(`simple_toast_view_details`) || `View Details`, autoCloseDelay: 8e3, className: `snackbar-error`, onActionClick: () => {
                 let e = document.createElement(`md-dialog`);
                 e.innerHTML = `
@@ -165,4 +178,48 @@ function setupRefreshButton() {
     });
 }
 function setupExtras() {
+    // No button: tapping the right half of the Keybox Status card opens History
+    let card = document.getElementById(`keybox-card`);
+    card && card.addEventListener(`click`, e => {
+        let r = card.getBoundingClientRect();
+        if (e.clientX >= r.left + r.width / 2)
+            openHistoryDialog();
+    });
+}
+function historyTime(iso) {
+    let d = new Date(iso);
+    return isNaN(d) ? `` : d.toLocaleString([], { month: `short`, day: `numeric`, hour: `2-digit`, minute: `2-digit` });
+}
+function historyRows() {
+    let i = getTranslation;
+    let items = readHistory();
+    if (!items.length)
+        return `<p class="history-empty">${escapeHtml(i(`history_empty`) || `No activity yet — run an action to get started`)}</p>`;
+    return items.map(h => {
+        let key = friendlyNames[h.script];
+        let name = (key && i(key)) || h.script;
+        let mark = h.code === null || h.code === undefined ? `` : (h.code === 0 ? `<md-icon class="history-ok">check_circle</md-icon>` : `<md-icon class="history-fail">error</md-icon>`);
+        return `<details class="history-item"><summary>${mark}<span class="history-name">${escapeHtml(name)}</span><span class="history-time">${escapeHtml(historyTime(h.time))}</span></summary><div class="terminal"><pre>${escapeHtml(h.output)}</pre></div></details>`;
+    }).join(``);
+}
+function openHistoryDialog() {
+    let i = getTranslation;
+    let d = document.createElement(`md-dialog`);
+    d.className = `history-dialog`;
+    d.innerHTML = `
+    <div slot="headline">${escapeHtml(i(`history_title`) || `Recent Activity`)}</div>
+    <div slot="content" class="history-list">${historyRows()}</div>
+    <div slot="actions">
+      <md-text-button class="history-clear">${escapeHtml(i(`history_clear`) || `Clear`)}</md-text-button>
+      <md-text-button class="dialog-close">${escapeHtml(i(`dialog_close`) || `Close`)}</md-text-button>
+    </div>
+  `;
+    document.body.appendChild(d);
+    d.querySelector(`.dialog-close`).addEventListener(`click`, () => d.close());
+    d.querySelector(`.history-clear`).addEventListener(`click`, () => {
+        clearHistory();
+        d.querySelector(`.history-list`).innerHTML = historyRows();
+    });
+    d.addEventListener(`close`, () => d.remove());
+    d.show();
 }

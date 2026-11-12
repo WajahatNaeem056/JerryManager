@@ -24,7 +24,7 @@ fi
 
 ensure_dir "$KEYSTORE_DIR"
 
-if [ -f "$KEYSTORE_KEYBOX" ] && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ]; then
+if [ -f "$KEYSTORE_KEYBOX" ] && ! keybox_is_jerry "$KEYSTORE_KEYBOX" && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ]; then
   cp "$KEYSTORE_KEYBOX" "$KEYSTORE_BACKUP"
   log "CUSTOM_KEYBOX" "Created backup of existing keybox"
 fi

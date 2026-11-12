@@ -7,3 +7,4 @@ import './dialogs.css';
 import './ksu-shim.js';
 import './material.js';
 import './main.js';
+import './ui/index.js';

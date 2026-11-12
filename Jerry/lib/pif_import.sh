@@ -10,7 +10,8 @@
 #
 # Flow: validate file -> detect format -> parse -> map to pif.prop keys ->
 # validate values -> backup -> atomic write -> read back through pif_prop_get ->
-# restart GMS. The user's spoof* / DEBUG toggles are kept, never taken from the file.
+# restart GMS. spoof* / verboseLogs found in the file are applied to pif.prop (the WebUI
+# toggles read pif.prop live); flags the file does not mention keep their current value.
 
 PIF_IMPORT_MAX_BYTES=65536
 PIF_IMPORT_KEEP_BACKUPS=5
@@ -25,7 +26,7 @@ _pi_err() {
 }
 
 # Map a key from a pif.json / pif.prop to a pif.prop key.
-# Prints the canonical key, "FLAG" for spoof*/DEBUG (kept from the current config), or nothing if unknown.
+# Prints the canonical key, "FLAG:<pif.prop flag>" for spoof*/verboseLogs, or nothing if unknown.
 _pi_normkey() {
   case "$1" in
     FINGERPRINT|MANUFACTURER|MODEL|BRAND|PRODUCT|DEVICE|INCREMENTAL|RELEASE|TYPE|TAGS|SECURITY_PATCH|DEVICE_INITIAL_SDK_INT)
@@ -36,7 +37,9 @@ _pi_normkey() {
     VERSION.RELEASE) printf RELEASE ;;
     VERSION.INCREMENTAL) printf INCREMENTAL ;;
     spoofBuild|spoofProps|spoofProvider|spoofSignature|spoofVendingBuild|spoofVendingSdk|DEBUG)
-      printf FLAG ;;
+      printf 'FLAG:%s' "$1" ;;
+    spoofVendingFinger) printf 'FLAG:spoofVendingBuild' ;;
+    verboseLogs|verbose_logs) printf 'FLAG:DEBUG' ;;
   esac
 }
 
@@ -50,7 +53,18 @@ _pi_add() {
             _pi_unknown_names="${_pi_unknown_names:+$_pi_unknown_names, }$_pa_name"
           fi
           return 0 ;;
-    FLAG) _pi_flags=$((_pi_flags + 1)); return 0 ;;
+    FLAG:*)
+      _pa_flag="${_pa_canon#FLAG:}"
+      case "$(printf '%s' "$2" | tr 'A-Z' 'a-z')" in
+        1|true|yes|on)  _pa_fv=true ;;
+        0|false|no|off) _pa_fv=false ;;
+        *) return 0 ;;
+      esac
+      grep -v "^${_pa_flag}=" "$_pi_w/flags" > "$_pi_w/flags.tmp" 2>/dev/null
+      printf '%s=%s\n' "$_pa_flag" "$_pa_fv" >> "$_pi_w/flags.tmp"
+      mv -f "$_pi_w/flags.tmp" "$_pi_w/flags"
+      _pi_flags=$((_pi_flags + 1))
+      return 0 ;;
   esac
   [ -z "$2" ] && return 0
   if grep -q "^${_pa_canon}=" "$_pi_w/kv" 2>/dev/null; then
@@ -169,6 +183,8 @@ _pi_compose() {
     [ -n "$_pc_v" ] && printf '%s=%s\n' "$_pc_k" "$_pc_v" >> "$_pi_w/new"
   done
   for _pc_k in $PIF_FLAG_KEYS; do
+    _pc_v="$(grep -m1 "^${_pc_k}=" "$_pi_w/flags" 2>/dev/null | cut -d= -f2-)"
+    case "$_pc_v" in true|false) printf '%s=%s\n' "$_pc_k" "$_pc_v" >> "$_pi_w/new"; continue ;; esac
     _pc_v=""
     [ -f "$PIF_PROP" ] && _pc_v="$(pif_prop_get "$PIF_PROP" "$_pc_k")"
     case "$_pc_v" in true|false) ;; *)
@@ -229,6 +245,7 @@ pif_import_file() {
   rm -rf "$_pi_w"
   mkdir -p "$_pi_w" 2>/dev/null || { _pi_err "Cannot create a work directory"; return 1; }
   : > "$_pi_w/kv"
+  : > "$_pi_w/flags"
 
   # Format comes from the content ('{' = JSON); the extension must agree with it
   _pi_first="$(tr -d '\r' < "$_pi_src" | sed "1s/^$(printf '\357\273\277')//" | tr -d ' \t\n' | head -c 1)"
@@ -287,7 +304,10 @@ pif_import_file() {
   _pi_fpv="$(pif_prop_get "$PIF_PROP" FINGERPRINT)"
   [ -z "$_pi_model" ] && echo "Note: file has no MODEL"
   [ -z "$(pif_prop_get "$PIF_PROP" MANUFACTURER)" ] && echo "Note: file has no MANUFACTURER"
-  [ "$_pi_flags" -gt 0 ] && echo "Spoof toggles in the file were ignored, your current toggles are kept"
+  if [ "$_pi_flags" -gt 0 ]; then
+    echo "Spoof toggles applied from file:"
+    while IFS= read -r _pi_fl; do echo "  $_pi_fl"; done < "$_pi_w/flags"
+  fi
   if [ "$_pi_unknown" -gt 0 ]; then
     [ "$_pi_unknown" -gt 5 ] && _pi_unknown_names="$_pi_unknown_names, ..."
     echo "Ignored $_pi_unknown unsupported key(s): $_pi_unknown_names"

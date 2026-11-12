@@ -72,6 +72,7 @@ case "$1" in
     if [ "$_rc" -eq 0 ]; then
       # Home screen "PIF Status" reads MODEL from pif.prop, refresh it
       [ -f "$PIF_ROOT/webroot/common/pif-status.sh" ] && sh "$PIF_ROOT/webroot/common/pif-status.sh" >/dev/null 2>&1
+      sh "$MODDIR/security_patch.sh" >/dev/null 2>&1
     fi
     exit "$_rc"
     ;;

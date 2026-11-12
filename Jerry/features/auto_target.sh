@@ -52,6 +52,7 @@ KNOWN_PKGS="$JERRYMANAGER_DIR/auto_known_packages.txt"
 TEMP_LIST="$JERRYMANAGER_DIR/auto_scan_tmp.txt"
 NEW_LIST="$JERRYMANAGER_DIR/auto_new_tmp.txt"
 ADDED_LIST="$JERRYMANAGER_DIR/auto_added_tmp.txt"
+REMOVE_LIST="$JERRYMANAGER_DIR/auto_remove_tmp.txt"
 AT_LOCK="$JERRYMANAGER_DIR/.auto_target.lock"
 AT_PENDING="$JERRYMANAGER_DIR/.auto_target.pending"
 
@@ -87,7 +88,7 @@ fi
 rm -f "$AT_PENDING" 2>/dev/null
 
 _at_cleanup() {
-  rm -f "$TEMP_LIST" "$NEW_LIST" "$ADDED_LIST" 2>/dev/null
+  rm -f "$TEMP_LIST" "$NEW_LIST" "$ADDED_LIST" "$REMOVE_LIST" 2>/dev/null
   rm -rf "$AT_LOCK" 2>/dev/null
   if [ -f "$AT_PENDING" ] && [ "${AUTO_TARGET_DEPTH:-0}" -lt 3 ]; then
     AUTO_TARGET_DEPTH=$(( ${AUTO_TARGET_DEPTH:-0} + 1 )) sh "$_AT_SELF" "$AT_MODE" 2>/dev/null
@@ -101,6 +102,7 @@ _at_target_present() {
   [ -n "$KEYSTORE_TARGETS" ] && [ -f "$KEYSTORE_TARGETS" ] || return 1
   case "$KEYSTORE_FORMAT" in
     flat) grep -Fxq -e "$1" -e "$1!" -e "$1?" "$KEYSTORE_TARGETS" 2>/dev/null ;;
+    ini)  keystore_read_targets | sed 's/[!?]$//' | grep -Fxq "$1" ;;
     *)    grep -q "\"$1\"" "$KEYSTORE_TARGETS" 2>/dev/null ;;
   esac
 }
@@ -151,6 +153,9 @@ _known=""
 [ -f "$KNOWN_PKGS" ] && _known=$(cat "$KNOWN_PKGS")
 
 _excluded=0
+_blacklisted=0
+_bl_active=0
+auto_target_blacklist_active && _bl_active=1
 : > "$NEW_LIST"
 while IFS= read -r _pkg; do
   [ -z "$_pkg" ] && continue
@@ -161,27 +166,24 @@ while IFS= read -r _pkg; do
     _excluded=$((_excluded + 1))
     continue
   fi
+  if [ "$_bl_active" = "1" ] && is_auto_target_blacklisted "$_pkg"; then
+    _blacklisted=$((_blacklisted + 1))
+    continue
+  fi
   if _at_target_present "$_pkg"; then
     continue
   fi
   echo "$_pkg" >> "$NEW_LIST"
 done < "$TEMP_LIST"
 [ "$_excluded" -gt 0 ] && log "AUTO_TARGET" "Excluded $_excluded root/Xposed manager app(s)"
+[ "$_blacklisted" -gt 0 ] && _at_vlog "AUTO_TARGET" "Skipped $_blacklisted blacklisted app(s)"
 
 if [ -s "$NEW_LIST" ]; then
-  if [ "$KEYSTORE_BACKEND" = "omk" ] || [ "$KEYSTORE_BACKEND" = "teesim" ]; then
-    while IFS= read -r _new_pkg; do
-      [ -z "$_new_pkg" ] && continue
-      keystore_add_target "$_new_pkg" >/dev/null 2>&1 || true
-    done < "$NEW_LIST"
-  else
-    # Keep the last existing entry on its own line before appending
-    if [ -s "$TARGET_TXT" ] && [ -n "$(tail -c1 "$TARGET_TXT" 2>/dev/null)" ]; then
-      echo >> "$TARGET_TXT" 2>/dev/null
-    fi
-    cat "$NEW_LIST" >> "$TARGET_TXT" 2>/dev/null
-    sort -u "$TARGET_TXT" -o "$TARGET_TXT" 2>/dev/null
-  fi
+  # Every backend goes through keystore_add_target (locked, in-place, format-aware)
+  while IFS= read -r _new_pkg; do
+    [ -z "$_new_pkg" ] && continue
+    keystore_add_target "$_new_pkg" >/dev/null 2>&1 || true
+  done < "$NEW_LIST"
 
   # Read back: only packages that are really in the list now count as added
   : > "$ADDED_LIST"
@@ -199,7 +201,7 @@ if [ -s "$NEW_LIST" ]; then
   [ -z "$_added" ] && _added=0
 
   if [ "$_added" -gt 0 ]; then
-    if [ "$KEYSTORE_BACKEND" = "omk" ] || [ "$KEYSTORE_BACKEND" = "teesim" ]; then
+    if [ "$KEYSTORE_FORMAT" != "flat" ]; then
       log "AUTO_TARGET" "Added $_added new app(s) via $KEYSTORE_NAME [$AT_MODE]"
     else
       log "AUTO_TARGET" "Added $_added new app(s) to target.txt [$AT_MODE]"
@@ -217,7 +219,65 @@ else
   _at_vlog "AUTO_TARGET" "No new apps found"
 fi
 
-cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
+# Remove target entries of apps that were uninstalled since the last scan, and of
+# blacklisted apps. Manual entries of apps that were never installed are left alone:
+# only a package seen in the previous scan and now gone from the device is removed.
+: > "$REMOVE_LIST"
+if [ "$_baseline" = "0" ] && [ -n "$_known" ] && _feature_enabled toggle_auto_target_cleanup; then
+  _all_pkgs=$(pm list packages 2>/dev/null | cut -d ":" -f 2 | sed '/^$/d' | sort -u)
+  if [ -n "$_all_pkgs" ]; then
+    while IFS= read -r _gone_pkg; do
+      [ -z "$_gone_pkg" ] && continue
+      grep -Fxq "$_gone_pkg" "$TEMP_LIST" 2>/dev/null && continue
+      echo "$_all_pkgs" | grep -Fxq "$_gone_pkg" 2>/dev/null && continue
+      echo "$_gone_pkg" >> "$REMOVE_LIST"
+    done <<EOF
+$_known
+EOF
+  else
+    log "AUTO_TARGET" "Warning: pm list packages failed — uninstall cleanup skipped"
+  fi
+  unset _all_pkgs _gone_pkg
+fi
+if [ "$_bl_active" = "1" ]; then
+  tr -d '\r' < "$AUTO_TARGET_BLACKLIST_FILE" 2>/dev/null \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+    | grep -vE '^(#|$)' >> "$REMOVE_LIST"
+fi
+
+if [ -s "$REMOVE_LIST" ]; then
+  _removed=0
+  while IFS= read -r _rm_pkg; do
+    [ -z "$_rm_pkg" ] && continue
+    _rm_fixed=0
+    for _rm_f in $FIXED_TARGETS; do
+      [ "$_rm_pkg" = "$_rm_f" ] && _rm_fixed=1
+    done
+    [ "$_rm_fixed" = "1" ] && continue
+    _at_target_present "$_rm_pkg" || continue
+    keystore_remove_target "$_rm_pkg" all >/dev/null 2>&1 || true
+    if _at_target_present "$_rm_pkg"; then
+      log "AUTO_TARGET" "Failed to remove $_rm_pkg via $KEYSTORE_NAME"
+    else
+      _removed=$((_removed + 1))
+    fi
+  done < "$REMOVE_LIST"
+  unset _rm_pkg _rm_fixed _rm_f
+  [ "$_removed" -gt 0 ] && log "AUTO_TARGET" "Removed $_removed uninstalled/blacklisted app(s) from the target list [$AT_MODE]"
+fi
+
+# Blacklisted apps are left out of the known list, so un-blacklisting makes them eligible again
+if [ "$_bl_active" = "1" ]; then
+  tr -d '\r' < "$AUTO_TARGET_BLACKLIST_FILE" 2>/dev/null \
+    | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+    | grep -vE '^(#|$)' > "$KNOWN_PKGS.bl" 2>/dev/null
+  grep -vxFf "$KNOWN_PKGS.bl" "$TEMP_LIST" > "$KNOWN_PKGS.new" 2>/dev/null
+  # grep exits 1 when every line was dropped; an empty result is still valid
+  cat "$KNOWN_PKGS.new" > "$KNOWN_PKGS" 2>/dev/null || cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
+  rm -f "$KNOWN_PKGS.bl" "$KNOWN_PKGS.new" 2>/dev/null
+else
+  cp "$TEMP_LIST" "$KNOWN_PKGS" 2>/dev/null || true
+fi
 
 _at_vlog "AUTO_TARGET" "Finish"
 exit 0

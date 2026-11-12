@@ -4,6 +4,7 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/teesim.sh"
 
 TSIM_CONFIG="$TEESIM_CONFIG"
 PIF_DIR="/data/adb/modules/JerryManager"
@@ -16,7 +17,8 @@ _ts_pif_prop=""
 for _ts_pif_candidate in \
     "$PIF_DIR/custom.pif.prop" \
     "$PIF_DIR/pif.prop" \
-    "/data/adb/custom.pif.prop"
+    "/data/adb/custom.pif.prop" \
+    "/data/adb/pif.prop"
 do
     if [ -f "$_ts_pif_candidate" ]; then
         _ts_pif_prop="$_ts_pif_candidate"
@@ -49,14 +51,37 @@ _ts_product=$(_ts_esc_json "$(_ts_get_pif "PRODUCT")")
 _ts_manufacturer=$(_ts_esc_json "$(_ts_get_pif "MANUFACTURER")")
 _ts_model=$(_ts_esc_json "$(_ts_get_pif "MODEL")")
 
+# Jerry's pif.prop can be fingerprint-only: derive brand/product/device from it
+_ts_fp=$(_ts_get_pif "FINGERPRINT" | tr -d '\r')
+if [ -n "$_ts_fp" ]; then
+    _ts_fpa="${_ts_fp%%:*}"
+    [ -z "$_ts_brand" ]   && _ts_brand=$(_ts_esc_json "$(printf '%s' "$_ts_fpa" | cut -d/ -f1)")
+    [ -z "$_ts_product" ] && _ts_product=$(_ts_esc_json "$(printf '%s' "$_ts_fpa" | cut -d/ -f2)")
+    [ -z "$_ts_device" ]  && _ts_device=$(_ts_esc_json "$(printf '%s' "$_ts_fpa" | cut -d/ -f3)")
+    unset _ts_fpa
+fi
+unset _ts_fp
+
 _ts_tmp="${TSIM_CONFIG}.tmp.$$"
 cp "$TSIM_CONFIG" "$_ts_tmp" 2>/dev/null || { log "TEESIM" "Could not stage a working copy — aborting"; exit 0; }
+
+# Only the "default" profile is edited; other TEESimulator profiles stay untouched
+if _ts_range=$(_teesim_default_range "$_ts_tmp"); then
+    set -- $_ts_range; _ts_rs=$1; _ts_re=$2
+elif [ "$(grep -o '"apps"' "$_ts_tmp" 2>/dev/null | wc -l | tr -d ' ')" -le 1 ]; then
+    # Compact / single-line config with one profile: the whole file is that profile
+    _ts_rs=1; _ts_re='$'
+else
+    log "TEESIM" "Could not locate the default profile block — config.json left unchanged"
+    rm -f "$_ts_tmp"
+    exit 0
+fi
 
 _ts_set_str() {
     _tss_key="$1"
     _tss_val="$2"
     [ -z "$_tss_val" ] && return 0
-    sed -i "s|\"$_tss_key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"$_tss_key\": \"$_tss_val\"|" "$_ts_tmp"
+    sed -i "${_ts_rs},${_ts_re}s|\"$_tss_key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"$_tss_key\": \"$_tss_val\"|" "$_ts_tmp"
 }
 
 _ts_set_str "brand"        "$_ts_brand"

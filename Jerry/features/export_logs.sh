@@ -79,6 +79,8 @@ SECURITY_PATCH SUSPICIOUS TARGET TEESIM UNINSTALL WIDEVINE ZYGISK_NEXT"
   echo "=== SECURITY PATCH ==="
   if [ -f "$SECURITY_PATCH_FILE" ]; then
     cat "$SECURITY_PATCH_FILE" 2>/dev/null
+  elif [ -f "$TRICKY_CONFIG" ]; then
+    awk '/^\[default_policy\]/{f=1;print;next} /^\[/{f=0} f' "$TRICKY_CONFIG" 2>/dev/null
   else
     echo "(not set)"
   fi
@@ -89,6 +91,8 @@ SECURITY_PATCH SUSPICIOUS TARGET TEESIM UNINSTALL WIDEVINE ZYGISK_NEXT"
     _tt_count=$(grep -c . "$TARGET_TXT" 2>/dev/null || echo 0)
     echo "target.txt entries=$_tt_count"
     unset _tt_count
+  elif [ -f "$TRICKY_CONFIG" ]; then
+    echo "config.ini [target] entries=$(awk '/^\[target\]/{f=1;next} /^\[/{f=0} f&&NF&&$0!~/^[#;]/' "$TRICKY_CONFIG" 2>/dev/null | wc -l | tr -d ' ')"
   else
     echo "target.txt not found"
   fi

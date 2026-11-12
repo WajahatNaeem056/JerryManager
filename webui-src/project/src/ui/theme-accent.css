@@ -1,0 +1,204 @@
+/* JerryManager: shared UI tweaks for the default style. */
+
+#at-menu.at-menu-dropdown {
+  width:max-content !important; min-width:0 !important; padding:0 !important; overflow:visible !important;
+  background:transparent !important; border:none !important; box-shadow:none !important;
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important; animation:none !important;
+}
+
+#at-menu .at-menu-divider { display:none !important; }
+
+#at-menu .at-menu-item {
+  display:flex !important; align-items:center; justify-content:flex-start; width:100% !important; box-sizing:border-box; min-height:36px !important;
+  margin:0 0 2px 0 !important; padding:0 14px 0 11px !important; gap:8px !important;
+  border:1px solid var(--at-border) !important; border-radius:999px !important;
+  background:var(--at-menu-bg) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+  font-size:.8125rem !important; font-weight:500 !important; letter-spacing:0 !important; white-space:nowrap;
+  transition:transform .12s ease, background-color .15s ease;
+  animation:at-pill-in .22s cubic-bezier(.2,.9,.3,1.2) both;
+}
+
+#at-menu .at-menu-item:last-child { margin-bottom:0 !important; }
+
+#at-menu .at-menu-item > span { white-space:nowrap; }
+
+#at-menu .at-menu-item:nth-child(1) { animation-delay:0s; }
+
+#at-menu .at-menu-item:nth-child(2) { animation-delay:.04s; }
+
+#at-menu .at-menu-item:nth-child(3) { animation-delay:.08s; }
+
+#at-menu .at-menu-item:nth-child(5) { animation-delay:.12s; }
+
+#at-menu .at-menu-item:nth-child(7) { animation-delay:.16s; }
+
+#at-menu .at-menu-item.at-pressed { transform:scale(.93) !important; }
+
+#at-menu .at-menu-item[aria-checked="true"] {
+  background:var(--at-menu-item-press-bg) !important; border-color:transparent !important;
+}
+
+#at-menu .at-menu-item .at-menu-state { margin-left:auto !important; }
+
+@keyframes at-pill-in { from { opacity:0; transform:translateX(14px) scale(.88); } to { opacity:1; transform:none; } }
+
+#at-menu.at-menu-dropdown::before { content:""; position:fixed; inset:0; z-index:-1; background:rgba(0,0,0,.55); animation:at-dim-in .2s ease both; }
+
+@keyframes at-dim-in { from { opacity:0; } to { opacity:1; } }
+
+.at-header { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+
+.at-header .at-back-btn,
+.at-header .at-title,
+.at-header .at-saving { position:relative; z-index:211; }
+
+:root[data-ui-style][data-theme-resolved] #keybox-card,
+:root[data-ui-style][data-theme-resolved] .jf-combined-card,
+:root[data-ui-style][data-theme-resolved] .list-container,
+:root[data-ui-style][data-theme-resolved] .theme-toggle-card,
+:root[data-ui-style][data-theme-resolved] .community-card,
+:root[data-ui-style][data-theme-resolved] .jerry-lang-trigger,
+:root[data-ui-style][data-theme-resolved] .jerry-lang-menu,
+:root[data-ui-style][data-theme-resolved] .at-search-box,
+:root[data-ui-style][data-theme-resolved] .pif-term,
+:root[data-ui-style][data-theme-resolved] .pif-picker-sheet,
+:root[data-ui-style][data-theme-resolved] md-filled-card,
+:root[data-ui-style][data-theme-resolved] md-elevated-card,
+:root[data-ui-style][data-theme-resolved] md-outlined-card { border-radius:28px !important; }
+
+:root[data-ui-style][data-theme-resolved] .jf-row-icon { border-radius:50% !important; }
+
+:root[data-ui-style][data-theme-resolved] .ctrl-card { border-radius:24px !important; }
+
+:root[data-ui-style][data-theme-resolved] .theme-btn { border-radius:22px !important; }
+
+:root[data-ui-style][data-theme-resolved] .jerry-lang-option { border-radius:20px !important; }
+
+:root[data-ui-style][data-theme-resolved] .pif-btn,
+:root[data-ui-style][data-theme-resolved] .pif-btn-row .pif-btn,
+:root[data-ui-style][data-theme-resolved] .at-apply-fab { border-radius:999px !important; }
+
+:root[data-ui-style][data-theme-resolved] #keybox-card.hero-card { border-radius:28px !important; }
+
+:root[data-ui-style][data-theme-resolved] #pages > section { padding-top:6px !important; }
+
+:root[data-ui-style][data-theme-resolved] header#top-bar.app-top-bar {
+  background:transparent !important; border:none !important; box-shadow:none !important;
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  min-height:48px !important; padding-top:4px !important; padding-bottom:4px !important;
+}
+
+:root[data-ui-style][data-theme-resolved="dark"] header#top-bar .app-title { color:#fff !important; font-weight:700 !important; }
+
+:root[data-ui-style][data-theme-resolved="light"] header#top-bar .app-title { color:#111 !important; font-weight:700 !important; }
+
+/* ---- Blue accent ---- */
+/* Blue accent for the default style, overriding the baseline purple Material roles.
+   Low specificity on purpose: later rules in icons.css refine these. */
+:root[data-theme-resolved=light] {
+  --md-sys-color-primary:#1a73e8; --md-sys-color-on-primary:#ffffff;
+  --md-sys-color-primary-container:#d3e3fd; --md-sys-color-on-primary-container:#041e49;
+  --md-sys-color-secondary:#4a5a78; --md-sys-color-on-secondary:#ffffff;
+  --md-sys-color-secondary-container:#dbe4f6; --md-sys-color-on-secondary-container:#121c30;
+  --md-sys-color-tertiary:#006879; --md-sys-color-tertiary-container:#a8edff;
+  --md-sys-color-inverse-primary:#a8c7fa; --md-sys-color-surface-tint:#1a73e8;
+}
+:root[data-theme-resolved=dark] {
+  --md-sys-color-primary:#a8c7fa; --md-sys-color-on-primary:#062e6f;
+  --md-sys-color-primary-container:#2d6bd1; --md-sys-color-on-primary-container:#d3e3fd;
+  --md-sys-color-secondary:#bdc7dc; --md-sys-color-on-secondary:#273141;
+  --md-sys-color-secondary-container:#3b475c; --md-sys-color-on-secondary-container:#d9e3f9;
+  --md-sys-color-tertiary:#82d3e8; --md-sys-color-tertiary-container:#004e5d;
+  --md-sys-color-inverse-primary:#1a73e8; --md-sys-color-surface-tint:#a8c7fa;
+}
+
+/* Icons: see icons.css (single Material Symbols Rounded system). */
+
+/* Section headers (Detection, Fixes, ...): white in dark mode, dark text in light mode */
+:root[data-theme-resolved=dark] .list-title, :root[data-theme=dark] .list-title { color: var(--color-gray-96) !important; }
+:root[data-theme-resolved=light] .list-title, :root[data-theme=light] .list-title { color: var(--color-gray-10) !important; }
+
+/* Bottom nav: Material Symbols; the active tab uses the filled glyph */
+.jerry-nav-icon.msr {
+  font-family: var(--icon-font);
+  font-size: 26px; line-height: 1; width: auto; height: auto; display: inline-block;
+  font-style: normal; font-weight: 400; white-space: nowrap; direction: ltr;
+  font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  color: var(--color-gray-64); fill: none;
+  transition: color .2s ease, transform .2s ease, font-variation-settings .2s ease;
+}
+:root[data-theme-resolved=dark] .jerry-nav-icon.msr, :root[data-theme=dark] .jerry-nav-icon.msr { color: #ffffff99; }
+:root[data-theme-resolved=dark] .jerry-nav-label, :root[data-theme=dark] .jerry-nav-label { color: #ffffff99; }
+.jerry-nav-tab.active .jerry-nav-icon.msr,
+:root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-icon.msr,
+:root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-icon.msr {
+  color: var(--color-blue-66); font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Grouped lists + Control rows (split style): separate segments, 2px gap, soft outer corners, bold section titles */
+:root[data-ui-style][data-theme-resolved] { --jm-seg: var(--color-white); --jm-seg-press: var(--color-gray-95, #eef0f4); }
+:root[data-ui-style][data-theme-resolved=dark] { --jm-seg: var(--color-gray-12); --jm-seg-press: var(--color-gray-15); }
+:root[data-ui-style][data-theme-resolved] .list-container {
+  background: transparent !important; border: none !important; box-shadow: none !important; outline: none !important;
+  gap: 2px !important; border-radius: 28px !important; overflow: hidden;
+}
+:root[data-ui-style][data-theme-resolved] .list-container > .list-item,
+:root[data-ui-style][data-theme-resolved] .list-container > .pif-row,
+:root[data-ui-style][data-theme-resolved] .list-container > .ctrl-row {
+  background: var(--jm-seg) !important; border: none !important; border-radius: 4px !important;
+}
+:root[data-ui-style][data-theme-resolved] .list-container > .ctrl-row { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > .list-item:first-child,
+:root[data-ui-style][data-theme-resolved] .list-container > .pif-row:first-child,
+:root[data-ui-style][data-theme-resolved] .list-container > .ctrl-row:first-child { border-radius: 28px 28px 4px 4px !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > .list-item:last-child,
+:root[data-ui-style][data-theme-resolved] .list-container > .pif-row:last-child,
+:root[data-ui-style][data-theme-resolved] .list-container > .ctrl-row:last-child { border-radius: 4px 4px 28px 28px !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > .list-item:only-child,
+:root[data-ui-style][data-theme-resolved] .list-container > .pif-row:only-child,
+:root[data-ui-style][data-theme-resolved] .list-container > .ctrl-row:only-child { border-radius: 28px !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > .list-item:active { background: var(--jm-seg-press) !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > .list-item { padding: 14px 18px !important; min-height: 60px !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > #pif-settings-btn { min-height: 78px !important; }
+:root[data-ui-style][data-theme-resolved] .list-title {
+  font-size: 1rem !important; font-weight: 700 !important; letter-spacing: .01em !important; text-transform: none !important;
+  padding: 14px 16px 8px !important;
+}
+
+/* Align page content with the top bar title (16px edge) */
+#pages { padding-left: 4px !important; padding-right: 4px !important; }
+
+/* Theme / UI buttons: selected state: solid accent blue */
+:root[data-ui-style][data-theme-resolved] .theme-btn.active {
+  background: var(--color-accent-58) !important; color: #fff !important; box-shadow: none !important;
+}
+
+/* Switches: same blue as the nav accent, white handle */
+:root {
+  --md-switch-selected-track-color: var(--color-blue-66);
+  --md-switch-selected-hover-track-color: var(--color-blue-66);
+  --md-switch-selected-pressed-track-color: var(--color-blue-66);
+  --md-switch-selected-focus-track-color: var(--color-blue-66);
+  --md-switch-selected-handle-color: #fff;
+  --md-switch-selected-hover-handle-color: #fff;
+  --md-switch-selected-pressed-handle-color: #fff;
+  --md-switch-selected-focus-handle-color: #fff;
+  --md-switch-selected-icon-color: var(--color-blue-66);
+  --md-switch-selected-hover-icon-color: var(--color-blue-66);
+  --md-switch-selected-pressed-icon-color: var(--color-blue-66);
+  --md-switch-selected-focus-icon-color: var(--color-blue-66);
+}
+
+/* ---- Home info rows: stronger labels, clear results ---- */
+:root[data-theme-resolved] .jf-row-lbl { font-size:16px !important; font-weight:700 !important; }
+:root[data-theme-resolved] .jf-row-val {
+  font-size:17px !important; font-weight:400 !important; max-width:62%;
+  white-space:normal !important; overflow:visible !important; text-overflow:clip !important;
+  overflow-wrap:anywhere; line-height:1.25;
+}
+:root[data-theme-resolved=dark] .jf-row-lbl,
+:root[data-theme-resolved=dark] .jf-row-val { color:#ffffff !important; }
+:root[data-theme-resolved=light] .jf-row-lbl,
+:root[data-theme-resolved=light] .jf-row-val { color:#121c2b !important; }

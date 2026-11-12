@@ -77,9 +77,10 @@ _jm_pif() {
 }
 
 if [ ! -d "/data/adb/modules/tricky_store" ] && [ ! -d "/data/adb/modules_update/tricky_store" ] && \
-   [ ! -d "/data/adb/modules/oh_my_keymint" ] && [ ! -d "/data/adb/modules_update/oh_my_keymint" ]; then
+   [ ! -d "/data/adb/modules/oh_my_keymint" ] && [ ! -d "/data/adb/modules_update/oh_my_keymint" ] && \
+   [ ! -d "/data/adb/modules/teesim" ] && [ ! -d "/data/adb/modules_update/teesim" ]; then
   ui_print "- Error: No supported keystore backend is installed"
-  ui_print "- Please install Tricky Store or OhMyKeymint first."
+  ui_print "- Please install Tricky Store, TEESimulator or OhMyKeymint first."
   ui_print "- After installing one of them, install the keybox from the action button or WebUI."
   _jm_pif
   return 0
@@ -107,7 +108,7 @@ if check_network; then
                   ui_print "- Current keybox is already up to date. No changes needed."
                   rm -f "$TEMP_FILE" "$DECODE_FILE"
               else
-                  if [ "$KEYSTORE_BACKEND" != "none" ] && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ] && ! grep -q "jerryroot" "$KEYSTORE_KEYBOX" 2>/dev/null; then
+                  if [ "$KEYSTORE_BACKEND" != "none" ] && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ] && ! keybox_is_jerry "$KEYSTORE_KEYBOX"; then
                       ui_print "- Previous keybox was not installed by Jerry Keybox."
                       ui_print "- Creating a backup keybox..."
                       cp "$KEYSTORE_KEYBOX" "$KEYSTORE_BACKUP"
@@ -126,18 +127,7 @@ if check_network; then
   fi
 else
   ui_print "- No internet connection detected."
-  if [ -f "$MODPATH/keybox.xml" ]; then
-    ui_print "- Installing bundled keybox (Offline)..."
-    ensure_dir "$KEYSTORE_DIR"
-    if [ "$KEYSTORE_BACKEND" != "none" ] && [ -f "$KEYSTORE_KEYBOX" ] && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ]; then
-      cp "$KEYSTORE_KEYBOX" "$KEYSTORE_BACKUP"
-      ui_print "- Backup of existing keybox created."
-    fi
-    keystore_install_keybox "$MODPATH/keybox.xml"
-    ui_print "- Bundled keybox installed successfully! ($KEYSTORE_NAME)"
-  else
-    ui_print "- No bundled keybox found. Use the Offline button in WebUI after reboot."
-  fi
+  ui_print "- Keybox not installed. Connect to the internet, then install it from the action button or WebUI."
 fi
 
 _jm_pif

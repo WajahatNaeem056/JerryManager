@@ -157,13 +157,14 @@ if [ -f "/sys/fs/selinux/enforce" ]; then
 fi
 unset _enforce
 
-log "BANKING" "Step 8: Disabling Developer Options & ADB"
+log "BANKING" "Step 8: Disabling Developer Options & ADB (only what ADB Disabler allows)"
+_bk_dev=false; _bk_usb=false; _bk_oem=false
+adb_hide_enabled toggle_adb_disabler_dev_options && _bk_dev=true
+adb_hide_enabled toggle_adb_disabler_usb_debug   && _bk_usb=true
+adb_hide_enabled toggle_adb_disabler_oem_unlock  && _bk_oem=true
 for _p in \
-    persist.service.adb.enable persist.service.debuggable \
-    persist.sys.developer_options persist.sys.dev_mode \
-    persist.sys.debuggable persist.sys.dev.mode \
-    persist.hyperceiler.log.level persist.adb.notify \
-    persist.sys.root_access persist.sys.usb.config \
+    persist.hyperceiler.log.level \
+    persist.sys.root_access \
     persist.traced.enable persist.debug.wfd.enable \
     persist.zygote.app_data_isolation \
     persist.com.luckyzyx.luckytool.log.level \
@@ -173,28 +174,45 @@ for _p in \
 done
 unset _p
 
-sp_persist persist.sys.developer_options 0
-sp_persist persist.sys.dev_mode          0
-sp_persist persist.sys.debuggable        0
+if $_bk_dev; then
+    for _p in persist.sys.developer_options persist.sys.dev_mode persist.sys.dev.mode persist.sys.debuggable; do
+        sp_persist_delete "$_p"
+    done
+    unset _p
+    sp_persist persist.sys.developer_options 0
+    sp_persist persist.sys.dev_mode          0
+    sp_persist persist.sys.debuggable        0
+    settings put global development_settings_enabled 0 >/dev/null 2>&1 || true
+    resetprop -n persist.sys.development_settings_enabled 0 >/dev/null 2>&1 || true
+fi
 
-settings put global development_settings_enabled 0 >/dev/null 2>&1 || true
-settings put global adb_enabled                  0 >/dev/null 2>&1 || true
-settings put global oem_unlock_allowed           0 >/dev/null 2>&1 || true
-settings put global adb_wifi_enabled             0 >/dev/null 2>&1 || true
-settings put global adb_wifi_port               -1 >/dev/null 2>&1 || true
+if $_bk_usb; then
+    for _p in persist.service.adb.enable persist.service.debuggable persist.adb.notify persist.sys.usb.config; do
+        sp_persist_delete "$_p"
+    done
+    unset _p
+    settings put global adb_enabled                  0 >/dev/null 2>&1 || true
+    settings put global adb_wifi_enabled             0 >/dev/null 2>&1 || true
+    settings put global adb_wifi_port               -1 >/dev/null 2>&1 || true
 
-_adbd=$(getprop init.svc.adbd 2>/dev/null || echo "")
-[ "$_adbd" = "running" ] && setprop ctl.stop adbd 2>/dev/null || true
-unset _adbd
+    _adbd=$(getprop init.svc.adbd 2>/dev/null || echo "")
+    [ "$_adbd" = "running" ] && setprop ctl.stop adbd 2>/dev/null || true
+    unset _adbd
 
-_tcp=$(getprop service.adb.tcp.port 2>/dev/null || echo "")
-[ -n "$_tcp" ] && resetprop service.adb.tcp.port -1 2>/dev/null || true
-unset _tcp
+    _tcp=$(getprop service.adb.tcp.port 2>/dev/null || echo "")
+    [ -n "$_tcp" ] && resetprop service.adb.tcp.port -1 2>/dev/null || true
+    unset _tcp
 
-setprop sys.usb.config mtp 2>/dev/null || true
-setprop sys.usb.state  mtp 2>/dev/null || true
-[ -f /sys/class/android_usb/android0/functions ] && \
-    echo "mtp" > /sys/class/android_usb/android0/functions 2>/dev/null || true
+    setprop sys.usb.config mtp 2>/dev/null || true
+    setprop sys.usb.state  mtp 2>/dev/null || true
+    [ -f /sys/class/android_usb/android0/functions ] && \
+        echo "mtp" > /sys/class/android_usb/android0/functions 2>/dev/null || true
+fi
+
+if $_bk_oem; then
+    settings put global oem_unlock_allowed 0 >/dev/null 2>&1 || true
+fi
+unset _bk_dev _bk_usb _bk_oem
 
 apply_boot_hardening
 

@@ -1,0 +1,93 @@
+/* ==========================================================================
+   Jerry Manager icon system: Google Material Symbols Rounded only.
+   Weight 400, GRAD 0, outlined (FILL 0); FILL 1 only for the active nav tab.
+   Sizes: nav 26px, action/card 24px, inline 20px.
+   Offline: drop the Material Symbols Rounded variable font next to this file as
+   MaterialSymbolsRounded.woff2 and it is used instead of the Google Fonts CDN.
+   ========================================================================== */
+@font-face {
+  font-family: "JM Symbols";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url("MaterialSymbolsRounded.woff2") format("woff2");
+}
+
+:root {
+  --icon-font: "JM Symbols", "Material Symbols Rounded";
+  --md-icon-font: var(--icon-font);
+  --icon-nav: 26px;
+  --icon-action: 24px;
+  --icon-inline: 20px;
+  --icon-inactive: #5f6368;
+}
+:root[data-theme-resolved=dark] { --icon-inactive: #ffffff99; }
+
+md-icon, .msr {
+  font-family: var(--icon-font);
+  font-weight: 400; font-style: normal; line-height: 1;
+  font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+md-icon { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
+.jerry-nav-icon.msr { font-size: var(--icon-nav); }
+
+/* Size helpers */
+md-icon.icon-sm { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); }
+md-icon.icon-chip { margin-right: 4px; flex-shrink: 0; }
+md-icon.icon-chevron { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); color: var(--icon-inactive); opacity: .7; }
+
+/* Row / card icons: 24px, neutral grey (blue is reserved for selected nav + active states) */
+.list-item md-icon:first-child, .pif-row > md-icon:first-child { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
+:root[data-theme-resolved][data-ui-style] .list-item md-icon:first-child,
+:root[data-theme-resolved][data-ui-style] .ctrl-card md-icon:first-child,
+:root[data-theme-resolved][data-ui-style] .ctrl-row md-icon:first-child,
+:root[data-theme-resolved][data-ui-style] .pif-row > md-icon:first-child,
+:root[data-theme-resolved][data-ui-style] .jf-row-icon md-icon {
+  color: var(--icon-inactive) !important; opacity: 1 !important;
+}
+:root[data-theme-resolved][data-ui-style] .list-item[data-destructive] md-icon:first-child { color: var(--icon-danger) !important; }
+:root[data-theme-resolved][data-ui-style] .ctrl-row md-icon:first-child { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
+:root[data-theme-resolved][data-ui-style][data-theme-resolved=light] .jf-row-icon { background: #0000000a !important; }
+
+/* Home info rows */
+.jf-row-icon md-icon { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
+
+/* Headers, buttons, inputs */
+.at-back-btn md-icon { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
+.pif-btn md-icon, .omk-chip-btn md-icon, .pif-term-bar md-icon, .pif-term-clear md-icon { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); flex-shrink: 0; }
+.network-chip md-icon { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); }
+.fb-chevron { --md-icon-size: var(--icon-inline); }
+
+/* App Targeting menu, chips, apply button, checkbox */
+.at-menu-item md-icon { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); flex-shrink: 0; opacity: .7; position: relative; z-index: 1; transition: opacity .1s ease; }
+.at-menu-item.at-pressed md-icon { opacity: 1; }
+.at-menu-item md-icon.at-menu-state { margin-left: auto; }
+.at-apply-fab md-icon { margin-right: 2px; }
+.at-checkbox md-icon.at-check-icon { --md-icon-size: 16px; font-size: 16px; color: #fff; }
+.at-checkbox svg.at-check-icon { width: 16px; height: 16px; fill: #fff; display: block; }
+
+/* Settings: theme / UI-style buttons, community cards, language select */
+.theme-btn md-icon.theme-btn-icon { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); }
+.community-card md-icon.community-card__icon { --md-icon-size: var(--icon-action); font-size: var(--icon-action); margin-bottom: 6px; }
+.community-card md-icon.community-card__arrow { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); }
+md-icon.jerry-lang-trigger-arrow { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline); }
+
+/* Control rows: chevrons are inline-size; M3 tonal circle holds a 24px glyph */
+.ctrl-chevron, .ctrl-row md-icon.ctrl-chevron { --md-icon-size: var(--icon-inline); font-size: var(--icon-inline) !important; }
+
+/* Tonal icon circles on rows (neutral, subtle) */
+:root[data-theme-resolved][data-ui-style] { --icon-tonal: #0000000d; --icon-tonal-danger: #b3261e1a; --icon-danger: #b3261e; }
+:root[data-theme-resolved=dark][data-ui-style] { --icon-tonal: #ffffff14; --icon-tonal-danger: #c94b4b1f; --icon-danger: #c94b4b; }
+:root[data-theme-resolved][data-ui-style] .list-item > md-icon:first-child,
+:root[data-theme-resolved][data-ui-style] .pif-row > md-icon:first-child,
+:root[data-theme-resolved][data-ui-style] .ctrl-row > md-icon:first-child {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 40px; height: 40px; border-radius: 50%; background: var(--icon-tonal);
+}
+:root[data-theme-resolved][data-ui-style] .list-item[data-destructive] > md-icon:first-child { background: var(--icon-tonal-danger); }
+:root[data-theme-resolved][data-ui-style] .list-item { gap: 14px; }
+
+/* Icon font unavailable: blank slots instead of ligature words (see icon-check.js) */
+:root[data-icons="missing"] md-icon, :root[data-icons="missing"] .msr { font-size: 0 !important; overflow: hidden; }
+:root[data-icons="missing"] .jerry-nav-icon.msr { display: block; width: var(--icon-nav); height: var(--icon-nav); }

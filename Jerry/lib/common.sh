@@ -1,4 +1,5 @@
 # shellcheck shell=sh
+# ===== Logging =====
 JERRYMANAGER_LOG_FILE="/data/adb/JerryManager/boot.log"
 log() {
     _log_line="$(date +%Y-%m-%d\ %H:%M:%S) [$1] $2"
@@ -31,6 +32,7 @@ log_customrom() {
     unset _lcr_line _lcr_size _lcr_file
 }
 
+# ===== Network =====
 download() {
     _dl_url="$1" _dl_output="$2" _dl_oldpath="$PATH"
     PATH="/data/adb/ap/bin:/data/adb/ksu/bin:/data/adb/magisk:/data/data/com.termux/files/usr/bin:$PATH"
@@ -42,17 +44,17 @@ download() {
     fi
 
     for _dl_try in 1 2 3; do
-        if busybox wget -T 10 --no-check-certificate -qO "$_dl_output" "$_dl_url" 2>/dev/null; then
+        if busybox wget -T 10 --no-check-certificate -qO "$_dl_output" "$_dl_url" 2>/dev/null && [ -s "$_dl_output" ]; then
             _dl_code=0 && break
         fi
         if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1; then
-            curl --connect-timeout 10 -Ls -o "$_dl_output" "$_dl_url" 2>/dev/null && _dl_code=0 && break
+            curl --connect-timeout 10 -Ls -o "$_dl_output" "$_dl_url" 2>/dev/null && [ -s "$_dl_output" ] && _dl_code=0 && break
         fi
         sleep 1
     done
 
-    if [ -n "$_dl_tmp" ] && [ "$_dl_code" -eq 0 ]; then
-        cat "$_dl_tmp"
+    if [ -n "$_dl_tmp" ]; then
+        [ "$_dl_code" -eq 0 ] && cat "$_dl_tmp"
         rm -f "$_dl_tmp"
     fi
 
@@ -70,11 +72,21 @@ check_network() {
         ping -c1 -W2 "$_cn_dns" >/dev/null 2>&1 && PATH="$_cn_oldpath" && unset _cn_oldpath _cn_dns && return 0
     done
 
+    # Some networks block ping (ICMP) while the internet works: try a tiny HTTP request
+    if busybox wget -T 5 --no-check-certificate -qO /dev/null "https://cloudflare.com/cdn-cgi/trace" 2>/dev/null; then
+        PATH="$_cn_oldpath"; unset _cn_oldpath _cn_dns; return 0
+    fi
+    if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1 \
+       && curl --connect-timeout 5 -sI "https://clients3.google.com/generate_204" >/dev/null 2>&1; then
+        PATH="$_cn_oldpath"; unset _cn_oldpath _cn_dns; return 0
+    fi
+
     PATH="$_cn_oldpath"
     unset _cn_oldpath _cn_dns
     return 1
 }
 
+# ===== Checks =====
 check_module() {
     _cm_name="$1"
     if [ ! -d "/data/adb/modules/$_cm_name" ] && [ ! -d "/data/adb/modules_update/$_cm_name" ]; then
@@ -100,12 +112,15 @@ check_prop() {
     unset _cp_name _cp_expected _cp_value
 }
 
+# ===== Prop helpers =====
 sp_try() {
     _st_name="$1"
     if [ $# -eq 2 ]; then
         _st_expected="$2"
         _st_current=$(resetprop "$_st_name" 2>/dev/null || echo "")
-        if [ -n "$_st_current" ] && [ "$_st_current" = "$_st_expected" ]; then
+        # Only change a prop the device already has. A missing prop is left alone
+        # (never invent e.g. Realme props on a OnePlus); an equal one needs no change.
+        if [ -z "$_st_current" ] || [ "$_st_current" = "$_st_expected" ]; then
             unset _st_name _st_expected _st_current
             return 0
         fi
@@ -119,6 +134,16 @@ sp_try() {
     fi
     resetprop -n "$_st_name" "$_st_expected" 2>/dev/null || true
     unset _st_name _st_expected _st_current _st_needle _st_value
+    return 0
+}
+
+# $1 = prop, $2 = value. Sets the prop even when the device does not have it yet.
+# Only for props that must exist (ro.boot.flash.locked); everything else uses sp_try.
+sp_force() {
+    _sf_name="$1" _sf_expected="$2"
+    _sf_current=$(resetprop "$_sf_name" 2>/dev/null || echo "")
+    [ "$_sf_current" = "$_sf_expected" ] || resetprop -n "$_sf_name" "$_sf_expected" 2>/dev/null || true
+    unset _sf_name _sf_expected _sf_current
     return 0
 }
 
@@ -150,9 +175,33 @@ sp_persist_delete() {
     resetprop -p --delete "$1" 2>/dev/null || true
 }
 
+# ===== Small helpers =====
 ensure_dir() { mkdir -p "$1" 2>/dev/null; }
 
 _escape_json() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+
+# Writes webroot/json/state.json (all config/*.val) so the WebUI reads settings without a shell call.
+write_state_snapshot() {
+    _ss_dir="$MODDIR/webroot/json"
+    [ -d "$_ss_dir" ] || mkdir -p "$_ss_dir" 2>/dev/null
+    _ss_cfg=""
+    _ss_sep=""
+    for _ss_f in "$JERRYMANAGER_CONFIG_DIR"/*.val; do
+        [ -f "$_ss_f" ] || continue
+        _ss_k="${_ss_f##*/}"
+        _ss_k="${_ss_k%.val}"
+        _ss_v=""
+        IFS= read -r _ss_v < "$_ss_f" || true
+        _ss_v=${_ss_v//\\/\\\\}
+        _ss_v=${_ss_v//\"/\\\"}
+        _ss_cfg="${_ss_cfg}${_ss_sep}\"${_ss_k}\":\"${_ss_v}\""
+        _ss_sep=","
+    done
+    if printf '{"config_ts":%s,"config":{%s}}\n' "$(date +%s)" "$_ss_cfg" > "$_ss_dir/.state.json.tmp" 2>/dev/null; then
+        mv -f "$_ss_dir/.state.json.tmp" "$_ss_dir/state.json" 2>/dev/null
+    fi
+    unset _ss_dir _ss_cfg _ss_sep _ss_f _ss_k _ss_v
+}
 
 version_ge() {
     awk -v a="$1" -v b="$2" 'BEGIN {
@@ -165,6 +214,7 @@ version_ge() {
     }'
 }
 
+# ===== Keybox decode =====
 decode_keybox_blob() {
     _dkb_in="$1" _dkb_out="$2"
     base64 -d "$_dkb_in" > "$_dkb_out" 2>/dev/null
@@ -203,28 +253,125 @@ decode_keybox_serial() {
     unset _dks_file _dks_b64 _dks_tmp _dks_serial
 }
 
-check_google_revocation() {
-    _cgr_serial="$1"
-    [ -n "$_cgr_serial" ] || return 1
-    _cgr_list=$(download "$GOOGLE_REVOCATION_URL" 2>/dev/null)
-    [ -z "$_cgr_list" ] && { log "REVOKE" "Warning: Could not fetch Google revocation list"; return 1; }
-    if echo "$_cgr_list" | grep -qiE "\"$_cgr_serial\"[[:space:]]*:"; then
-        unset _cgr_serial _cgr_list; return 0
-    fi
-    _cgr_clean="${_cgr_serial#"${_cgr_serial%%[!0]*}"}"
-    [ -z "$_cgr_clean" ] && _cgr_clean=0
-    if echo "$_cgr_list" | grep -qiE "\"$_cgr_clean\"[[:space:]]*:"; then
-        unset _cgr_serial _cgr_list _cgr_clean; return 0
-    fi
-    if [ "${#_cgr_serial}" -le 16 ]; then
-        _cgr_dec=$((16#$_cgr_clean))
-        if echo "$_cgr_list" | grep -qE "\"$_cgr_dec\"[[:space:]]*:"; then
-            unset _cgr_serial _cgr_list _cgr_clean _cgr_dec; return 0
+# notAfter (YYYYMMDDHHMMSS, UTC) of ONE base64 DER certificate passed as $1. Empty + return 1 when unreadable.
+# Reads the two validity times (UTCTime 17 0d or GeneralizedTime 18 0f) out of the DER bytes.
+_decode_cert_notafter() {
+    _dcn_tmp=$(mktemp 2>/dev/null || echo "/data/local/tmp/.jerry_exp_$$")
+    printf '%s' "$1" | base64 -d > "$_dcn_tmp" 2>/dev/null
+    _dcn_bytes=$(od -v -An -tx1 "$_dcn_tmp" 2>/dev/null | tr -s '\n ' '  ')
+    rm -f "$_dcn_tmp"
+    _dcn_t='(17 0d (3[0-9] ){12}5a|18 0f (3[0-9] ){14}5a)'
+    _dcn_pair=$(printf '%s ' "$_dcn_bytes" | grep -oE "$_dcn_t $_dcn_t" | head -1)
+    _dcn_end=$(printf '%s' "$_dcn_pair" | grep -oE "$_dcn_t" | tail -1)
+    _dcn_out=$(printf '%s' "$_dcn_end" | awk '{
+        n = ($1 == "17") ? 12 : 14
+        s = ""
+        for (i = 3; i < 3 + n; i++) s = s substr($i, 2, 1)
+        if (n == 12) s = (substr(s, 1, 2) + 0 < 50 ? "20" : "19") s
+        printf "%s", s
+    }')
+    printf '%s' "$_dcn_out"
+    _dcn_rc=1; [ ${#_dcn_out} -eq 14 ] && _dcn_rc=0
+    unset _dcn_tmp _dcn_bytes _dcn_t _dcn_pair _dcn_end _dcn_out
+    return $_dcn_rc
+}
+
+# Earliest notAfter over every certificate of the first <CertificateChain> (leaf AND intermediates/root):
+# a chain is only as valid as its shortest-lived cert. Prints YYYYMMDDHHMMSS.
+decode_keybox_expiry() {
+    _dke_file="$1"
+    [ -f "$_dke_file" ] || return 1
+    _dke_min=""
+    _dke_certs=$(sed -n '/<CertificateChain>/,/<\/CertificateChain>/{p;/<\/CertificateChain>/q}' "$_dke_file" 2>/dev/null | \
+        awk '/<Certificate format="pem">/{c=1; b=""; next} /<\/Certificate>/{if(c) print b; c=0; next} c && !/-----/{gsub(/[ \r\t]/,""); b=b $0}')
+    for _dke_b64 in $_dke_certs; do
+        [ -n "$_dke_b64" ] || continue
+        _dke_one=$(_decode_cert_notafter "$_dke_b64") || continue
+        # awk compares 14-digit values as doubles (exact); shell test would overflow on 32-bit mksh
+        if [ -z "$_dke_min" ] || awk -v a="$_dke_one" -v b="$_dke_min" 'BEGIN{exit !(a+0 < b+0)}'; then _dke_min="$_dke_one"; fi
+    done
+    printf '%s' "$_dke_min"
+    _dke_rc=1; [ ${#_dke_min} -eq 14 ] && _dke_rc=0
+    unset _dke_file _dke_min _dke_certs _dke_b64 _dke_one
+    return $_dke_rc
+}
+
+# 0 when any certificate in the chain has reached its notAfter; 1 when valid or unreadable
+keybox_is_expired() {
+    _kie_exp=$(decode_keybox_expiry "$1") || { unset _kie_exp; return 1; }
+    _kie_now=$(date -u +%Y%m%d%H%M%S)
+    awk -v e="$_kie_exp" -v n="$_kie_now" 'BEGIN{exit !(e+0 <= n+0)}'
+    _kie_rc=$?
+    unset _kie_exp _kie_now
+    return $_kie_rc
+}
+
+# Google's revocation list is kept in cache/ for GOOGLE_REVOCATION_TTL seconds (default 1h) so repeated
+# checks do not download it again. Prints the list file; fails when there is no valid list (no network,
+# empty or broken reply). Only a reply that contains "entries" is ever kept.
+_google_revocation_file() {
+    _grf_cache="$JERRYMANAGER_DIR/cache/google_revocation.json"
+    _grf_tmp="$_grf_cache.tmp.$$"
+    if [ -s "$_grf_cache" ]; then
+        _grf_age=$(( $(date +%s) - $(stat -c %Y "$_grf_cache" 2>/dev/null || echo 0) ))
+        if [ "$_grf_age" -ge 0 ] && [ "$_grf_age" -lt "${GOOGLE_REVOCATION_TTL:-3600}" ] \
+           && grep -q '"entries"' "$_grf_cache" 2>/dev/null; then
+            echo "$_grf_cache"
+            unset _grf_cache _grf_tmp _grf_age
+            return 0
         fi
-        unset _cgr_dec
     fi
-    unset _cgr_serial _cgr_list _cgr_clean
+    ensure_dir "$JERRYMANAGER_DIR/cache"
+    if download "$GOOGLE_REVOCATION_URL" "$_grf_tmp" >/dev/null 2>&1 \
+       && grep -q '"entries"' "$_grf_tmp" 2>/dev/null \
+       && mv -f "$_grf_tmp" "$_grf_cache" 2>/dev/null; then
+        echo "$_grf_cache"
+        unset _grf_cache _grf_tmp _grf_age
+        return 0
+    fi
+    rm -f "$_grf_tmp" 2>/dev/null
+    unset _grf_cache _grf_tmp _grf_age
     return 1
+}
+
+# $1 = certificate serial. Looks it up in Google's list (as given, without leading zeros, then as decimal).
+# Prints "STATUS|REASON" when listed. Return: 0 = listed (revoked), 1 = not listed, 2 = list unavailable.
+google_revocation_info() {
+    [ -n "$1" ] || return 2
+    _gri_file=$(_google_revocation_file) || { unset _gri_file; return 2; }
+    _gri_clean="${1#"${1%%[!0]*}"}"
+    [ -z "$_gri_clean" ] && _gri_clean=0
+    _gri_dec=""
+    if [ "${#1}" -le 16 ]; then
+        _gri_dec=$(printf '%d' "0x$_gri_clean" 2>/dev/null) || _gri_dec=""
+    fi
+    for _gri_key in "$1" "$_gri_clean" "$_gri_dec"; do
+        [ -n "$_gri_key" ] || continue
+        if tr -d '\n\r' < "$_gri_file" 2>/dev/null | grep -qiE "\"$_gri_key\"[[:space:]]*:"; then
+            _gri_obj=$(tr -d '\n\r' < "$_gri_file" 2>/dev/null \
+                | grep -oiE "\"$_gri_key\"[[:space:]]*:[[:space:]]*\{[^}]*\}" | head -n1)
+            _gri_status=$(printf '%s' "$_gri_obj" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+            _gri_reason=$(printf '%s' "$_gri_obj" | sed -n 's/.*"reason"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+            printf '%s|%s\n' "${_gri_status:-REVOKED}" "$_gri_reason"
+            unset _gri_file _gri_clean _gri_dec _gri_key _gri_obj _gri_status _gri_reason
+            return 0
+        fi
+    done
+    unset _gri_file _gri_clean _gri_dec _gri_key
+    return 1
+}
+
+# Same result codes as google_revocation_info: 0 = revoked, 1 = not revoked, 2 = unknown (list unavailable).
+check_google_revocation() {
+    google_revocation_info "$1" >/dev/null
+}
+
+# ===== Boot props =====
+# $1 = ADB Disabler sub-toggle. True only when the master switch AND that
+# sub-toggle are on. Master off = nothing about ADB / developer options is touched.
+# Master on = every sub-toggle counts as on unless it was switched off (default 1).
+adb_hide_enabled() {
+    [ "$(cfg_get toggle_adb_disabler 0)" != "0" ] && [ "$(cfg_get "$1" 1)" != "0" ]
 }
 
 apply_boot_props() {
@@ -270,7 +417,6 @@ ro.boot.verifiedbootstate|green
 vendor.boot.verifiedbootstate|green
 ro.boot.vbmeta.device_state|locked
 vendor.boot.vbmeta.device_state|locked
-ro.boot.flash.locked|1
 ro.boot.veritymode|enforcing
 ro.boot.veritymode.managed|yes
 ro.boot.vbmeta.hash_alg|sha256
@@ -282,16 +428,21 @@ ro.is_ever_orange|0
 ro.secureboot.lockstate|locked
 ro.boot.realme.lockstate|1
 ro.boot.realmebootstate|green
-sys.usb.config|mtp
-sys.usb.adb.disabled|1
-persist.sys.usb.config|none
-service.adb.root|0
 partition.system.verified|2
 partition.vendor.verified|2
 partition.product.verified|2
 partition.system_ext.verified|2
 partition.odm.verified|2
 PROPS
+
+    sp_force ro.boot.flash.locked 1
+
+    if adb_hide_enabled toggle_adb_disabler_usb_debug; then
+        sp_try sys.usb.config mtp
+        sp_try sys.usb.adb.disabled 1
+        sp_try persist.sys.usb.config none
+        sp_try service.adb.root 0
+    fi
 
     for _abp_rp in ro.bootmode ro.boot.bootmode vendor.boot.bootmode ro.boot.mode vendor.boot.mode; do
         sp_try "$_abp_rp" recovery unknown
@@ -303,6 +454,7 @@ PROPS
     resetprop --delete "crashrecovery.rescue_boot_count" 2>/dev/null || true
 }
 
+# ===== Prop hiding =====
 hexpatch_deleteprop() {
     _hd_prop="$1"
     [ -n "$_hd_prop" ] || return 0
@@ -385,41 +537,50 @@ hide_recovery_folders() {
 
 apply_critical_hiding_props() {
     resetprop --delete sys.oem_unlock_allowed 2>/dev/null || true
-    resetprop -n ro.oem_unlock_supported 0 2>/dev/null || true
-    resetprop -n ro.boot.warranty_bit 0 2>/dev/null || true
-    resetprop -n ro.warranty_bit 0 2>/dev/null || true
-    resetprop -n ro.vendor.warranty_bit 0 2>/dev/null || true
-    resetprop -n ro.vendor.boot.warranty_bit 0 2>/dev/null || true
+    sp_try ro.oem_unlock_supported 0
+    sp_try ro.boot.warranty_bit 0
+    sp_try ro.warranty_bit 0
+    sp_try ro.vendor.warranty_bit 0
+    sp_try ro.vendor.boot.warranty_bit 0
 }
 
+# ===== Boot hardening =====
 apply_boot_hardening() {
-    settings put global development_settings_enabled 0
-    settings put global adb_enabled 0
-    settings put global oem_unlock_allowed 0
-    settings put global adb_wifi_enabled 0
-    settings put global adb_wifi_port -1
-    resetprop --delete persist.service.adb.enable 2>/dev/null || true
-    resetprop --delete persist.service.debuggable 2>/dev/null || true
-    resetprop -n persist.sys.developer_options 0
+    if adb_hide_enabled toggle_adb_disabler_dev_options; then
+        settings put global development_settings_enabled 0
+        resetprop -n persist.sys.development_settings_enabled 0
+        resetprop -n persist.sys.developer_options 0
+    fi
+    if adb_hide_enabled toggle_adb_disabler_usb_debug; then
+        settings put global adb_enabled 0
+        settings put global adb_wifi_enabled 0
+        settings put global adb_wifi_port -1
+        resetprop --delete persist.service.adb.enable 2>/dev/null || true
+        resetprop --delete persist.service.debuggable 2>/dev/null || true
+    fi
+    if adb_hide_enabled toggle_adb_disabler_oem_unlock; then
+        settings put global oem_unlock_allowed 0
+    fi
     apply_critical_hiding_props
-    resetprop -n ro.is_ever_orange 0 2>/dev/null || true
-    resetprop -n ro.secureboot.lockstate locked 2>/dev/null || true
-    resetprop -n ro.boot.vbmeta.device_state locked 2>/dev/null || true
-    resetprop -n vendor.boot.vbmeta.device_state locked 2>/dev/null || true
-    resetprop -n ro.boot.flash.locked 1 2>/dev/null || true
-    resetprop -n ro.boot.veritymode enforcing 2>/dev/null || true
-    resetprop -n ro.boot.veritymode.managed yes 2>/dev/null || true
-    resetprop -n ro.boot.selinux enforcing 2>/dev/null || true
-    resetprop -n ro.build.selinux 1 2>/dev/null || true
-    resetprop -n ro.build.selinux.enforce 1 2>/dev/null || true
-    resetprop -n ro.secure 1 2>/dev/null || true
-    resetprop -n ro.hardware.virtual_device 0 2>/dev/null || true
+    sp_try ro.is_ever_orange 0
+    sp_try ro.secureboot.lockstate locked
+    sp_try ro.boot.vbmeta.device_state locked
+    sp_try vendor.boot.vbmeta.device_state locked
+    sp_force ro.boot.flash.locked 1
+    sp_try ro.boot.veritymode enforcing
+    sp_try ro.boot.veritymode.managed yes
+    sp_try ro.boot.selinux enforcing
+    sp_try ro.build.selinux 1
+    sp_try ro.build.selinux.enforce 1
+    sp_try ro.secure 1
+    sp_try ro.hardware.virtual_device 0
     if [ "$(toybox cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then
         chmod 640 /sys/fs/selinux/enforce 2>/dev/null || true
         chmod 440 /sys/fs/selinux/policy 2>/dev/null || true
     fi
 }
 
+# ===== ROM spoof =====
 block_rom_spoof_engines() {
     _brs_gate=false
     resetprop 2>/dev/null | grep -qE 'persist\.sys\.(pihooks|entryhooks|pixelprops)' && _brs_gate=true
@@ -441,6 +602,10 @@ persist.sys.pixelprops.gms|false
 persist.sys.pixelprops.gapps|false
 persist.sys.pixelprops.google|false
 persist.sys.pixelprops.pi|false
+persist.sys.pixelprops.vending|false
+persist.sys.pihooks.disable|1
+persist.sys.kihooks.disable|1
+persist.sys.pihooks.enabled_features|0
 MAP
 
     if [ -f "/data/system/gms_certified_props.json" ] && [ "$(resetprop persist.sys.spoof.gms 2>/dev/null)" != "false" ]; then
@@ -470,6 +635,7 @@ disable_bootloader_spoofer() {
     fi
 }
 
+# ===== Conflicts =====
 CONFLICT_BACKUP_FILE="$JERRYMANAGER_DIR/conflict_backups.txt"
 
 _conflict_registry() {
@@ -617,4 +783,31 @@ $(_conflict_registry)
 EOF
     printf ']'
     unset _cs_first _cs_id _cs_name _cs_scripts _cs_features _cs_type _cs_choice _cs_priority _cs_name_json
+}
+
+# ===== Inotifyd =====
+# Pick an inotifyd for install detection: the ROM's own, then the root manager's
+# busybox. Sets INOTIFYD_KIND (system, busybox or none) and INOTIFYD_CMD
+# (word-split when used, so it may hold two words).
+resolve_inotifyd() {
+    INOTIFYD_KIND="none"
+    INOTIFYD_CMD=""
+
+    if command -v inotifyd >/dev/null 2>&1; then
+        INOTIFYD_KIND="system"
+        INOTIFYD_CMD="inotifyd"
+        return 0
+    fi
+
+    for _ri_bb in /data/adb/magisk/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox; do
+        [ -x "$_ri_bb" ] || continue
+        "$_ri_bb" --list 2>/dev/null | grep -qx inotifyd || continue
+        INOTIFYD_KIND="busybox"
+        INOTIFYD_CMD="$_ri_bb inotifyd"
+        unset _ri_bb
+        return 0
+    done
+    unset _ri_bb
+
+    return 0
 }

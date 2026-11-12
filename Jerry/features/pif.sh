@@ -95,6 +95,9 @@ fi
 
 pif_kill_gms
 
+# New pif.prop may carry a new SECURITY_PATCH: re-sync the keystore patch to it
+[ "$(cfg_get toggle_action_security_patch 1)" != "0" ] && sh "$MODDIR/security_patch.sh" >/dev/null 2>&1
+
 if [ -n "$product" ]; then
   model="$(pif_model_of "$product")"
 else

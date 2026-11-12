@@ -10,9 +10,9 @@ fi
 
 log "ADB" "Start"
 
-_dev_opt=$(cfg_get toggle_adb_disabler_dev_options 0)
-_usb_dbg=$(cfg_get toggle_adb_disabler_usb_debug 0)
-_oem_unlock=$(cfg_get toggle_adb_disabler_oem_unlock 0)
+_dev_opt=$(cfg_get toggle_adb_disabler_dev_options 1)
+_usb_dbg=$(cfg_get toggle_adb_disabler_usb_debug 1)
+_oem_unlock=$(cfg_get toggle_adb_disabler_oem_unlock 1)
 
 if [ "$_dev_opt" != "0" ]; then
   settings put global development_settings_enabled 0 2>/dev/null && log "ADB" "development_settings_enabled -> 0"
