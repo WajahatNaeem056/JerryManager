@@ -71,3 +71,12 @@
 
   --color-white: #ffffff;
 }
+
+/* AMOLED theme: dark with a pure black background (enabled via data-amoled on <html>) */
+:root[data-amoled="1"][data-theme-resolved=dark] {
+  --color-gray-7: #000000;
+  --color-gray-11: #121212;
+  --color-gray-12: #151515;
+  --color-gray-15: #1c1c1c;
+  --color-gray-16: #2a2a2a;
+}

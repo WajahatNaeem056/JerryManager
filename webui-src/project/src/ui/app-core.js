@@ -209,7 +209,8 @@
 
       var _isDark = document.documentElement.getAttribute('data-theme-resolved') === 'dark'
         || document.documentElement.getAttribute('data-theme') === 'dark';
-      dialog.style.setProperty('--md-dialog-container-color', _isDark ? '#1E1E1E' : '#ffffff');
+      var _isAmoled = document.documentElement.getAttribute('data-amoled') === '1';
+      dialog.style.setProperty('--md-dialog-container-color', _isDark ? (_isAmoled ? '#151515' : '#1E1E1E') : '#ffffff');
       dialog.style.setProperty('--md-dialog-headline-color', _isDark ? '#F5F5F5' : '#252525');
       dialog.style.setProperty('--md-dialog-supporting-text-color', _isDark ? '#A0A0A0' : '#444444');
 

@@ -229,6 +229,9 @@
   --pif-term-border: transparent;
   --pif-term-bar: var(--color-gray-15);
 }
+:root[data-amoled="1"][data-theme-resolved=dark] {
+  --pif-term-bg: #050505;
+}
 :root[data-theme-resolved=dark] .pif-row,:root[data-theme=dark] .pif-row {
   background: var(--color-gray-12);
 }

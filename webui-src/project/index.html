@@ -22,6 +22,7 @@
       document.documentElement.setAttribute('data-theme', mode);
       document.documentElement.setAttribute('data-theme-resolved', resolved);
       document.documentElement.style.colorScheme = resolved;
+      try { if (mode === 'dark' && localStorage.getItem('amoled') === '1') document.documentElement.setAttribute('data-amoled', '1'); } catch(e) {}
       if (mode === 'auto' && !window.__autoThemeListener) {
         window.__autoThemeListener = function(e) {
           var currentMode = 'auto';
@@ -38,10 +39,16 @@
   </script>
   <script>
   window.__setTheme = function(mode) {
-    ['dark','auto','light'].forEach(function(m) {
+    var amoled = (mode === 'amoled');
+    var shown = mode;
+    if (amoled) mode = 'dark';
+    ['amoled','dark','auto','light'].forEach(function(m) {
       var btn = document.getElementById('theme-btn-' + m);
-      if (btn) btn.classList.toggle('active', m === mode);
+      if (btn) btn.classList.toggle('active', m === shown);
     });
+    if (amoled) document.documentElement.setAttribute('data-amoled', '1');
+    else document.documentElement.removeAttribute('data-amoled');
+    try { localStorage.setItem('amoled', amoled ? '1' : '0'); } catch(e) {}
     document.documentElement.setAttribute('data-theme', mode);
     var resolved = mode === 'auto'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
@@ -78,8 +85,9 @@
   document.addEventListener('DOMContentLoaded', function() {
     var saved = 'dark';
     try { saved = localStorage.getItem('themeMode') || 'dark'; } catch(e) {}
+    try { if (saved === 'dark' && localStorage.getItem('amoled') === '1') saved = 'amoled'; } catch(e) {}
     setTimeout(function() {
-      ['dark','auto','light'].forEach(function(m) {
+      ['amoled','dark','auto','light'].forEach(function(m) {
         var btn = document.getElementById('theme-btn-' + m);
         if (btn) btn.classList.toggle('active', m === saved);
       });
@@ -417,6 +425,10 @@
 
           <div class="list-title" data-i18n="settings_theme">Theme</div>
           <div class="theme-toggle-card" id="theme-toggle-card">
+            <button class="theme-btn" id="theme-btn-amoled" onclick="window.__setTheme('amoled')">
+              <svg class="theme-btn-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:var(--icon-inline,20px);height:var(--icon-inline,20px);flex:none"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18V4a8 8 0 0 1 0 16z"/></svg>
+              <span class="theme-btn-label" data-i18n="theme_amoled">AMOLED</span>
+            </button>
             <button class="theme-btn" id="theme-btn-dark" onclick="window.__setTheme('dark')">
               <md-icon class="theme-btn-icon">dark_mode</md-icon>
               <span class="theme-btn-label" data-i18n="theme_dark">Dark</span>
