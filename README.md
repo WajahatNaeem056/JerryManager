@@ -26,6 +26,7 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 
 - **Play Integrity And Root Hiding** — full pipeline covering keybox injection, security patch spoofing, and prop hardening to pass Strong Integrity
 - **Built-in PIF** — powered by JerryManager itself, no separate standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
+- **Built-in Tricky Store OSS** — keystore engine bundled inside JerryManager (works with Tricky Store only), no separate Tricky Store module needed. Source: [Jerry TrickyStore-Oos](https://github.com/WajahatNaeem056/Jerry-Ts-Oos)
 - **Keybox Management** — supply your own keybox or pull one automatically
 - **Auto Target**: inotify + polling for new apps
 - **Banking Mode**: dedicated handling for banking and payment apps
@@ -46,6 +47,7 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 ## Structure
 
 - `Jerry/`: module (features, lib, pipelines); `dex/classes.dex` and `zygisk/*.so` are the built-in PIF binaries, built from [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
+- `Jerry/ts/`, `Jerry/sepolicy.rule`: built-in Tricky Store OSS binaries, built from [Jerry TrickyStore-Oos](https://github.com/WajahatNaeem056/Jerry-Ts-Oos)
 - `webui-src/project/`: WebUI source (Vite) and static webroot files (`public/`); `webroot/` in the zip is generated from it
 - `package.json`, `vite.config.js`: WebUI build; `npm run build` builds the WebUI and the flashable ZIP
 - `tools/`: icon-font inline, webroot check and zip packaging scripts
