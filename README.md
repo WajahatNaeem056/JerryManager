@@ -40,9 +40,8 @@ Built for users who need a practical, centralized solution for **Root Hiding, Pl
 ## Installation
 
 1. Download the latest ZIP from [Releases](https://github.com/WajahatNaeem056/JerryManager/releases)
-2. Flash via KernelSU or APatch (Magisk is not the primary target — verify support before flashing)
-3. Reboot
-4. Open the module's Web UI from your manager app to configure
+2. Reboot
+3. Open the module's Web UI from your manager app to configure
 
 ## Structure
 
