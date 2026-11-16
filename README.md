@@ -4,11 +4,6 @@
 
 **A KernelSU / APatch module for achieving and maintaining Root Hiding and Integrity on Android.**
 
-![Platform](https://img.shields.io/badge/Platform-KernelSU%20%7C%20APatch-blue)
-![Version](https://img.shields.io/badge/Version-v4.7-purple)
-![License](https://img.shields.io/badge/License-GPL--3.0-orange)
-![Status](https://img.shields.io/badge/Status-Active-success)
-
 </div>
 
 ---
@@ -73,6 +68,12 @@ npm run build
 `npm run build` builds the WebUI with Vite, moves the base64 icon font into index.html, checks the webroot and packages the ZIP. The WebUI is built into `dist/webroot` (`index.html` with the base64 icon font inline, plus one JS file and one CSS file in `assets/`) and packaged into the ZIP as `webroot/`.
 
 Output: `dist/JerryManager-<version>.zip`, where `<version>` comes from `Jerry/module.prop` (e.g. `dist/JerryManager-v4.7.zip`).
+
+## Thanks
+
+- [beakthoven](https://github.com/beakthoven) for developing TrickyStore OSS, which is integrated into JerryManager.
+- [KOWX712](https://github.com/KOWX712) for PIF Inject, used for PIF injection in JerryManager.
+- [dpejoh](https://github.com/dpejoh) for the WebUI inspiration and helpful work.
 
 ## Developer
 
