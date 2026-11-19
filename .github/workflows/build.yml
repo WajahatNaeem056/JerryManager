@@ -1,0 +1,90 @@
+name: Build JerryManager (Normal + Trick Store)
+
+# One manual run builds both flashable ZIPs in two independent jobs (separate runners, separate
+# checkouts, separate artifacts). Neither job needs the other; one failing does not hide the other.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-normal:
+    name: Normal build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Read module version
+        id: ver
+        run: echo "version=$(grep '^version=' Jerry/module.prop | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Unchanged project build: vite build, icon font inline, webroot check, sh -n on all scripts, ZIP packaging
+      - name: Build module ZIP
+        run: npm run build
+
+      - name: Name the ZIP
+        env:
+          VER: ${{ steps.ver.outputs.version }}
+        run: mv "dist/JerryManager-${VER}.zip" "dist/JerryManager-${VER}-Normal.zip"
+
+      - name: Verify Normal ZIP
+        env:
+          VER: ${{ steps.ver.outputs.version }}
+        run: sh variants/verify-zip.sh "dist/JerryManager-${VER}-Normal.zip" normal
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JerryManager-${{ steps.ver.outputs.version }}-Normal
+          path: dist/JerryManager-${{ steps.ver.outputs.version }}-Normal.zip
+          if-no-files-found: error
+
+  build-trickstore:
+    name: Trick Store build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Read module version
+        id: ver
+        run: echo "version=$(grep '^version=' Jerry/module.prop | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+
+      # Verifies SHA256 of the stored Trick Store OSS files, dry-runs and applies the patches, copies the
+      # overlay. Works on this job's own disposable checkout only; the Normal job never sees it.
+      - name: Apply Trick Store variant
+        run: sh variants/trickstore/apply.sh
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build module ZIP
+        run: npm run build
+
+      - name: Name the ZIP
+        env:
+          VER: ${{ steps.ver.outputs.version }}
+        run: mv "dist/JerryManager-${VER}.zip" "dist/JerryManager-${VER}-TrickStore.zip"
+
+      - name: Verify Trick Store ZIP
+        env:
+          VER: ${{ steps.ver.outputs.version }}
+        run: sh variants/verify-zip.sh "dist/JerryManager-${VER}-TrickStore.zip" trickstore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JerryManager-${{ steps.ver.outputs.version }}-TrickStore
+          path: dist/JerryManager-${{ steps.ver.outputs.version }}-TrickStore.zip
+          if-no-files-found: error

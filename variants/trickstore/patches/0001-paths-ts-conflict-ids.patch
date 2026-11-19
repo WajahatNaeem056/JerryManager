@@ -1,0 +1,11 @@
+--- a/Jerry/lib/paths.sh
++++ b/Jerry/lib/paths.sh
+@@ -19,6 +19,8 @@
+ TEESIM_DIR="/data/adb/teesim"
+ TEESIM_CONFIG="$TEESIM_DIR/config.json"
+ TEESIM_KEYBOX="$TEESIM_DIR/keybox.xml"
++# Trick Store build: keystore modules that must not run next to the built-in Tricky Store OSS (two keystore2 hooks clash)
++TS_CONFLICT_IDS="tricky_store oh_my_keymint teesim tricky_store_v2 TrickyStore tee_simulator TEESimulator TEESimulator-RS"
+ 
+ KEYBOX_BACKUP_DIR="/data/adb/JerryManager/KeyBackup"
+ mkdir -p "$KEYBOX_BACKUP_DIR" 2>/dev/null

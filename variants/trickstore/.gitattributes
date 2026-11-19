@@ -1,0 +1,3 @@
+# Everything under variants/trickstore is stored and checked out byte-for-byte (no EOL conversion):
+# the SHA256SUMS check and the patches depend on exact bytes.
+* -text
