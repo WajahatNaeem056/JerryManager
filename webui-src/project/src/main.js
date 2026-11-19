@@ -198,7 +198,7 @@ function historyRows() {
     return items.map(h => {
         let key = friendlyNames[h.script];
         let name = (key && i(key)) || h.script;
-        let mark = h.code === null || h.code === undefined ? `` : (h.code === 0 ? `<md-icon class="history-ok">check_circle</md-icon>` : `<md-icon class="history-fail">error</md-icon>`);
+        let mark = h.code === null || h.code === undefined ? `` : (h.code === 0 ? `<md-icon class="history-ok">check_circle</md-icon>` : `<md-icon class="history-fail">cancel</md-icon>`);
         return `<details class="history-item"><summary>${mark}<span class="history-name">${escapeHtml(name)}</span><span class="history-time">${escapeHtml(historyTime(h.time))}</span></summary><div class="terminal"><pre>${escapeHtml(h.output)}</pre></div></details>`;
     }).join(``);
 }

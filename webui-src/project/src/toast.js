@@ -2,7 +2,7 @@
 export function showToast(message, options = {}) {
     let { action: action, autoCloseDelay: autoCloseDelay = 3e3, onActionClick: onActionClick, className: className } = options;
     let toast = document.createElement(`div`);
-    let icon = className === `snackbar-success` ? `check_circle` : className === `snackbar-error` ? `error` : ``;
+    let icon = className === `snackbar-success` ? `check_circle` : className === `snackbar-error` ? `cancel` : ``;
     return toast.className = `md-toast` + (className ? ` ` + className : ``), toast.innerHTML = `
     ${icon ? `<md-icon class="md-toast__icon">${icon}</md-icon>` : ``}
     <span class="md-toast__message">${message}</span>
