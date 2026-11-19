@@ -5,6 +5,7 @@ MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
 . "$MODDIR/../lib/config_env.sh"
+. "$MODDIR/../lib/root_detect.sh"
 
 MODE="${1:---hide}"
 ADB_DIR="/data/adb"
@@ -22,36 +23,13 @@ _mr_items_for() {
 
 _mr_exists() { [ -e "$1" ] || [ -L "$1" ]; }
 
-# Roots positively detected as running right now (space separated)
 _mr_detect_active() {
     _mr_ov=$(cfg_get multiroot_active_root auto)
     case "$_mr_ov" in
         magisk|kernelsu|apatch) echo "$_mr_ov"; return 0 ;;
     esac
-
-    _mr_act=""
-
-    # APatch also exports KSU=true, so check it first
-    if [ "$APATCH" = "true" ] || command -v apd >/dev/null 2>&1; then
-        _mr_act="$_mr_act apatch"
-    elif [ "$KSU" = "true" ] || command -v ksud >/dev/null 2>&1; then
-        _mr_act="$_mr_act kernelsu"
-    fi
-    if [ -n "$MAGISK_VER_CODE" ] || command -v magisk >/dev/null 2>&1 || pidof magiskd >/dev/null 2>&1; then
-        _mr_act="$_mr_act magisk"
-    fi
-
-    for _mr_pid in $$ $PPID; do
-        _mr_exe=$(readlink "/proc/$_mr_pid/exe" 2>/dev/null)
-        case "$_mr_exe" in
-            "$ADB_DIR"/magisk|"$ADB_DIR"/magisk/*)           _mr_act="$_mr_act magisk" ;;
-            "$ADB_DIR"/ksu|"$ADB_DIR"/ksu/*|"$ADB_DIR"/ksud) _mr_act="$_mr_act kernelsu" ;;
-            "$ADB_DIR"/ap|"$ADB_DIR"/ap/*|"$ADB_DIR"/apd|"$ADB_DIR"/fp|"$ADB_DIR"/fp/*) _mr_act="$_mr_act apatch" ;;
-        esac
-    done
-
-    echo $_mr_act
-    unset _mr_ov _mr_act _mr_pid _mr_exe
+    detect_root_family
+    unset _mr_ov
 }
 
 # True if $1 is where the running shell (or its parent) executes from
