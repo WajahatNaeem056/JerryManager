@@ -20,6 +20,7 @@ export function startLiveDeviceInfo() {
         lastLiveRun = Date.now();
         try {
             await refreshDeviceInfo();
+            await refreshKeyboxInfo();
         }
         finally {
             busy = false;
@@ -105,6 +106,10 @@ async function waitForKeyboxInfo(_priorGenTs = null, timeoutMs = 6e3, intervalMs
     }
 }
 var lastKeyboxInfo = null;
+setInterval(() => {
+    if (lastKeyboxInfo && !document.hidden)
+        renderKeyboxCard(lastKeyboxInfo);
+}, 30e3);
 async function loadKeyboxCard() {
     try {
         lastKeyboxInfo = await fetchKeyboxInfo();
@@ -126,13 +131,13 @@ function renderKeyboxCard(info) {
     }
     if (backendEl)
         backendEl.textContent = info.backend || `—`;
-    let setLabel = (v) => {
+    let setLabel = (v, num) => {
         if (valueEl) {
             let q = valueEl.firstChild;
             q && q.nodeType === 3 ? q.nodeValue = v + ` ` : valueEl.insertBefore(document.createTextNode(v + ` `), valueEl.firstChild);
         }
         if (numEl)
-            numEl.textContent = info.version ? `/ v${info.version}` : ``;
+            numEl.textContent = num !== undefined ? num : (info.version ? `/ v${info.version}` : ``);
     };
     if (!(!card || !icon || !valueEl)) {
         if (card.className = `hero-card`, !info.installed) {
@@ -141,37 +146,27 @@ function renderKeyboxCard(info) {
             setLabel(`Not Installed`);
             return;
         }
-        if (info.expired) {
-            card.classList.add(`keybox-revoked`);
-            icon.textContent = `event_busy`;
-            setLabel(`Expired`);
-            return;
+        let num = info.by_jerry && info.version ? `/ v${info.version}` : info.by_rkp && info.rkp_id ? `/ ${info.rkp_id}` : `/ Generic`;
+        let label, cls, ico;
+        let expMs = Date.parse(info.expires_at || ``);
+        if (info.expired || (!isNaN(expMs) && expMs <= Date.now())) {
+            label = `Expired`, cls = `keybox-revoked`, ico = `event_busy`;
         }
-        if (!info.by_jerry) {
-            card.classList.add(`keybox-unknown`);
-            icon.textContent = `key`;
-            setLabel(`Generic`);
-            return;
+        else if (info.revoked) {
+            label = `Revoked`, cls = `keybox-revoked`, ico = `gpp_bad`;
         }
-        if (info.revoked) {
-            card.classList.add(`keybox-revoked`);
-            icon.textContent = `gpp_bad`;
-            setLabel(`Revoked`);
-            return;
+        else if (info.softbanned) {
+            label = `Softbanned`, cls = `keybox-outdated`, ico = `warning`;
         }
-        if (info.softbanned) {
-            card.classList.add(`keybox-outdated`);
-            icon.textContent = `warning`;
-            setLabel(`Softbanned`);
-            return;
+        else if (info.by_jerry && !info.up_to_date && info.latest_version) {
+            label = `Update Available`, cls = `keybox-outdated`, ico = `system_update`;
         }
-        if (info.up_to_date) {
-            card.classList.add(`keybox-ok`);
-            icon.textContent = `verified_user`;
-            setLabel(`Valid`);
+        else {
+            label = `Valid`, cls = `keybox-ok`, ico = `verified_user`;
         }
-        else
-            card.classList.add(`keybox-outdated`), icon.textContent = `system_update`, setLabel(`New Keybox Available`);
+        card.classList.add(cls);
+        icon.textContent = ico;
+        setLabel(label, num);
     }
 }
 function setTextById(id, text) {

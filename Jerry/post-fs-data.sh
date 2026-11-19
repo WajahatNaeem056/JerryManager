@@ -9,6 +9,9 @@ MODDIR=${0%/*}
 mkdir -p "$(dirname "$JERRYMANAGER_LOG_FILE")" 2>/dev/null
 : > "$JERRYMANAGER_LOG_FILE" 2>/dev/null || true
 
+# Early boot props (before zygote and apps)
+_feature_enabled toggle_boot_props && apply_boot_prop_list
+
 # Only when built-in PIF is installed (skippable at install): keep a standalone PIF/Fork disabled, it would inject into GMS twice.
 if [ -d "$MODDIR/zygisk" ] && [ -d /data/adb/modules/playintegrityfix ] && [ ! -f /data/adb/modules/playintegrityfix/disable ]; then
     touch /data/adb/modules/playintegrityfix/disable 2>/dev/null

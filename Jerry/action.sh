@@ -23,6 +23,7 @@ _step_label() {
     esac
 }
 
+# Converts raw pipeline log lines into user-friendly output
 _format_fact() {
     _ff_line="$1"
     _ff_feature="$2"
@@ -154,6 +155,7 @@ _print_start_line() {
 _print_fact_line() {
     _pf_feature="$1" _pf_line="$2"
     [ -z "$_pf_feature" ] && return 0
+    # '|' is the protocol delimiter, so logs use '¦'; convert back for display
     _pf_line=$(printf '%s' "$_pf_line" | sed 's/¦/|/g')
     _format_fact "$_pf_line" "$_pf_feature"
     unset _pf_feature _pf_line
@@ -176,6 +178,7 @@ fi
 
 _al_rc_tmp=$(mktemp 2>/dev/null || echo "/data/local/tmp/.jerry_action_rc_$$")
 _al_current_had_error=false
+# Orchestrator sends __START__/__FACT__/__DONE__ lines on fd 3; stdout/stderr dropped
 { sh "$MODDIR/orchestrator.sh" full_integrity 3>&1 1>/dev/null 2>/dev/null; echo $? > "$_al_rc_tmp"; } | \
     while IFS= read -r _al_result_line; do
         case "$_al_result_line" in
@@ -213,6 +216,7 @@ if [ "$_pipeline_rc" -eq 0 ]; then
 fi
 unset _pipeline_rc
 
+# Refresh WebUI device info (fallback: path used while module update is pending reboot)
 if [ -f "$MODDIR/webroot/common/device-info.sh" ]; then
   sh "$MODDIR/webroot/common/device-info.sh" >/dev/null 2>&1
 elif [ -f /data/adb/modules_update/JerryManager/webroot/common/device-info.sh ]; then
@@ -221,4 +225,5 @@ fi
 
 update_description >/dev/null 2>&1
 
+# exit when run directly, return when sourced
 [ "${0##*/}" = "action.sh" ] && exit 0 || return 0

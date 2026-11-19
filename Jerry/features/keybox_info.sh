@@ -23,6 +23,8 @@ ensure_dir "$(dirname "$INFO_PATH")"
 
 _installed=false
 _by_jerry=false
+_by_rkp=false
+_rkp_id=""
 _version=""
 _latest_version=""
 _up_to_date=false
@@ -30,6 +32,9 @@ _revoked=false
 _softbanned=false
 _expired=false
 _expires_at=""
+_online_checked=false
+_rev_checked=false
+_checked_at=""
 
 if [ -f "$KEYBOX_FILE" ]; then
   _installed=true
@@ -53,10 +58,18 @@ if [ -f "$KEYBOX_FILE" ]; then
     _by_jerry=true
     _version="$_jerry_marker"
   fi
+
+  # RKP-installed keybox: tagged by rkp_catalog.sh install, independent of the jerryroot scheme
+  _rkp_marker=$(grep -oE 'RKP-KEYBOX:[A-Za-z0-9._-]{1,64}' "$KEYBOX_FILE" | head -1 | sed 's/RKP-KEYBOX://')
+  if [ -n "$_rkp_marker" ]; then
+    _by_rkp=true
+    _rkp_id="$_rkp_marker"
+  fi
 fi
 
 if [ "$_installed" = "true" ]; then
   if check_network; then
+    _online_checked=true
     _tmp_revoked="$(mktemp 2>/dev/null || echo /data/local/tmp/.jerry_revoked_$$)"
     _tmp_latest="$(mktemp 2>/dev/null || echo /data/local/tmp/.jerry_latest_$$)"
 
@@ -73,12 +86,22 @@ if [ "$_installed" = "true" ]; then
     rm -f "$_tmp_revoked" "$_tmp_latest" 2>/dev/null
 
     _revoke_reason=""
-    if [ -n "$_revoked_list" ]; then
+    if [ -n "$_revoked_list" ] && [ "$_by_rkp" != "true" ]; then
       _b64=$(sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' "$KEYBOX_FILE" | head -20 | grep -v 'CERTIFICATE' | tr -d '\n')
       if [ -n "$_b64" ]; then
         _hex=$(echo "$_b64" | base64 -d 2>/dev/null | od -v -tx1 | awk 'BEGIN{ORS=""} {for(i=2;i<=NF;i++) printf "%s", $i}')
         _serial_hex=$(echo "$_hex" | grep -o "020a[0-9a-f]\{20\}" | head -1 | sed 's/^020a//')
+        if [ -z "$_serial_hex" ]; then
+          _sr=$(echo "$_hex" | sed -n 's/.*a00302010202\([0-9a-f][0-9a-f]\)\([0-9a-f]*\)$/\1 \2/p' | head -1)
+          _sl=${_sr%% *}; _sb=${_sr#* }
+          if [ -n "$_sl" ] && [ "$_sl" != "$_sr" ]; then
+            _sn=$((16#$_sl * 2))
+            [ "$_sn" -gt 0 ] && [ "$_sn" -le 40 ] && _serial_hex=$(echo "$_sb" | cut -c1-$_sn)
+          fi
+          unset _sr _sl _sb _sn
+        fi
         if [ -n "$_serial_hex" ]; then
+          _rev_checked=true
           if echo "$_revoked_list" | grep -qi "$_serial_hex"; then
             _revoked=true; _revoke_reason="hex"
           fi
@@ -123,8 +146,10 @@ if [ "$_installed" = "true" ]; then
 
     if $_revoked; then
       log "KEYBOX_INFO" "Serial: $_serial_hex — REVOKED ($_revoke_reason)"
-    else
+    elif $_rev_checked; then
       log "KEYBOX_INFO" "Serial: $_serial_hex — clean, not revoked"
+    else
+      log "KEYBOX_INFO" "Revocation not checked (list unavailable or serial not found)"
     fi
     log "KEYBOX_INFO" "Installed: $_version, Latest: $_latest_version"
   else
@@ -133,11 +158,14 @@ if [ "$_installed" = "true" ]; then
 fi
 
 _gen_ts=$(date +%s%N 2>/dev/null || date +%s)
+_checked_at=$(date +%s 2>/dev/null)
 
 cat <<EOF > "$INFO_PATH"
 {
   "installed": $_installed,
   "by_jerry": $_by_jerry,
+  "by_rkp": $_by_rkp,
+  "rkp_id": "$_rkp_id",
   "version": "$_version",
   "latest_version": "$_latest_version",
   "up_to_date": $_up_to_date,
@@ -145,9 +173,12 @@ cat <<EOF > "$INFO_PATH"
   "softbanned": $_softbanned,
   "expired": $_expired,
   "expires_at": "$_expires_at",
+  "online_checked": $_online_checked,
+  "revocation_checked": $_rev_checked,
+  "checked_at": "$_checked_at",
   "backend": "$KEYSTORE_NAME",
   "generated_at": "$_gen_ts"
 }
 EOF
 
-unset _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _device_id _jerry_marker _revoked_list _b64 _serial_hex _serial_clean _serial_dec _tmp_revoked _tmp_latest _pid_revoked _pid_latest _revoke_reason
+unset _hex _rev_checked _checked_at _online_checked _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _by_rkp _rkp_id _rkp_marker _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _device_id _jerry_marker _revoked_list _b64 _serial_hex _serial_clean _serial_dec _tmp_revoked _tmp_latest _pid_revoked _pid_latest _revoke_reason

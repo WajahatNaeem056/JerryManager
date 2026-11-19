@@ -161,7 +161,8 @@
 :root[data-ui-style][data-theme-resolved] .list-container > .ctrl-row:only-child { border-radius: 28px !important; }
 :root[data-ui-style][data-theme-resolved] .list-container > .list-item:active { background: var(--jm-seg-press) !important; }
 :root[data-ui-style][data-theme-resolved] .list-container > .list-item { padding: 14px 18px !important; min-height: 60px !important; }
-:root[data-ui-style][data-theme-resolved] .list-container > #pif-settings-btn { min-height: 78px !important; }
+:root[data-ui-style][data-theme-resolved] .list-container > #pif-settings-btn,
+:root[data-ui-style][data-theme-resolved] .list-container > #rkp-open-btn { min-height: 78px !important; }
 :root[data-ui-style][data-theme-resolved] .list-title {
   font-size: 1rem !important; font-weight: 700 !important; letter-spacing: .01em !important; text-transform: none !important;
   padding: 14px 16px 8px !important;

@@ -229,6 +229,20 @@
             </div>
           </div>
 
+          <div class="list-title" data-i18n="menu_rkp_keybox">RKP Keyboxes</div>
+          <div class="list-container">
+            <div class="list-item" id="rkp-open-btn" style="cursor:pointer" onclick="openRkpPanel()">
+              <md-icon>key</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="menu_rkp_catalog">RKP Keybox Catalog</div>
+                <span class="supporting-text" data-i18n="menu_rkp_catalog_desc">Available RKP keybox entries</span>
+              </div>
+              <div class="spacer"></div>
+              <md-icon class="icon-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
+          </div>
+
           <div class="list-title" data-i18n="menu_pif_configs">PIF Configs</div>
           <div class="list-container">
 
@@ -790,6 +804,42 @@
           <md-icon class="icon-sm">check</md-icon>
           <span class="ph-save-label">Apply &amp; Install</span>
         </button>
+      </div>
+    </div>
+
+    <div id="rkp-panel" class="at-panel pif-page">
+      <div class="at-header">
+        <button onclick="closeRkpPanel()" class="at-back-btn">
+          <md-icon>arrow_back</md-icon>
+        </button>
+        <span class="at-title" data-i18n="menu_rkp_keybox">RKP Keyboxes</span>
+      </div>
+      <div class="pif-scroll">
+        <div id="rkp-loading" class="list-container" style="display:none">
+          <div class="list-item">
+            <md-circular-progress indeterminate></md-circular-progress>
+            <div class="list-item-content">
+              <div class="toggle-text">Loading catalog</div>
+            </div>
+          </div>
+        </div>
+        <p id="rkp-empty" class="ph-intro" style="display:none">No RKP entries available.</p>
+        <div id="rkp-error" class="list-container" style="display:none">
+          <div class="list-item">
+            <md-icon>cancel</md-icon>
+            <div class="list-item-content">
+              <div class="toggle-text" id="rkp-error-text"></div>
+            </div>
+          </div>
+          <div class="list-item" id="rkp-retry" style="cursor:pointer">
+            <md-icon>refresh</md-icon>
+            <div class="list-item-content">
+              <div class="toggle-text">Retry</div>
+            </div>
+            <md-ripple></md-ripple>
+          </div>
+        </div>
+        <div id="rkp-list" class="list-container" style="display:none"></div>
       </div>
     </div>
 

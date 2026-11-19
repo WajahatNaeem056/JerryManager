@@ -18,5 +18,6 @@ import './app-targeting.js';
 import './pif-panel.js';
 import './patch-hash-panel.js';
 import './keybox-panel.js';
+import './rkp-panel.js';
 import './omk-panel.js';
 import './ui-style.js';

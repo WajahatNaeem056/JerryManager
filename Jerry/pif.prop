@@ -7,6 +7,6 @@ spoofBuild=true
 spoofProps=true
 spoofProvider=false
 spoofSignature=false
-spoofVendingBuild=true
+spoofVendingBuild=false
 spoofVendingSdk=false
 DEBUG=false

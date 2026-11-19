@@ -105,13 +105,6 @@ check_command() {
     return 0
 }
 
-check_prop() {
-    _cp_name=$1 _cp_expected=$2
-    _cp_value=$(resetprop "$_cp_name" 2>/dev/null || echo "")
-    [ -z "$_cp_value" ] || [ "$_cp_value" = "$_cp_expected" ] || resetprop -n "$_cp_name" "$_cp_expected" 2>/dev/null || true
-    unset _cp_name _cp_expected _cp_value
-}
-
 # ===== Prop helpers =====
 sp_try() {
     _st_name="$1"
@@ -133,6 +126,7 @@ sp_try() {
         return 1
     fi
     resetprop -n "$_st_name" "$_st_expected" 2>/dev/null || true
+    log "PROPS" "$_st_name: ${_st_current:-(unset)} -> $_st_expected"
     unset _st_name _st_expected _st_current _st_needle _st_value
     return 0
 }
@@ -142,7 +136,10 @@ sp_try() {
 sp_force() {
     _sf_name="$1" _sf_expected="$2"
     _sf_current=$(resetprop "$_sf_name" 2>/dev/null || echo "")
-    [ "$_sf_current" = "$_sf_expected" ] || resetprop -n "$_sf_name" "$_sf_expected" 2>/dev/null || true
+    if [ "$_sf_current" != "$_sf_expected" ]; then
+        resetprop -n "$_sf_name" "$_sf_expected" 2>/dev/null || true
+        log "PROPS" "$_sf_name: ${_sf_current:-(unset)} -> $_sf_expected"
+    fi
     unset _sf_name _sf_expected _sf_current
     return 0
 }
@@ -374,7 +371,7 @@ adb_hide_enabled() {
     [ "$(cfg_get toggle_adb_disabler 0)" != "0" ] && [ "$(cfg_get "$1" 1)" != "0" ]
 }
 
-apply_boot_props() {
+apply_boot_prop_list() {
     while IFS='|' read -r _abp_prop _abp_val; do
         [ -z "$_abp_prop" ] && continue
         case "$_abp_prop" in
@@ -401,6 +398,7 @@ MATCHES
     done << PROPS
 ro.boot.selinux|enforcing
 ro.build.selinux|1
+ro.build.selinux.enforce|1
 ro.secure|1
 ro.adb.secure|1
 ro.debuggable|0
@@ -435,7 +433,21 @@ partition.system_ext.verified|2
 partition.odm.verified|2
 PROPS
 
-    sp_force ro.boot.flash.locked 1
+    for _abp_f in \
+        ro.boot.flash.locked:1 ro.boot.verifiedbootstate:green ro.boot.vbmeta.device_state:locked \
+        vendor.boot.verifiedbootstate:green vendor.boot.vbmeta.device_state:locked \
+        ro.boot.veritymode:enforcing ro.boot.selinux:enforcing ro.secureboot.lockstate:locked \
+        ro.build.type:user ro.build.tags:release-keys ro.crypto.state:encrypted \
+        ro.secure:1 ro.debuggable:0 ro.force.debuggable:0 ro.adb.secure:1 ro.oem_unlock_supported:0 \
+        ro.boot.warranty_bit:0 ro.warranty_bit:0 ro.vendor.boot.warranty_bit:0 ro.vendor.warranty_bit:0; do
+        sp_force "${_abp_f%%:*}" "${_abp_f#*:}"
+    done
+    unset _abp_prop _abp_val _abp_match _abp_f
+}
+
+# Boot only: also changes USB/ADB state and bootmode (apply_boot_prop_list is safe to re-run).
+apply_boot_props() {
+    apply_boot_prop_list
 
     if adb_hide_enabled toggle_adb_disabler_usb_debug; then
         sp_try sys.usb.config mtp
@@ -544,6 +556,22 @@ apply_critical_hiding_props() {
     sp_try ro.vendor.boot.warranty_bit 0
 }
 
+apply_shared_boot_props() {
+    apply_critical_hiding_props
+    sp_try ro.is_ever_orange 0
+    sp_try ro.secureboot.lockstate locked
+    sp_try ro.boot.vbmeta.device_state locked
+    sp_try vendor.boot.vbmeta.device_state locked
+    sp_force ro.boot.flash.locked 1
+    sp_try ro.boot.veritymode enforcing
+    sp_try ro.boot.veritymode.managed yes
+    sp_try ro.boot.selinux enforcing
+    sp_try ro.build.selinux 1
+    sp_try ro.build.selinux.enforce 1
+    sp_try ro.secure 1
+    sp_try ro.hardware.virtual_device 0
+}
+
 # ===== Boot hardening =====
 apply_boot_hardening() {
     if adb_hide_enabled toggle_adb_disabler_dev_options; then
@@ -561,19 +589,7 @@ apply_boot_hardening() {
     if adb_hide_enabled toggle_adb_disabler_oem_unlock; then
         settings put global oem_unlock_allowed 0
     fi
-    apply_critical_hiding_props
-    sp_try ro.is_ever_orange 0
-    sp_try ro.secureboot.lockstate locked
-    sp_try ro.boot.vbmeta.device_state locked
-    sp_try vendor.boot.vbmeta.device_state locked
-    sp_force ro.boot.flash.locked 1
-    sp_try ro.boot.veritymode enforcing
-    sp_try ro.boot.veritymode.managed yes
-    sp_try ro.boot.selinux enforcing
-    sp_try ro.build.selinux 1
-    sp_try ro.build.selinux.enforce 1
-    sp_try ro.secure 1
-    sp_try ro.hardware.virtual_device 0
+    apply_shared_boot_props
     if [ "$(toybox cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then
         chmod 640 /sys/fs/selinux/enforce 2>/dev/null || true
         chmod 440 /sys/fs/selinux/policy 2>/dev/null || true
