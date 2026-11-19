@@ -63,6 +63,13 @@ case "$1" in
 
     _tmp=$(mktemp 2>/dev/null || echo "/data/local/tmp/.rkp_kb_$$")
     download "$_url" "$_tmp" >/dev/null 2>&1 || { rm -f "$_tmp"; echo "Keybox download failed" >&2; exit 21; }
+
+    tr -d ' \r\n\t' < "$_tmp" | base64 -d > "${_tmp}.dec" 2>/dev/null
+    if [ -s "${_tmp}.dec" ]; then
+      mv "${_tmp}.dec" "$_tmp"
+    else
+      rm -f "${_tmp}.dec" "$_tmp"; echo "Keybox is not valid Base64" >&2; exit 22
+    fi
     keystore_validate_keybox "$_tmp" >/dev/null 2>&1 || { rm -f "$_tmp"; echo "Keybox is invalid" >&2; exit 22; }
 
     # Tag the keybox with its catalog id (XML comment) so the home card shows "RKP <id>"; a failed tag only affects display
