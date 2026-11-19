@@ -5,6 +5,7 @@ MODDIR=${0%/*}
 . "$MODDIR/lib/config_env.sh"
 . "$MODDIR/lib/package_list.sh"
 . "$MODDIR/lib/toggle_seed.sh"
+. "$MODDIR/lib/root_detect.sh"
 
 log "SERVICE" "Resolving module conflicts..."
 resolve_conflicts
@@ -52,11 +53,8 @@ else
     sh "$MODDIR/features/multiroot_hide.sh" --restore 2>/dev/null || true
 fi
 
-if [ "$KSU" != "true" ]; then
-    log "SERVICE" "Magisk detected — polling sys.boot_completed"
-else
-    log "SERVICE" "KernelSU/APatch detected — polling sys.boot_completed"
-fi
+_ROOT_FAMILY=$(detect_root_family)
+log "SERVICE" "Root: ${_ROOT_FAMILY:-unknown} — polling sys.boot_completed"
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
     sleep 1
 done
@@ -86,11 +84,10 @@ fi
 if _feature_enabled toggle_rom_spoof && ! _feature_enabled toggle_rom_builtin_spoof; then
     log "SERVICE" "Blocking ROM spoof engines..."
     # Magisk: background; KSU/APatch: foreground
-    if [ "$KSU" != "true" ]; then
-        ( block_rom_spoof_engines ) &
-    else
-        block_rom_spoof_engines
-    fi
+    case "$_ROOT_FAMILY" in
+        kernelsu|apatch) block_rom_spoof_engines ;;
+        *)               ( block_rom_spoof_engines ) & ;;
+    esac
 fi
 
 if _feature_enabled toggle_bootloader_spoofer; then
