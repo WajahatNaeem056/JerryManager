@@ -291,7 +291,7 @@
     if (!plain) {
       var ic = document.createElement('md-icon');
       ic.className = 'pif-toast__icon';
-      ic.textContent = isError ? 'error' : 'check_circle';
+      ic.textContent = isError ? 'cancel' : 'check_circle';
       el.appendChild(ic);
     }
     el.appendChild(tx);
