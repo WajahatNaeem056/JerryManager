@@ -1,16 +1,24 @@
 /* RKP Keyboxes page (same full-page shell as Set Custom Keybox).
    Backend: features/rkp_catalog.sh list -> "id|name|expires_at" per eligible entry.
    Exit 0 = ok (zero or more entries); any other exit = error state.
-   Tap a row once to install its keybox: features/rkp_catalog.sh install <id>. */
+   Select a row (radio), then tap Install: features/rkp_catalog.sh install <id>. */
 (function () {
   'use strict';
 
   var token = 0;
   var busy = false;
+  var sel = null; // selected row
 
   function toast(m, err) { if (typeof window.jerryToast === 'function') window.jerryToast(m, err); }
 
   function $(id) { return document.getElementById(id); }
+
+  function mk(tag, cls, txt) {
+    var x = document.createElement(tag);
+    if (cls) x.className = cls;
+    if (txt != null) x.textContent = txt;
+    return x;
+  }
 
   async function run(cmd) {
     if (typeof window.jerryRun !== 'function') return { code: -1, stdout: '', stderr: 'no bridge' };
@@ -53,19 +61,76 @@
     return 'Install failed (exit ' + r.code + ')';
   }
 
-  async function install(e, hint) {
-    busy = true;
-    hint.textContent = 'Installing...';
-    toast('Installing...', false);
-    var r = await run("sh @ROOT@/features/rkp_catalog.sh install '" + e.id + "'");
-    busy = false;
-    hint.textContent = 'Tap to install';
-    toast(installText(r), r.code !== 0);
+  // "2026-11-29" -> "29 Nov 2026" in the device locale
+  function fmtDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+    if (!m) return s;
+    try {
+      return new Date(+m[1], +m[2] - 1, +m[3])
+        .toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return s; }
   }
 
-  function onRowTap(e, hint) {
-    if (busy) return;
-    install(e, hint);
+  // bottom Install button: idle | busy | ok | err
+  function setBtn(state) {
+    var b = $('rkp-install');
+    if (!b) return;
+    b.setAttribute('data-state', state);
+    b.setAttribute('aria-busy', state === 'busy' ? 'true' : 'false');
+    b.disabled = state === 'busy' || state === 'ok' || (state === 'idle' && !sel);
+    b.querySelector('.rkp-btn-label').textContent =
+      state === 'busy' ? 'Installing\u2026' : state === 'ok' ? 'Installed' : state === 'err' ? 'Try again' : 'Install';
+    b.querySelector('.rkp-btn-icon').textContent =
+      state === 'ok' ? 'check_circle' : state === 'err' ? 'refresh' : 'check';
+  }
+
+  // row subtitle: idle | busy | ok | err
+  function setRow(row, state, msg) {
+    var meta = row.querySelector('.rkp-meta');
+    row.setAttribute('data-state', state);
+    meta.textContent = '';
+    if (state === 'idle') {
+      meta.appendChild(document.createTextNode('Valid until '));
+      meta.appendChild(mk('span', 'rkp-date', fmtDate(row._rkp.until)));
+    } else {
+      meta.textContent = state === 'busy' ? 'Installing\u2026' : state === 'ok' ? 'Installed' : msg;
+    }
+  }
+
+  function pick(row) {
+    if (busy || sel === row) return;
+    if (sel) {
+      clearTimeout(sel._rkpT);
+      setRow(sel, 'idle');
+      sel.setAttribute('aria-checked', 'false');
+    }
+    sel = row;
+    row.setAttribute('aria-checked', 'true');
+    setRow(row, 'idle');
+    setBtn('idle');
+  }
+
+  async function install(entry, row) {
+    var list = $('rkp-list');
+    busy = true;
+    if (list) list.classList.add('is-busy');
+    clearTimeout(row._rkpT);
+    setRow(row, 'busy');
+    setBtn('busy');
+    var r = await run("sh @ROOT@/features/rkp_catalog.sh install '" + entry.id + "'");
+    busy = false;
+    if (list) list.classList.remove('is-busy');
+    var ok = r.code === 0;
+    var msg = installText(r);
+    setRow(row, ok ? 'ok' : 'err', msg);
+    setBtn(ok ? 'ok' : 'err');
+    toast(msg, !ok);
+    // fall back to the idle look after a moment
+    row._rkpT = setTimeout(function () {
+      if (busy) return;
+      setRow(row, 'idle');
+      if (sel === row) setBtn('idle');
+    }, ok ? 3000 : 6000);
   }
 
   function setState(state, message) {
@@ -73,38 +138,45 @@
       var el = $('rkp-' + s);
       if (el) el.style.display = s === state ? '' : 'none';
     });
+    var sub = $('rkp-sub');
+    if (sub) sub.style.display = state === 'list' ? '' : 'none';
+    var bar = $('rkp-bar');
+    if (bar) bar.style.display = state === 'list' ? '' : 'none';
     if (state === 'error') $('rkp-error-text').textContent = message || '';
   }
 
   function renderList(entries) {
     var box = $('rkp-list');
     box.textContent = '';
+    box.classList.remove('is-busy');
+    sel = null;
     entries.forEach(function (e) {
-      var row = document.createElement('div');
-      row.className = 'list-item';
-      var icon = document.createElement('md-icon');
-      icon.textContent = 'key';
-      var content = document.createElement('div');
-      content.className = 'list-item-content';
-      var title = document.createElement('div');
-      title.className = 'toggle-text';
-      title.textContent = e.name || ('RKP Keybox ' + e.id.slice(0, 8));
-      var sub = document.createElement('span');
-      sub.className = 'supporting-text';
-      sub.textContent = 'Valid until ' + e.until;
-      var hint = document.createElement('span');
-      hint.className = 'rkp-hint supporting-text';
-      hint.style.display = 'block';
-      hint.textContent = 'Tap to install';
-      content.appendChild(title);
-      content.appendChild(sub);
-      content.appendChild(hint);
-      row.style.cursor = 'pointer';
-      row.addEventListener('click', function () { onRowTap(e, hint); });
-      row.appendChild(icon);
+      var name = e.name || ('RKP Keybox ' + e.id.slice(0, 8));
+      var row = mk('div', 'list-item rkp-item');
+      row._rkp = e;
+      row.setAttribute('role', 'radio');
+      row.setAttribute('aria-checked', 'false');
+      row.setAttribute('aria-label', name);
+      row.tabIndex = 0;
+      var content = mk('div', 'list-item-content');
+      var meta = mk('span', 'supporting-text rkp-meta');
+      var radio = mk('span', 'rkp-radio');
+      meta.setAttribute('aria-live', 'polite');
+      radio.setAttribute('aria-hidden', 'true');
+      content.appendChild(mk('div', 'toggle-text', name));
+      content.appendChild(meta);
+      row.appendChild(mk('md-icon', null, 'key'));
       row.appendChild(content);
+      row.appendChild(radio);
+      row.appendChild(document.createElement('md-ripple'));
+      row.addEventListener('click', function () { pick(row); });
+      row.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(row); }
+      });
       box.appendChild(row);
+      setRow(row, 'idle');
     });
+    setBtn('idle');
   }
 
   async function load() {
@@ -141,7 +213,14 @@
   window.__rkpPanel = { parse: parse, load: load, errorText: errorText };
 
   document.addEventListener('DOMContentLoaded', function () {
+    var btn = $('rkp-install');
+    if (btn) btn.addEventListener('click', function () { if (sel && !busy) install(sel._rkp, sel); });
     var retry = $('rkp-retry');
-    if (retry) retry.addEventListener('click', load);
+    if (retry) {
+      retry.addEventListener('click', load);
+      retry.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); load(); }
+      });
+    }
   });
 })();

@@ -4,6 +4,7 @@ import './pif-panel.css';
 import './omk-panel.css';
 import './theme-accent.css';
 import './icons.css';
+import './rkp-panel.css';
 
 import './icon-check.js';
 import './network-status.js';
