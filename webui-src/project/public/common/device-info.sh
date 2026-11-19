@@ -15,7 +15,7 @@ _android_ver=$(_escape_json "$(getprop ro.build.version.release)")
 _version=$(_escape_json "$(grep '^version=' "$MODDIR/module.prop" | cut -d'=' -f2)")
 
 # ROM and root are detected live once per boot: service.sh clears the cache at boot, the first WebUI open
-# detects and saves them, and every later refresh in that boot only reads the cache (no ksud/pm).
+# detects and saves them, and every later refresh in that boot only reads the cache (no ksud/pm). A root answer without live evidence is not cached.
 _rom_status=$(cfg_get "cached_rom_status" "")
 if [ -z "$_rom_status" ]; then
     . "$MODDIR/lib/rom_detect.sh"
@@ -27,8 +27,9 @@ _rom_status=$(_escape_json "$_rom_status")
 _root_type=$(cfg_get "cached_root_type" "")
 if [ -z "$_root_type" ]; then
     . "$MODDIR/lib/root_detect.sh"
-    _root_type="$(detect_root)"
-    [ -n "$_root_type" ] && [ "$_root_type" != "Unknown" ] && cfg_set "cached_root_type" "$_root_type"
+    if _root_type="$(detect_root)"; then
+        cfg_set "cached_root_type" "$_root_type"
+    fi
 fi
 
 cat <<EOF > "$INFO_PATH"
