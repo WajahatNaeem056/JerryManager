@@ -20,7 +20,7 @@ if [ "$_force_stop" != "0" ]; then
   # Two separate pgrep calls instead of one '\|' alternation pattern —
   # toybox pgrep's basic-regex support for '\|' is inconsistent across
   # builds, so a single alternation pattern can silently match nothing.
-  for _pid in $(pgrep -f 'droidguard' 2>/dev/null) $(pgrep -f 'com\.google\.android\.gms\b' 2>/dev/null); do
+  for _pid in $(pgrep -f 'droidguard' 2>/dev/null) $(pgrep -f 'com\.google\.android\.gms\.unstable' 2>/dev/null); do
     kill -9 "$_pid" 2>/dev/null || true
     _count=$((_count + 1))
   done
@@ -28,6 +28,8 @@ if [ "$_force_stop" != "0" ]; then
 
   for _pkg in $GMS_APPS; do
     echo "$_installed_pkgs" | grep -Fq "package:$_pkg" || continue
+    # Force-stopping GMS also kills the Magisk app (closes the manager mid-Action)
+    [ "$_pkg" = "com.google.android.gms" ] && continue
     am force-stop "$_pkg" >/dev/null 2>&1 || { log "GMS" "Warning: Failed to force-stop $_pkg"; continue; }
     log "GMS" "Force-stopped $_pkg"
     _count=$((_count + 1))
