@@ -21,7 +21,8 @@ done
 
 for pkg in $GMS_APPS; do
   echo "$_installed_pkgs" | grep -Fq "package:$pkg" || continue
-  am force-stop "$pkg" >/dev/null 2>&1 || log "KILL_ALL" "Warning: Failed to force-stop $pkg"
+  # Force-stopping GMS also kills the Magisk app (closes the manager mid-Action)
+  [ "$pkg" = "com.google.android.gms" ] || am force-stop "$pkg" >/dev/null 2>&1 || log "KILL_ALL" "Warning: Failed to force-stop $pkg"
   cmd package trim-caches 999999999 "$pkg" >/dev/null 2>&1 || true
   rm -rf "/data/data/$pkg/app_dg_cache"   2>/dev/null || true
   rm -rf "/data/data/$pkg/app_droidguard" 2>/dev/null || true
