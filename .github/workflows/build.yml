@@ -1,0 +1,87 @@
+name: Build JerryManager module
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # "npm run build" (package.json) runs: vite build -> tools/inline-font.mjs ->
+      # tools/check-webroot.mjs -> tools/package.sh. That produces dist/webroot/ and
+      # copies it into the module as webroot/ inside dist/JerryManager-<version>.zip.
+      - name: Build WebUI and package module
+        run: npm run build
+
+      - name: Locate module ZIP
+        id: zip
+        run: |
+          set -e
+          count=$(ls dist/JerryManager-*.zip | wc -l)
+          [ "$count" -eq 1 ] || { echo "Expected exactly one dist/JerryManager-*.zip, found $count" >&2; exit 1; }
+          f=$(ls dist/JerryManager-*.zip)
+          echo "path=$f" >> "$GITHUB_OUTPUT"
+          echo "Built $f"
+
+      - name: Verify ZIP structure
+        run: |
+          set -e
+          ZIP="${{ steps.zip.outputs.path }}"
+          unzip -tq "$ZIP"
+          unzip -Z1 "$ZIP" | grep -v '/$' | sort > /tmp/zip-files.txt
+
+          # Module files must sit at the ZIP root (no parent folder).
+          for f in module.prop customize.sh service.sh post-fs-data.sh uninstall.sh \
+                   META-INF/com/google/android/update-binary \
+                   META-INF/com/google/android/updater-script \
+                   webroot/index.html; do
+            grep -qx "$f" /tmp/zip-files.txt || { echo "Missing from ZIP root: $f" >&2; exit 1; }
+          done
+
+          # Every file shipped in Jerry/ must be in the ZIP at the same relative path.
+          (cd Jerry && find . -type f | sed 's|^\./||' | sort) > /tmp/jerry-files.txt
+          missing=$(comm -23 /tmp/jerry-files.txt /tmp/zip-files.txt)
+          [ -z "$missing" ] || { echo "Files missing from ZIP:" >&2; echo "$missing" >&2; exit 1; }
+
+          # Only webroot/ may be added on top of Jerry/.
+          extra=$(comm -13 /tmp/jerry-files.txt /tmp/zip-files.txt | grep -v '^webroot/' || true)
+          [ -z "$extra" ] || { echo "Unexpected files in ZIP:" >&2; echo "$extra" >&2; exit 1; }
+
+          # No nested archives or build junk.
+          if grep -Eiq '\.zip$|node_modules|^dist/|^Jerry/' /tmp/zip-files.txt; then
+            echo "ZIP contains nested archive, node_modules, dist/ or a Jerry/ parent folder" >&2
+            exit 1
+          fi
+
+          # WebUI build output present.
+          grep -Eq '^webroot/assets/index-.*\.js$'  /tmp/zip-files.txt
+          grep -Eq '^webroot/assets/index-.*\.css$' /tmp/zip-files.txt
+
+          echo "ZIP OK: $(wc -l < /tmp/zip-files.txt) files"
+          unzip -l "$ZIP" | head -40
+
+      # archive: false uploads the ZIP as-is (artifact name = file name), so the
+      # download is the flashable ZIP itself and not a ZIP wrapped in another ZIP.
+      - name: Upload flashable ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.zip.outputs.path }}
+          archive: false
+          if-no-files-found: error
