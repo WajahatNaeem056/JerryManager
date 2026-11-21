@@ -149,11 +149,11 @@ function renderKeyboxCard(info) {
         let num = info.by_jerry && info.version ? `/ v${info.version}` : info.by_rkp && info.rkp_id ? `/ ${info.rkp_id}` : `/ Generic`;
         let label, cls, ico;
         let expMs = Date.parse(info.expires_at || ``);
-        if (info.expired || (!isNaN(expMs) && expMs <= Date.now())) {
-            label = `Expired`, cls = `keybox-revoked`, ico = `event_busy`;
-        }
-        else if (info.revoked) {
+        if (info.revoked) {
             label = `Revoked`, cls = `keybox-revoked`, ico = `gpp_bad`;
+        }
+        else if (info.expired || (!isNaN(expMs) && expMs <= Date.now())) {
+            label = `Expired`, cls = `keybox-revoked`, ico = `event_busy`;
         }
         else if (info.softbanned) {
             label = `Softbanned`, cls = `keybox-outdated`, ico = `warning`;
