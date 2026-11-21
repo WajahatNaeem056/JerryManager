@@ -86,7 +86,7 @@ if [ "$_installed" = "true" ]; then
     rm -f "$_tmp_revoked" "$_tmp_latest" 2>/dev/null
 
     _revoke_reason=""
-    if [ -n "$_revoked_list" ] && [ "$_by_rkp" != "true" ]; then
+    if [ -n "$_revoked_list" ]; then
       _b64=$(sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' "$KEYBOX_FILE" | head -20 | grep -v 'CERTIFICATE' | tr -d '\n')
       if [ -n "$_b64" ]; then
         _hex=$(echo "$_b64" | base64 -d 2>/dev/null | od -v -tx1 | awk 'BEGIN{ORS=""} {for(i=2;i<=NF;i++) printf "%s", $i}')
