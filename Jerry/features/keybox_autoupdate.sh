@@ -22,9 +22,7 @@ while true; do
             if [ ! -f "$KEYSTORE_KEYBOX" ]; then
                 _ka_need="missing"
             else
-                _ka_serial=$(decode_keybox_serial "$KEYSTORE_KEYBOX" 2>/dev/null || echo "")
-                _ka_rev=1
-                [ -n "$_ka_serial" ] && { check_google_revocation "$_ka_serial"; _ka_rev=$?; }
+                keybox_revocation_check "$KEYSTORE_KEYBOX" >/dev/null 2>&1; _ka_rev=$?
                 if [ "$_ka_rev" = "0" ]; then
                     _ka_need="revoked"
                 elif keybox_is_expired "$KEYSTORE_KEYBOX"; then
@@ -45,9 +43,9 @@ while true; do
             else
                 log "KEYBOX_AUTO" "Keybox OK — nothing to do"
                 [ "$(cfg_get keybox_valid "")" = "Unknown" ] && ! keybox_is_expired "$KEYSTORE_KEYBOX" \
-                    && [ -n "$_ka_serial" ] && cfg_set keybox_valid "Yes"
+                    && [ "$_ka_rev" = "1" ] && cfg_set keybox_valid "Yes"
             fi
-            unset _ka_need _ka_serial _ka_rev
+            unset _ka_need _ka_rev
         fi
     fi
     sleep "$_ka_sleep"

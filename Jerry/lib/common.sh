@@ -232,22 +232,59 @@ _parse_serial() {
     unset _ps_file _ps_hex _ps_serial
 }
 
+# Serial number (lowercase hex, leading 00 stripped) of ONE base64 DER certificate passed as $1.
+# Walks the real X.509 structure (Certificate > TBSCertificate > [0] version > serial), so any serial
+# length works (e.g. 16 bytes + sign byte = 17 bytes, which the old pattern matching missed).
+_decode_cert_serial() {
+    _dcs_tmp=$(mktemp 2>/dev/null || echo "/data/local/tmp/.jerry_ser_$$")
+    printf '%s' "$1" | base64 -d > "$_dcs_tmp" 2>/dev/null
+    _dcs_out=$(od -v -An -tx1 "$_dcs_tmp" 2>/dev/null | tr -s '\n ' '  ' | awk '
+        function h(s) { return (index("0123456789abcdef", substr(s,1,1)) - 1) * 16 + index("0123456789abcdef", substr(s,2,1)) - 1 }
+        {
+            n = split($0, B, " "); p = 1
+            if (B[p] != "30") exit 1
+            p++; l = h(B[p]); p++; if (l >= 128) p += l - 128
+            if (B[p] != "30") exit 1
+            p++; l = h(B[p]); p++; if (l >= 128) p += l - 128
+            if (B[p] == "a0") { p++; l = h(B[p]); p += 1 + l }
+            if (B[p] != "02") exit 1
+            p++; l = h(B[p]); p++
+            if (l < 1 || l > 32 || p + l - 1 > n) exit 1
+            s = ""
+            for (i = 0; i < l; i++) s = s B[p + i]
+            sub(/^(00)+/, "", s)
+            printf "%s", s
+        }')
+    rm -f "$_dcs_tmp"
+    printf '%s' "$_dcs_out"
+    _dcs_rc=1; [ -n "$_dcs_out" ] && _dcs_rc=0
+    unset _dcs_tmp _dcs_out
+    return $_dcs_rc
+}
+
+# Serials of EVERY certificate in the first <CertificateChain> (leaf first), one per line.
+# Google can revoke the leaf OR an intermediate (e.g. "Droid CA3"); a keybox is dead if any of them is listed.
+decode_keybox_serials() {
+    _dkss_file="$1"
+    [ -f "$_dkss_file" ] || return 1
+    _dkss_certs=$(sed -n '/<CertificateChain>/,/<\/CertificateChain>/{p;/<\/CertificateChain>/q}' "$_dkss_file" 2>/dev/null | \
+        awk '/<Certificate format="pem">/{c=1; b=""; next} /<\/Certificate>/{if(c) print b; c=0; next} c && !/-----/{gsub(/[ \r\t]/,""); b=b $0}')
+    _dkss_n=0
+    for _dkss_b64 in $_dkss_certs; do
+        [ -n "$_dkss_b64" ] || continue
+        _dkss_one=$(_decode_cert_serial "$_dkss_b64") || continue
+        printf '%s\n' "$_dkss_one"
+        _dkss_n=$((_dkss_n + 1))
+    done
+    unset _dkss_file _dkss_certs _dkss_b64 _dkss_one
+    _dkss_rc=1; [ "$_dkss_n" -gt 0 ] && _dkss_rc=0
+    unset _dkss_n
+    return $_dkss_rc
+}
+
+# Leaf certificate serial (first in the chain)
 decode_keybox_serial() {
-    _dks_file="$1"
-    [ -f "$_dks_file" ] || return 1
-    _dks_b64=$(sed -n '/<Certificate format="pem">/,/<\/Certificate>/p' "$_dks_file" 2>/dev/null | \
-        grep -v 'Certificate' | \
-        grep -v -- '-----BEGIN' | \
-        grep -v -- '-----END' | \
-        tr -d '\n\r ')
-    [ -z "$_dks_b64" ] && return 1
-    _dks_tmp=$(mktemp 2>/dev/null || echo "/data/local/tmp/.jerry_cert_$$")
-    printf '%s' "$_dks_b64" | base64 -d > "$_dks_tmp" 2>/dev/null
-    [ -s "$_dks_tmp" ] || { rm -f "$_dks_tmp"; return 1; }
-    _dks_serial=$(_parse_serial "$_dks_tmp")
-    rm -f "$_dks_tmp"
-    printf '%s' "$_dks_serial"
-    unset _dks_file _dks_b64 _dks_tmp _dks_serial
+    decode_keybox_serials "$1" 2>/dev/null | head -n1 | tr -d '\n'
 }
 
 # notAfter (YYYYMMDDHHMMSS, UTC) of ONE base64 DER certificate passed as $1. Empty + return 1 when unreadable.
@@ -319,7 +356,7 @@ _google_revocation_file() {
         fi
     fi
     ensure_dir "$JERRYMANAGER_DIR/cache"
-    if download "$GOOGLE_REVOCATION_URL" "$_grf_tmp" >/dev/null 2>&1 \
+    if download "${GOOGLE_REVOCATION_URL}&nc=$(date +%s)" "$_grf_tmp" >/dev/null 2>&1 \
        && grep -q '"entries"' "$_grf_tmp" 2>/dev/null \
        && mv -f "$_grf_tmp" "$_grf_cache" 2>/dev/null; then
         echo "$_grf_cache"
@@ -331,6 +368,24 @@ _google_revocation_file() {
     return 1
 }
 
+# Arbitrary-length hex -> decimal string (serials are up to 160 bits, far beyond shell integers)
+_hex_to_dec() {
+    printf '%s' "$1" | tr 'A-F' 'a-f' | awk '{
+        n = 0; split("", D)
+        len = length($0)
+        if (len == 0) exit 1
+        for (i = 1; i <= len; i++) {
+            v = index("0123456789abcdef", substr($0, i, 1)) - 1
+            if (v < 0) exit 1
+            carry = v
+            for (j = 1; j <= n; j++) { t = D[j] * 16 + carry; D[j] = t % 10; carry = int(t / 10) }
+            while (carry > 0) { n++; D[n] = carry % 10; carry = int(carry / 10) }
+        }
+        if (n == 0) { printf "0"; exit }
+        for (j = n; j >= 1; j--) printf "%d", D[j]
+    }'
+}
+
 # $1 = certificate serial. Looks it up in Google's list (as given, without leading zeros, then as decimal).
 # Prints "STATUS|REASON" when listed. Return: 0 = listed (revoked), 1 = not listed, 2 = list unavailable.
 google_revocation_info() {
@@ -338,10 +393,8 @@ google_revocation_info() {
     _gri_file=$(_google_revocation_file) || { unset _gri_file; return 2; }
     _gri_clean="${1#"${1%%[!0]*}"}"
     [ -z "$_gri_clean" ] && _gri_clean=0
-    _gri_dec=""
-    if [ "${#1}" -le 16 ]; then
-        _gri_dec=$(printf '%d' "0x$_gri_clean" 2>/dev/null) || _gri_dec=""
-    fi
+    # List keys are hex (newer serials) or decimal (older 64-bit ones); decimal needs more than shell integers
+    _gri_dec=$(_hex_to_dec "$_gri_clean" 2>/dev/null) || _gri_dec=""
     for _gri_key in "$1" "$_gri_clean" "$_gri_dec"; do
         [ -n "$_gri_key" ] || continue
         if tr -d '\n\r' < "$_gri_file" 2>/dev/null | grep -qiE "\"$_gri_key\"[[:space:]]*:"; then
@@ -361,6 +414,23 @@ google_revocation_info() {
 # Same result codes as google_revocation_info: 0 = revoked, 1 = not revoked, 2 = unknown (list unavailable).
 check_google_revocation() {
     google_revocation_info "$1" >/dev/null
+}
+
+# Checks EVERY certificate of the keybox chain against Google's list.
+# Return: 0 = revoked (prints "SERIAL|STATUS|REASON" of the listed cert), 1 = none listed,
+#         2 = unknown (list unavailable, or no serial could be read: never reported as clean).
+keybox_revocation_check() {
+    _krc_serials=$(decode_keybox_serials "$1" 2>/dev/null)
+    [ -n "$_krc_serials" ] || { unset _krc_serials; return 2; }
+    for _krc_s in $_krc_serials; do
+        _krc_info=$(google_revocation_info "$_krc_s"); _krc_rc=$?
+        case "$_krc_rc" in
+            0) printf '%s|%s\n' "$_krc_s" "$_krc_info"; unset _krc_serials _krc_s _krc_info _krc_rc; return 0 ;;
+            2) unset _krc_serials _krc_s _krc_info _krc_rc; return 2 ;;
+        esac
+    done
+    unset _krc_serials _krc_s _krc_info _krc_rc
+    return 1
 }
 
 # ===== Boot props =====

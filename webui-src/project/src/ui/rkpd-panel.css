@@ -1,0 +1,20 @@
+/* Device RKP Issuer page. Shares header/row/bar styling with the RKP Keyboxes page (rkp-panel.css). */
+#rkpd-panel .pif-scroll{display:flex;flex-direction:column;gap:12px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+/* Flex children default to flex-shrink:1 and .list-container clips (overflow:hidden), so cards were squashed and their content cut off. */
+#rkpd-panel .pif-scroll>*{flex:0 0 auto;min-height:auto}
+#rkpd-panel .pif-scroll>.list-container{margin-bottom:0}
+#rkpd-panel .list-container>.list-item{height:auto;overflow:visible}
+#rkpd-panel .list-container>.list-item{min-height:64px!important}
+#rkpd-panel .list-container>.list-item.rkpd-summary-row{min-height:80px!important;padding-right:8px!important}
+#rkpd-panel .toggle-text{font-size:1rem!important;line-height:1.3}
+#rkpd-panel .supporting-text{font-size:.8125rem!important;line-height:1.4!important;overflow-wrap:anywhere}
+#rkpd-panel .list-title{margin:4px 0 -4px}
+#rkpd-panel #rkpd-summary[data-state=ready] #rkpd-icon,#rkpd-panel #rkpd-summary[data-state=ok] #rkpd-icon,#rkpd-panel #rkpd-summary[data-state=ok] #rkpd-status{color:var(--md-sys-color-primary)!important}
+#rkpd-panel #rkpd-summary[data-state=blocked] #rkpd-icon,#rkpd-panel #rkpd-summary[data-state=err] #rkpd-icon,#rkpd-panel #rkpd-summary[data-state=err] #rkpd-status{color:var(--icon-danger)!important}
+#rkpd-panel .rkpd-row .list-item-content{gap:2px}
+#rkpd-panel .rkpd-val{font-size:.9375rem;color:var(--md-sys-color-on-surface);overflow-wrap:anywhere}
+#rkpd-panel .rkpd-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8125rem}
+#rkpd-panel .rkpd-diag{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text;font:.75rem/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--md-sys-color-on-surface-variant)}
+#rkpd-panel #rkpd-methods>.rkp-item[aria-disabled=true]{opacity:.45;pointer-events:none}
+#rkpd-panel #rkpd-methods.is-busy>.rkp-item{opacity:.5;pointer-events:none}
+#rkpd-panel .rkp-item .rkp-meta{color:var(--at-text-secondary)}

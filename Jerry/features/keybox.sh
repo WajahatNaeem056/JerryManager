@@ -1,7 +1,7 @@
 #!/system/bin/sh
-# Install a keybox for the active backend (OhMyKeymint, TEESimulator or Tricky Store).
-# One flow for all three: custom keybox (file or URL) if one is set, otherwise the Jerry keybox.
-# Every install goes through keystore_install_keybox (validation, in-place copy, backend reload).
+# Install a keybox for the built-in Tricky Store OSS.
+# Custom keybox (file or URL) if one is set, otherwise the Jerry keybox.
+# Every install goes through keystore_install_keybox (validation, in-place copy).
 MODDIR=${0%/*}
 . "$MODDIR/../lib/common.sh"
 . "$MODDIR/../lib/paths.sh"
@@ -48,37 +48,59 @@ _fetch_keybox() {
   fi
 }
 
-# Check Google's revocation list for the installed keybox and record the result
+# Key algorithms in the keybox, e.g. "ECDSA + RSA"
+_key_types() {
+  grep -oi "algorithm=[\"'][a-z0-9_-]*[\"']" "$1" 2>/dev/null | tr -d "\"'" | cut -d= -f2 \
+    | tr a-z A-Z | awk '!s[$0]++ { printf "%s%s", (n++ ? " + " : ""), $0 }'
+}
+
+# Time left until $1 (YYYYMMDDHHMMSS, UTC): "8d left", "5h left" or "expired"
+_time_left() {
+  awk -v e="$1" -v n="$(date -u +%Y%m%d%H%M%S)" '
+    function dn(s,  y, m, d) { y = substr(s,1,4)+0; m = substr(s,5,2)+0; d = substr(s,7,2)+0; if (m < 3) { y--; m += 12 }
+      return 365*y + int(y/4) - int(y/100) + int(y/400) + int((153*(m-3)+2)/5) + d }
+    function sc(s) { return substr(s,9,2)*3600 + substr(s,11,2)*60 + substr(s,13,2) }
+    BEGIN { t = (dn(e) - dn(n)) * 86400 + sc(e) - sc(n)
+      if (t <= 0) printf "expired"; else if (t < 86400) printf "%dh left", int(t/3600); else printf "%dd left", int(t/86400) }'
+}
+
+_log_expiry() {
+  [ -n "$_rev_exp" ] || return 0
+  log "KEYBOX" "Keybox expires: $(printf '%s' "$_rev_exp" | sed 's/^\(....\)\(..\)\(..\).*/\1-\2-\3/') · $(_time_left "$_rev_exp")"
+}
+
+# Check Google's revocation list for every certificate of the installed keybox and record the result
 _check_revocation() {
-  _serial=$(decode_keybox_serial "$KEYSTORE_KEYBOX" 2>/dev/null || echo "")
-  if [ -n "$_serial" ]; then
-    log "KEYBOX" "Checking Google revocation for serial $_serial"
-    _rev_info=$(google_revocation_info "$_serial"); _rev_rc=$?
-    case "$_rev_rc" in
-      0)
-        _rev_reason="${_rev_info#*|}"
-        log "KEYBOX" "Warning: Keybox is revoked by Google${_rev_reason:+ ($_rev_reason)} (installed anyway — update soon)"
-        cfg_set keybox_valid "No"
-        ;;
-      1)
-        log "KEYBOX" "Keybox is not revoked — clean"
-        cfg_set keybox_valid "Yes"
-        ;;
-      *)
-        log "KEYBOX" "Warning: Google revocation list unavailable — keybox status unknown (checked again later)"
-        cfg_set keybox_valid "Unknown"
-        ;;
-    esac
-    if keybox_is_expired "$KEYSTORE_KEYBOX"; then
-      log "KEYBOX" "Warning: Keybox certificate has expired (installed anyway — update soon)"
-      [ "$(cfg_get keybox_valid "")" != "No" ] && cfg_set keybox_valid "Expired"
-    fi
-    unset _rev_info _rev_rc _rev_reason
-  else
-    log "KEYBOX" "Warning: Could not extract serial for revocation check"
-    cfg_set keybox_valid "Unknown"
+  _rev_leaf=$(decode_keybox_serial "$KEYSTORE_KEYBOX" 2>/dev/null)
+  log "KEYBOX" "Checking Google revocation for serial ${_rev_leaf:-unreadable}"
+  _rev_keys=$(_key_types "$KEYSTORE_KEYBOX")
+  [ -n "$_rev_keys" ] && log "KEYBOX" "Keybox keys: $_rev_keys"
+  _rev_exp=$(decode_keybox_expiry "$KEYSTORE_KEYBOX" 2>/dev/null)
+  _rev_info=$(keybox_revocation_check "$KEYSTORE_KEYBOX"); _rev_rc=$?
+  case "$_rev_rc" in
+    0)
+      _rev_rest="${_rev_info#*|}"; _rev_status="${_rev_rest%%|*}"; _rev_reason="${_rev_rest#*|}"
+      log "KEYBOX" "Keybox revoked: ${_rev_reason:-$_rev_status}"
+      log "KEYBOX" "Warning: Revoked keybox is installed — update soon"
+      cfg_set keybox_valid "No"
+      ;;
+    1)
+      log "KEYBOX" "Keybox is not revoked — clean"
+      cfg_set keybox_valid "Yes"
+      _log_expiry
+      ;;
+    *)
+      log "KEYBOX" "Keybox revocation unknown"
+      log "KEYBOX" "Warning: revocation status unknown (list unavailable or serial unreadable), checked again later"
+      cfg_set keybox_valid "Unknown"
+      _log_expiry
+      ;;
+  esac
+  if keybox_is_expired "$KEYSTORE_KEYBOX"; then
+    log "KEYBOX" "Warning: Keybox certificate has expired (installed anyway — update soon)"
+    [ "$(cfg_get keybox_valid "")" != "No" ] && cfg_set keybox_valid "Expired"
   fi
-  unset _serial
+  unset _rev_info _rev_rc _rev_status _rev_reason _rev_rest _rev_leaf _rev_keys _rev_exp
 }
 
 # Offline check for a custom keybox: never claims Valid/Revoked without asking Google

@@ -25,7 +25,7 @@ _reliable_patterns_for_tag() {
         TARGET) echo "OhMyKeymint active *|OhMyKeymint: processed * FIXED_TARGETS entries|TEESimulator — generating *|Merge pass: added *" ;;
         SECURITY_PATCH) echo "Writing * via *" ;;
         BOOT_HASH) echo "Stored Jerry boot hash (source: *)" ;;
-        KEYBOX) echo "OhMyKeymint active *|Custom keybox installed from *|Checking Google revocation for serial *|Keybox is not revoked — clean|locked.xml written to *|Placeholder locked.xml written|Keybox installed successfully" ;;
+        KEYBOX) echo "OhMyKeymint active *|Custom keybox installed from *|Checking Google revocation for serial *|Keybox is not revoked — clean|Keybox keys: *|Keybox expires: *|Keybox revoked: *|Keybox revocation unknown|locked.xml written to *|Placeholder locked.xml written|Keybox installed successfully" ;;
         PIF) echo "Start|Detected * variant|Selected device: *|Finish" ;;
         CLEANUP) echo "Finish" ;;
         *) echo "" ;;

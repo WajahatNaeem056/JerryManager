@@ -70,54 +70,28 @@ fi
 if [ "$_installed" = "true" ]; then
   if check_network; then
     _online_checked=true
-    _tmp_revoked="$(mktemp 2>/dev/null || echo /data/local/tmp/.jerry_revoked_$$)"
     _tmp_latest="$(mktemp 2>/dev/null || echo /data/local/tmp/.jerry_latest_$$)"
 
-    ( _quick_fetch "$GOOGLE_REVOCATION_URL" > "$_tmp_revoked" 2>/dev/null ) &
-    _pid_revoked=$!
     ( _quick_fetch "$LATEST_KEYBOX_URL" > "$_tmp_latest" 2>/dev/null ) &
     _pid_latest=$!
 
-    wait "$_pid_revoked" 2>/dev/null
     wait "$_pid_latest" 2>/dev/null
 
-    _revoked_list=$(cat "$_tmp_revoked" 2>/dev/null)
     _latest_version=$(cat "$_tmp_latest" 2>/dev/null | tr -d '[:space:]')
-    rm -f "$_tmp_revoked" "$_tmp_latest" 2>/dev/null
+    rm -f "$_tmp_latest" 2>/dev/null
 
+    # Every certificate in the chain (leaf + intermediates) is checked, not just the leaf
     _revoke_reason=""
-    if [ -n "$_revoked_list" ]; then
-      _b64=$(sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' "$KEYBOX_FILE" | head -20 | grep -v 'CERTIFICATE' | tr -d '\n')
-      if [ -n "$_b64" ]; then
-        _hex=$(echo "$_b64" | base64 -d 2>/dev/null | od -v -tx1 | awk 'BEGIN{ORS=""} {for(i=2;i<=NF;i++) printf "%s", $i}')
-        _serial_hex=$(echo "$_hex" | grep -o "020a[0-9a-f]\{20\}" | head -1 | sed 's/^020a//')
-        if [ -z "$_serial_hex" ]; then
-          _sr=$(echo "$_hex" | sed -n 's/.*a00302010202\([0-9a-f][0-9a-f]\)\([0-9a-f]*\)$/\1 \2/p' | head -1)
-          _sl=${_sr%% *}; _sb=${_sr#* }
-          if [ -n "$_sl" ] && [ "$_sl" != "$_sr" ]; then
-            _sn=$((16#$_sl * 2))
-            [ "$_sn" -gt 0 ] && [ "$_sn" -le 40 ] && _serial_hex=$(echo "$_sb" | cut -c1-$_sn)
-          fi
-          unset _sr _sl _sb _sn
-        fi
-        if [ -n "$_serial_hex" ]; then
-          _rev_checked=true
-          if echo "$_revoked_list" | grep -qi "$_serial_hex"; then
-            _revoked=true; _revoke_reason="hex"
-          fi
-          _serial_clean="${_serial_hex#"${_serial_hex%%[!0]*}"}"; [ -z "$_serial_clean" ] && _serial_clean=0
-          if echo "$_revoked_list" | grep -qi "$_serial_clean"; then
-            _revoked=true; _revoke_reason="clean hex"
-          fi
-          if ! $_revoked && [ ${#_serial_hex} -le 16 ]; then
-            _serial_dec=$((16#$_serial_clean))
-            if echo "$_revoked_list" | grep -q "$_serial_dec"; then
-              _revoked=true; _revoke_reason="decimal"
-            fi
-          fi
-        fi
-      fi
-    fi
+    _serial_hex=$(decode_keybox_serial "$KEYBOX_FILE" 2>/dev/null)
+    _kri=$(keybox_revocation_check "$KEYBOX_FILE" 2>/dev/null); _kri_rc=$?
+    case "$_kri_rc" in
+      0)
+        _rev_checked=true; _revoked=true
+        _serial_hex="${_kri%%|*}"; _revoke_reason="chain cert"
+        ;;
+      1) _rev_checked=true ;;
+    esac
+    unset _kri _kri_rc
 
     # Catalog (if reachable) overrides the single latest_keybox number and adds softban status
     _cat_pick=$(keybox_pick_entry 2>/dev/null) || _cat_pick=""
@@ -181,4 +155,4 @@ cat <<EOF > "$INFO_PATH"
 }
 EOF
 
-unset _hex _rev_checked _checked_at _online_checked _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _by_rkp _rkp_id _rkp_marker _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _device_id _jerry_marker _revoked_list _b64 _serial_hex _serial_clean _serial_dec _tmp_revoked _tmp_latest _pid_revoked _pid_latest _revoke_reason
+unset _hex _rev_checked _checked_at _online_checked _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _by_rkp _rkp_id _rkp_marker _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _device_id _jerry_marker _serial_hex _tmp_latest _pid_latest _revoke_reason

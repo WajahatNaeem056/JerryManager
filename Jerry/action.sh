@@ -107,6 +107,18 @@ _format_fact() {
         "Keybox is not revoked — clean")
             echo "Revocation: clean"
             ;;
+        "Keybox keys: "*)
+            echo "Keys: ${_ff_line#Keybox keys: }"
+            ;;
+        "Keybox expires: "*)
+            echo "Expires: ${_ff_line#Keybox expires: }"
+            ;;
+        "Keybox revoked: "*)
+            echo "Revocation: REVOKED · ${_ff_line#Keybox revoked: }"
+            ;;
+        "Keybox revocation unknown")
+            echo "Revocation: unknown"
+            ;;
         "locked.xml written to "*)
             echo "Mode: TEESimulator"
             echo "Installed successfully"

@@ -298,7 +298,7 @@ keystore_validate_keybox() {
     for _kvk_alg in ecdsa rsa; do
         if grep -qi "algorithm=[\"']$_kvk_alg[\"']" "$_kvk_f" 2>/dev/null; then
             _kvk_n=$((_kvk_n + 1))
-        else
+        elif [ "$_kvk_alg" != "rsa" ] || [ "$_kvk_n" -eq 0 ]; then
             log "KEYBOX" "Warning: keybox has no $_kvk_alg key"
         fi
     done
