@@ -57,11 +57,11 @@ _format_fact() {
         "Force-stopped "*)
             echo "$_ff_line"
             ;;
-        "OhMyKeymint active"*)
-            echo "Backend: OhMyKeymint"
+        *" active — merging FIXED_TARGETS into "*)
+            echo "Backend: ${_ff_line%% active — merging*}"
             ;;
-        "OhMyKeymint: processed "*)
-            _ff_n=$(echo "$_ff_line" | sed -n 's/^OhMyKeymint: processed \([0-9]*\) .*/\1/p')
+        *": processed "*" FIXED_TARGETS entries")
+            _ff_n=$(echo "$_ff_line" | sed -n 's/^.*: processed \([0-9]*\) FIXED_TARGETS entries$/\1/p')
             echo "Mode: merge"
             [ -n "$_ff_n" ] && echo "Added: $_ff_n entries"
             unset _ff_n
@@ -126,8 +126,11 @@ _format_fact() {
         "Placeholder locked.xml written")
             echo "Mode: TEESimulator (placeholder — no ECDSA key found)"
             ;;
-        "Keybox installed successfully")
+        "Keybox installed successfully"*)
             echo "Installed successfully"
+            _ff_bk=$(printf '%s' "$_ff_line" | sed -n 's/^Keybox installed successfully (\(.*\))$/\1/p')
+            [ -n "$_ff_bk" ] && echo "Backend: $_ff_bk"
+            unset _ff_bk
             ;;
         "Detected "*" variant")
             _ff_variant=$(printf '%s' "$_ff_line" | sed -n 's/^Detected \(.*\) variant$/\1/p')

@@ -346,15 +346,6 @@ keystore_install_keybox() {
     return "$_kik_status"
 }
 
-# --- Read back which keybox file is actually active, for status/UI display ---
-keystore_keybox_status() {
-    if [ -n "$KEYSTORE_KEYBOX" ] && [ -f "$KEYSTORE_KEYBOX" ]; then
-        echo "present"
-    else
-        echo "missing"
-    fi
-}
-
 # Per-app patch overrides (Tricky Store only — OMK has no per-package field)
 keystore_per_app_patch_supported() {
     [ "$KEYSTORE_BACKEND" = "trickystore" ] && [ "$KEYSTORE_FORMAT" = "flat" ]
@@ -431,84 +422,6 @@ keystore_remove_per_app_patch() {
 
     unset _krap_pkg _krap_tmp
     return "$_krap_status"
-}
-
-# --- OMK trust fields ([trust] in config.toml): os_version, security_patch, vb_key, vb_hash ---
-# Only the toml (OhMyKeymint) backend has these; other backends return 1.
-keystore_get_trust_field() {
-    _kgt_key="$1"
-    if [ "$KEYSTORE_FORMAT" != "toml" ] || [ ! -f "$KEYSTORE_SECURITY" ]; then
-        unset _kgt_key
-        return 1
-    fi
-    awk -v key="$_kgt_key" '
-    { t = $0; gsub(/^[ \t]+|[ \t\r]+$/, "", t) }
-    t ~ /^\[.*\]$/ { insec = (t == "[trust]"); next }
-    insec && t ~ ("^" key "[ \t]*=") { sub(/^[^=]*=[ \t]*/, "", t); gsub(/^"|"$/, "", t); print t; exit }
-    ' "$KEYSTORE_SECURITY"
-    unset _kgt_key
-    return 0
-}
-
-# keystore_set_trust_field KEY VALUE — values are validated so nothing can break the TOML
-# Accepted forms follow OMK's own config page: os_version auto|0-99, security_patch auto|latest|date,
-# vb_key / vb_hash auto|random|64 hex (from OMK docs/CONFIGURATION.md).
-keystore_set_trust_field() {
-    _kst_key="$1" _kst_val="$2"
-    [ "$KEYSTORE_FORMAT" = "toml" ] || { unset _kst_key _kst_val; return 1; }
-
-    case "$_kst_key" in
-        os_version)
-            case "$_kst_val" in
-                auto) _kst_out='"auto"' ;;
-                ''|*[!0-9]*) unset _kst_key _kst_val; return 1 ;;
-                *)
-                    [ "${#_kst_val}" -le 2 ] || { unset _kst_key _kst_val; return 1; }
-                    _kst_out="$_kst_val"
-                    ;;
-            esac
-            ;;
-        security_patch)
-            case "$_kst_val" in
-                auto|latest) ;;
-                [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;;
-                *) unset _kst_key _kst_val; return 1 ;;
-            esac
-            _kst_out="\"$_kst_val\""
-            ;;
-        vb_key|vb_hash)
-            case "$_kst_val" in
-                auto|random) ;;
-                *)
-                    [ "${#_kst_val}" -eq 64 ] || { unset _kst_key _kst_val; return 1; }
-                    case "$_kst_val" in *[!0-9a-fA-F]*) unset _kst_key _kst_val; return 1 ;; esac
-                    ;;
-            esac
-            _kst_out="\"$_kst_val\""
-            ;;
-        *)
-            unset _kst_key _kst_val
-            return 1
-            ;;
-    esac
-
-    # OMK creates config.toml on its first start; wait briefly for it
-    _kst_i=0
-    while [ ! -f "$KEYSTORE_SECURITY" ] && [ "$_kst_i" -lt 10 ]; do
-        sleep 1
-        _kst_i=$((_kst_i + 1))
-    done
-    if [ ! -f "$KEYSTORE_SECURITY" ]; then
-        log "KEYSTORE" "OMK config.toml not available yet, skipping trust field $_kst_key"
-        unset _kst_key _kst_val _kst_out _kst_i
-        return 1
-    fi
-
-    omk_toml_set "$KEYSTORE_SECURITY" trust "$_kst_key" "$_kst_out"
-    _kst_rc=$?
-    [ "$_kst_rc" -eq 0 ] && keystore_reload_keymint
-    unset _kst_key _kst_val _kst_out _kst_i
-    return "$_kst_rc"
 }
 
 # --- Locking: one writer at a time for target / patch files (mkdir is atomic) ---
@@ -668,6 +581,8 @@ _keystore_set_targets_nolock() {
                 while IFS= read -r _kst_p; do
                     [ -z "$_kst_p" ] && continue
                     grep -Fxq "$_kst_p" "$_kst_want" 2>/dev/null && continue
+                    # package@user and uid:N entries are managed in OMK itself, never drop them here
+                    printf '%s\n' "$_kst_p" | grep -Eq '^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)*$' || continue
                     omk_scoop_remove "$KEYSTORE_TARGETS" "$_kst_p" && _kst_changed=1 || _kst_rc=1
                 done < "$_kst_cur"
                 while IFS= read -r _kst_p; do

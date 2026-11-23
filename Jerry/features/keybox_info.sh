@@ -39,8 +39,6 @@ _checked_at=""
 if [ -f "$KEYBOX_FILE" ]; then
   _installed=true
 
-  _device_id=$(grep -o 'DeviceID="[^"]*"' "$KEYBOX_FILE" | head -1 | sed 's/DeviceID="//;s/"//')
-
   # Certificate expiry is read from the file itself, so it works offline
   _exp_raw=$(decode_keybox_expiry "$KEYBOX_FILE" 2>/dev/null || true)
   if [ -n "$_exp_raw" ]; then
@@ -155,4 +153,4 @@ cat <<EOF > "$INFO_PATH"
 }
 EOF
 
-unset _hex _rev_checked _checked_at _online_checked _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _by_rkp _rkp_id _rkp_marker _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _device_id _jerry_marker _serial_hex _tmp_latest _pid_latest _revoke_reason
+unset _hex _rev_checked _checked_at _online_checked _cat_pick _cat_ver _softbanned _gen_ts _installed _by_jerry _by_rkp _rkp_id _rkp_marker _version _latest_version _up_to_date _revoked _expired _expires_at _exp_raw _jerry_marker _serial_hex _tmp_latest _pid_latest _revoke_reason

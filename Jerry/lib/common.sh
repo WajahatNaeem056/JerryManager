@@ -86,25 +86,6 @@ check_network() {
     return 1
 }
 
-# ===== Checks =====
-check_module() {
-    _cm_name="$1"
-    if [ ! -d "/data/adb/modules/$_cm_name" ] && [ ! -d "/data/adb/modules_update/$_cm_name" ]; then
-        log "ERROR" "Required module '$1' is not installed"
-        return 1
-    fi
-    return 0
-}
-
-check_command() {
-    _cc_name="$1"
-    if ! command -v "$_cc_name" >/dev/null 2>&1; then
-        log "ERROR" "Required command '$1' not found on this device"
-        return 1
-    fi
-    return 0
-}
-
 # ===== Prop helpers =====
 sp_try() {
     _st_name="$1"
@@ -209,27 +190,6 @@ version_ge() {
         }
         exit 0
     }'
-}
-
-# ===== Keybox decode =====
-decode_keybox_blob() {
-    _dkb_in="$1" _dkb_out="$2"
-    base64 -d "$_dkb_in" > "$_dkb_out" 2>/dev/null
-    _dkb_rc=$?
-    unset _dkb_in _dkb_out
-    return $_dkb_rc
-}
-
-_parse_serial() {
-    _ps_file="$1"
-    _ps_hex=$(od -v -tx1 "$_ps_file" 2>/dev/null | awk 'BEGIN{ORS=""} {for(i=2;i<=NF;i++) printf "%s",$i}')
-    _ps_serial=$(echo "$_ps_hex" | grep -o "020a[0-9a-f]\{20\}" | head -1 | sed 's/^020a//')
-    [ -z "$_ps_serial" ] && _ps_serial=$(echo "$_ps_hex" | grep -o "0210[0-9a-f]\{32\}" | head -1 | sed 's/^0210//')
-    [ -z "$_ps_serial" ] && _ps_serial=$(echo "$_ps_hex" | grep -o "0208[0-9a-f]\{16\}" | head -1 | sed 's/^0208//')
-    [ -z "$_ps_serial" ] && _ps_serial=$(echo "$_ps_hex" | grep -o "0214[0-9a-f]\{40\}" | head -1 | sed 's/^0214//')
-    [ -z "$_ps_serial" ] && _ps_serial=$(echo "$_ps_hex" | grep -o "0212[0-9a-f]\{36\}" | head -1 | sed 's/^0212//')
-    printf '%s' "$_ps_serial"
-    unset _ps_file _ps_hex _ps_serial
 }
 
 # Serial number (lowercase hex, leading 00 stripped) of ONE base64 DER certificate passed as $1.
@@ -409,11 +369,6 @@ google_revocation_info() {
     done
     unset _gri_file _gri_clean _gri_dec _gri_key
     return 1
-}
-
-# Same result codes as google_revocation_info: 0 = revoked, 1 = not revoked, 2 = unknown (list unavailable).
-check_google_revocation() {
-    google_revocation_info "$1" >/dev/null
 }
 
 # Checks EVERY certificate of the keybox chain against Google's list.
@@ -849,26 +804,6 @@ $(_conflict_registry)
 EOF
     unset _rc_id _rc_name _rc_scripts _rc_features _rc_type
     apply_conflict_toggles
-}
-
-conflict_status_json() {
-    _cs_first=1
-    printf '['
-    while IFS='|' read -r _cs_id _cs_name _cs_scripts _cs_features _cs_type; do
-        [ -z "$_cs_id" ] && continue
-        _conflict_detect "$_cs_id" || continue
-        _cs_choice="$(_conflict_choice "$_cs_id")"
-        _cs_priority=true
-        [ "$_cs_choice" = "priority_module" ] && _cs_priority=false
-        _cs_name_json="$(_escape_json "$_cs_name")"
-        if [ "$_cs_first" -eq 0 ]; then printf ','; else _cs_first=0; fi
-        printf '{"key":"%s","friendlyName":"%s","detected":true,"priorityJerry":%s,"type":"%s"}' \
-            "$_cs_id" "$_cs_name_json" "$_cs_priority" "$_cs_type"
-    done <<EOF
-$(_conflict_registry)
-EOF
-    printf ']'
-    unset _cs_first _cs_id _cs_name _cs_scripts _cs_features _cs_type _cs_choice _cs_priority _cs_name_json
 }
 
 # ===== Inotifyd =====
