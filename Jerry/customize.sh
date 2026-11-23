@@ -15,8 +15,6 @@ mkdir -p "$JERRYMANAGER_CONFIG_DIR" 2>/dev/null
 
 resolve_keystore_backend
 
-# Device RKP Issuer helper (Generate RKP Keybox) is an ELF run directly
-[ -f "$MODPATH/dex/duckd" ] && chmod 755 "$MODPATH/dex/duckd" 2>/dev/null
 ui_print "- Keystore backend: $KEYSTORE_NAME"
 
 # Ask whether to install the built-in PIF: Vol+ = yes, Vol- = no.

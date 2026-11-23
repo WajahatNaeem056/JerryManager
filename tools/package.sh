@@ -29,8 +29,6 @@ find "$STAGE" -type f -exec chmod 644 {} \;
 # Runtime shell scripts are executable. update-binary is kept executable for
 # legacy recovery compatibility; KernelSU does not need to invoke it.
 find "$STAGE" -type f -name '*.sh' -exec chmod 755 {} \;
-# duckd (Device RKP Issuer) is an ELF run directly, so it must stay executable.
-[ -f "$STAGE/dex/duckd" ] && chmod 755 "$STAGE/dex/duckd"
 if [ -f "$STAGE/META-INF/com/google/android/update-binary" ]; then
   chmod 755 "$STAGE/META-INF/com/google/android/update-binary"
 fi

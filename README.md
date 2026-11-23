@@ -18,7 +18,6 @@ JerryManager keeps root hidden and Play Integrity passing on Android. PIF and Tr
 - **Built-in PIF** — no standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
 - **Built-in Tricky Store OSS** — bundled keystore engine (works with Tricky Store only). Source: [Jerry TrickyStore-Oos](https://github.com/WajahatNaeem056/Jerry-Ts-Oos)
 - **Keybox Management** — own keybox, auto pull, offline import or RKP catalog
-- **RKP Keybox Generator** — generates a keybox from this device's own KeyMint via the built-in `duckd` binary (RKP Device / RKP Extractor by [Eltavine](https://github.com/eltavine), used with permission). Source: [Jerry-ToolBox](https://github.com/WajahatNaeem056/Jerry-ToolBox)
 - **Widevine L1** — attestation keys via KmInstallKeybox
 
 **Hiding**
@@ -44,7 +43,6 @@ JerryManager keeps root hidden and Play Integrity passing on Android. PIF and Tr
 
 - `Jerry/`: module (features, lib, pipelines); `dex/classes.dex` and `zygisk/*.so` are the built-in PIF binaries, built from [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
 - `Jerry/ts/`, `Jerry/sepolicy.rule`: built-in Tricky Store OSS binaries, built from [Jerry TrickyStore-Oos](https://github.com/WajahatNaeem056/Jerry-Ts-Oos)
-- `Jerry/dex/duckd`: RKP Device binary, built from [Jerry-ToolBox](https://github.com/WajahatNaeem056/Jerry-ToolBox) (trimmed fork of [Duck-ToolBox](https://github.com/eltavine/Duck-ToolBox) by Eltavine, MIT)
 - `webui-src/project/`: WebUI source (Vite) and static webroot files (`public/`); `webroot/` in the zip is generated from it
 - `tools/`: icon-font inline, webroot check and zip packaging scripts
 - `licenses/duck-toolbox/`: original MIT `LICENSE` and `THIRD_PARTY_NOTICES.md` for the code above
