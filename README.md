@@ -14,7 +14,7 @@ JerryManager keeps root hidden and Play Integrity passing on Android. PIF and Tr
 
 ## Features
 
-**Integrity**
+**Integrity Related**
 - **Built-in PIF** — no standalone PIF module needed. Source: [Jerry-pif](https://github.com/WajahatNaeem056/Jerry-pif)
 - **Built-in Tricky Store OSS** — bundled keystore engine (works with Tricky Store only). Source: [Jerry TrickyStore-Oos](https://github.com/WajahatNaeem056/Jerry-Ts-Oos)
 - **Keybox Management** — own keybox, auto pull, offline import or RKP catalog
