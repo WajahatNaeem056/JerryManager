@@ -139,8 +139,19 @@ function renderKeyboxCard(info) {
         if (numEl)
             numEl.textContent = num !== undefined ? num : (info.version ? `/ v${info.version}` : ``);
     };
+    let setExpiry = (show, value) => {
+        let wrap = document.getElementById(`keybox-expiry`);
+        if (!wrap)
+            return;
+        wrap.style.display = show ? `` : `none`;
+        if (!show)
+            return;
+        document.getElementById(`keybox-expiry-label`).textContent = window.__jerryGetTranslation && window.__jerryGetTranslation(`home_keybox_expiry`) || `Expiry`;
+        document.getElementById(`keybox-expiry-value`).textContent = value;
+    };
     if (!(!card || !icon || !valueEl)) {
         if (card.className = `hero-card`, !info.installed) {
+            setExpiry(false);
             card.classList.add(`keybox-none`);
             icon.textContent = `vpn_key_off`;
             setLabel(`Not Installed`);
@@ -167,6 +178,7 @@ function renderKeyboxCard(info) {
         card.classList.add(cls);
         icon.textContent = ico;
         setLabel(label, num);
+        setExpiry(!isNaN(expMs) && (label === `Valid` || label === `Expired`), (info.expires_at || ``).slice(0, 10));
     }
 }
 function setTextById(id, text) {

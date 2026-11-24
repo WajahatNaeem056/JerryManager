@@ -1,13 +1,18 @@
 .keybox-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.keybox-text-right { align-items: flex-end; text-align: right; flex: 0 0 auto; max-width: 50%; }
+.keybox-text-right { align-items: flex-end; text-align: right; flex: 0 0 auto; margin-left: auto; }
+/* Expiry sits beside the status; if the status text is too long for one row (e.g. "Valid / RKP Device") it drops to its own row instead of cutting the status off */
+#keybox-card .keybox-inner { flex-wrap: wrap !important; row-gap: 6px !important; }
+#keybox-card .keybox-text:not(.keybox-text-right) { flex: 1 1 auto; }
+#keybox-card #keybox-expiry { align-self: stretch; justify-content: space-between; }
+#keybox-card #keybox-expiry-value { font-size: 1.5rem; font-weight: 700; letter-spacing: 0; }
 .keystore-value { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; }
 .keybox-label {
   margin: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 800;
   letter-spacing: 0.10em;
   text-transform: uppercase;
-  opacity: 0.75;
+  opacity: 1;
 }
 .keybox-value {
   margin: 0;
@@ -24,11 +29,11 @@
 /* Light theme: keybox loading-state text visibility */
 :root[data-theme-resolved=light] .keybox-label,
 :root[data-theme-resolved=light] .keybox-value { color: var(--color-black) !important; }
-:root[data-theme-resolved=light] .keybox-label { opacity: 0.6 !important; }
+:root[data-theme-resolved=light] .keybox-label { opacity: 1 !important; }
 /* Dark theme: keybox loading-state text visibility (!important to win) */
 :root[data-theme-resolved=dark] .keybox-label,
 :root[data-theme-resolved=dark] .keybox-value { color: var(--color-gray-96) !important; }
-:root[data-theme-resolved=dark] .keybox-label { opacity: 0.7 !important; }
+:root[data-theme-resolved=dark] .keybox-label { opacity: 1 !important; }
 /* Dynamic status colors disabled: all keybox states use default text */
 #keybox-card.keybox-ok .keybox-value,
 #keybox-card.keybox-ok .keybox-label,

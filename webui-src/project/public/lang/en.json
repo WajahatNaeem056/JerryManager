@@ -5,6 +5,7 @@
   "nav_advancemenu": "Advanced",
   "home_version": "Module Version",
   "home_keybox_status": "Keybox Status",
+  "home_keybox_expiry": "Expiry",
   "home_keystore_backend": "Keystore Backend",
   "home_android": "Android",
   "home_kernel": "Kernel",
