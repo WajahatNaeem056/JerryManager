@@ -75,7 +75,7 @@ Output: `dist/JerryManager-<version>.zip`
 
 - [beakthoven](https://github.com/beakthoven) for TrickyStore OSS, which is integrated into JerryManager.
 - [KOWX712](https://github.com/KOWX712) for PIF Inject, used for PIF injection.
-- [dpejoh](https://github.com/dpejoh) for the WebUI inspiration and helpful work.
+- [dpejoh](https://github.com/dpejoh) for the UI inspiration and helpful work.
 - [Eltavine](https://github.com/eltavine) for RKP Device / RKP Extractor, originally developed in Duck-ToolBox and used here with permission under the MIT license.
 
 ## Developer
