@@ -1,17 +1,21 @@
 #!/system/bin/sh
 # One-tap action: kill DroidGuard, force-stop the GMS family and clear Play Store data.
-# Only com.android.vending is cleared; GMS/GSF are force-stopped, never cleared (Google accounts live there).
-# Runs regardless of the boot-time toggles (those only control features/gms.sh).
-MODDIR=${0%/*}
-. "$MODDIR/../lib/common.sh"
-. "$MODDIR/../lib/package_list.sh"
+# Standalone: no lib/ or toggle dependency. Only com.android.vending is cleared;
+# GMS/GSF are force-stopped, never cleared (Google accounts live there).
+LOG_FILE="/data/adb/JerryManager/boot.log"
+log() {
+  _l="$(date '+%Y-%m-%d %H:%M:%S') [$1] $2"
+  echo "$_l"
+  mkdir -p "${LOG_FILE%/*}" 2>/dev/null
+  echo "$_l" >> "$LOG_FILE" 2>/dev/null
+}
+die() { log "ERROR" "$1"; exit 1; }
 
 log "GMS_CLEAR" "Start"
 
-# Without root (e.g. WebUI opened in a file manager) nothing below can work: report it instead of "Done"
 [ "$(id -u 2>/dev/null)" = "0" ] || die "Root access required, open Jerry from your root manager (KernelSU / Magisk / APatch)"
 
-EXTRA_PKGS="com.google.android.gms.persistent com.google.android.gms.unstable com.google.android.rkpdapp com.android.chrome com.google.android.googlequicksearchbox"
+GMS_PKGS="com.android.vending com.google.android.gsf com.google.android.gms com.google.android.contactkeys com.google.android.ims com.google.android.safetycore com.google.android.apps.walletnfcrel com.google.android.apps.nbu.paisa.user com.google.android.gms.persistent com.google.android.gms.unstable com.google.android.rkpdapp com.android.chrome com.google.android.googlequicksearchbox"
 
 _installed=$(pm list packages 2>/dev/null)
 [ -n "$_installed" ] || die "Cannot read installed packages (package manager not available)"
@@ -19,11 +23,12 @@ _killed=0
 _stopped=0
 _rc=0
 
-for _pid in $(pgrep -f 'droidguard' 2>/dev/null) $(pgrep -f 'com\.google\.android\.gms\b' 2>/dev/null); do
+# No \b: toybox pgrep regex does not support it (bad regex, silently matched nothing)
+for _pid in $(pgrep -f 'droidguard' 2>/dev/null) $(pgrep -f 'com\.google\.android\.gms' 2>/dev/null); do
   kill -9 "$_pid" 2>/dev/null && _killed=$((_killed + 1))
 done
 
-for _pkg in $GMS_APPS $EXTRA_PKGS; do
+for _pkg in $GMS_PKGS; do
   echo "$_installed" | grep -Fq "package:$_pkg" || continue
   if am force-stop "$_pkg" >/dev/null 2>&1; then
     _stopped=$((_stopped + 1))
