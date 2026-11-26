@@ -1,0 +1,114 @@
+/* Home page + bottom navbar.
+   Single owner of the home layout: keybox card, PIF/keystore tiles, info list and the floating navbar.
+   Every element ID/class is unchanged; all text values (version, keybox status, expiry, root...) are
+   filled at runtime by device-info.js, nothing here is hardcoded content.
+   Selectors start at #home-page / #keybox-card so they win over the generic md-filled-card rules. */
+
+/* ---- Tokens ---- */
+:root[data-theme-resolved=dark]  { --hm-card: var(--color-gray-12); --hm-chip: #2a2a2a; --hm-line: #2a2a2a; --hm-sub: #a0a0a0; --hm-text: #f2f2f2; --hm-icon: #e3e3e3; --hm-border: none; }
+:root[data-theme-resolved=light] { --hm-card: var(--color-white);   --hm-chip: #ececec; --hm-line: #e4e4e4; --hm-sub: #6b6b6b; --hm-text: #111;    --hm-icon: #3c4043; --hm-border: 1px solid rgba(0, 0, 0, .06); }
+
+/* ---- Top bar title ---- */
+header#top-bar .app-title { font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+
+/* ---- Page column ---- */
+:root[data-ui-style][data-theme-resolved] #pages > #home-page { padding-left: 7.6px !important; padding-right: 7.6px !important; }
+#home-page { display: flex; flex-direction: column; gap: 10px; }
+#home-page[hidden] { display: none; }
+#home-page > * { width: 100%; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
+
+/* ---- Cards share one look: keybox card, tiles, info list ---- */
+#home-page #keybox-card,
+#home-page .jm-tile,
+#home-page .jf-combined-card {
+  background: var(--hm-card);
+  border: var(--hm-border);
+  outline: none;
+  margin-top: 0;
+  margin-bottom: 0;
+  --md-filled-card-container-color: transparent;
+  /* generic md-filled-card rules in style.css / theme-accent.css are !important, so these three must be too */
+  border-radius: 22px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ---- Keybox card (status left, expiry right) ---- */
+#home-page .keybox-inner {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-end;
+  gap: 12px; padding: 14px 18px;
+}
+#home-page .keybox-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+#home-page .keybox-text-right { flex: 0 0 auto; margin-left: auto; align-items: flex-end; text-align: right; }
+#home-page #keybox-expiry { align-self: stretch; justify-content: space-between; }
+#home-page .keybox-label { margin: 0; font-size: 12px; font-weight: 400; letter-spacing: .03em; text-transform: none; color: var(--hm-sub); }
+#home-page .keybox-value {
+  margin: 0; max-width: 100%; font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: var(--hm-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#home-page #keybox-expiry .keybox-value { font-size: 15px; font-weight: 500; }
+
+/* ---- Tiles: PIF status + keystore backend ---- */
+#home-page .jm-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#home-page .jm-tile { padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+#home-page .jm-tile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#home-page .jm-tile .jf-row-lbl { font-size: 12px; font-weight: 400; color: var(--hm-sub); }
+#home-page .jm-tile .jf-row-val { font-size: 16px; font-weight: 500; text-align: left; max-width: 100%; color: var(--hm-text); }
+
+/* ---- Info list: module version, status, Android, root, ROM ---- */
+#home-page > .jf-combined-card { padding: 2px 16px; overflow: hidden; }
+#home-page .jf-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 0;
+  box-sizing: border-box; overflow: hidden; border-bottom: 1px solid var(--hm-line);
+}
+#home-page .jf-row:last-child { border-bottom: none; }
+#home-page .jf-row-icon {
+  position: relative; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; background: var(--hm-chip);
+}
+#home-page .jf-row-icon md-icon { --md-icon-size: calc(var(--icon-action) * .8); font-size: calc(var(--icon-action) * .8); color: var(--hm-icon); opacity: 1; }
+/* network-status.js writes an inline red/green colour on the status icon too; it stays neutral like the other icons */
+#home-page #status-icon { color: var(--hm-icon) !important; }
+#home-page .jf-row-lbl { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13.5px; }
+#home-page .jf-row-val {
+  max-width: 62%; min-width: 0; flex-shrink: 1; text-align: right; line-height: 1.25;
+  font-size: 14.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#home-page .jf-combined-card .jf-row-lbl { font-size: 15px; font-weight: 400; color: var(--hm-text); }
+/* network-status.js writes an inline red/green colour on #status-value; the list keeps one neutral colour */
+#home-page .jf-combined-card .jf-row-val { font-size: 14px; font-weight: 400; color: var(--hm-sub) !important; }
+/* tile text keeps its own size, not the list-row size */
+#home-page .jm-tile .jf-row-val { line-height: 20px; }
+@media (width <= 360px) {
+  #home-page .jf-combined-card .jf-row-lbl { font-size: 12.5px; }
+  #home-page .jf-combined-card .jf-row-val { font-size: 13.3px; }
+}
+
+/* ---- Bottom navbar ---- */
+.jerry-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center; background: transparent;
+  padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)); contain: layout style;
+}
+.jerry-nav-inner {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2px;
+  width: 100%; padding: 6px; overflow: hidden; border-radius: 26px; background: var(--hm-card);
+  border: var(--hm-nav-border); box-shadow: 0 6px 24px rgba(0, 0, 0, .25);
+  transition: background .3s ease, box-shadow .3s ease;
+}
+.jerry-nav-tab {
+  position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 6px 0; border: none; border-radius: 20px; background: none; cursor: pointer;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.jerry-nav-tab.active { background: var(--hm-chip); }
+.jerry-nav-pill { display: flex; align-items: center; justify-content: center; background: transparent; border: none; box-shadow: none; }
+.jerry-nav-icon { color: var(--hm-nav-off, var(--color-gray-64)); transition: color .2s ease, transform .2s ease; }
+.jerry-nav-label { font-size: 10.5px; font-weight: 500; letter-spacing: 0; color: var(--hm-nav-off, var(--color-gray-64)); transition: color .2s ease; }
+.jerry-nav-tab.active .jerry-nav-icon { color: var(--color-blue-66); transform: scale(1.08); }
+.jerry-nav-tab.active .jerry-nav-label { color: var(--color-blue-66); font-weight: 700; }
+.jerry-nav-tab:active .jerry-nav-icon { transform: scale(.9); opacity: .75; }
+:root[data-theme-resolved=dark] .jerry-nav-inner { backdrop-filter: blur(8px) saturate(1.2); -webkit-backdrop-filter: blur(8px) saturate(1.2); }
+:root[data-theme-resolved=dark] { --hm-nav-off: #ffffff99; --hm-nav-border: 1px solid var(--color-gray-16); }
+:root[data-theme-resolved=light] { --hm-nav-border: none; }

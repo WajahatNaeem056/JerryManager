@@ -139,54 +139,6 @@ section:not([hidden]) {
   color:var(--md-sys-color-error)
 }
 
-.hero-card {
-  width:100%
-}
-
-#keybox-card {
-  transition:background-color .3s
-}
-
-#keybox-card.keybox-none {
-  --md-filled-card-container-color:var(--md-sys-color-surface-variant)
-}
-
-#keybox-card.keybox-none #keybox-value,#keybox-card.keybox-none #keybox-icon,#keybox-card.keybox-none #keybox-label {
-  color:var(--color-gray-96)!important
-}
-
-#keybox-card.keybox-unknown {
-  --md-filled-card-container-color:var(--md-sys-color-surface-container-high)
-}
-
-#keybox-card.keybox-unknown #keybox-value,#keybox-card.keybox-unknown #keybox-icon,#keybox-card.keybox-unknown #keybox-label {
-  color:var(--color-gray-96)!important
-}
-
-#keybox-card.keybox-ok {
-  --md-filled-card-container-color:var(--md-sys-color-surface-container-high)
-}
-
-#keybox-card.keybox-ok #keybox-value,#keybox-card.keybox-ok #keybox-icon,#keybox-card.keybox-ok #keybox-label {
-  color:var(--color-gray-96)!important
-}
-
-#keybox-card.keybox-outdated {
-  --md-filled-card-container-color:var(--md-sys-color-surface-container-high)
-}
-
-#keybox-card.keybox-outdated #keybox-value,#keybox-card.keybox-outdated #keybox-icon,#keybox-card.keybox-outdated #keybox-label {
-  color:var(--color-gray-96)!important
-}
-
-#keybox-card.keybox-revoked {
-  --md-filled-card-container-color:var(--md-sys-color-surface-container-high)
-}
-
-#keybox-card.keybox-revoked #keybox-value,#keybox-card.keybox-revoked #keybox-icon,#keybox-card.keybox-revoked #keybox-label {
-  color:var(--color-gray-96)!important
-}
-
 .info-grid {
   grid-template-columns:1fr 1fr;
   gap:12px;
@@ -907,14 +859,14 @@ md-dialog {
 }
 
 :root[data-theme-resolved=light] .app-top-bar, :root[data-theme=light] .app-top-bar {
-  background: var(--color-white) !important;
+  /* same colour as the page (.app-layout); divider line stays */
+  background: var(--color-blue-95-a) !important;
   border-bottom: 1px solid rgba(0,0,0,0.07) !important;
   box-shadow: none !important;
 }
 
 :root[data-theme-resolved=light] .app-title, :root[data-theme=light] .app-title {
   color: var(--color-gray-10) !important;
-  font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=light] .network-chip, :root[data-theme=light] .network-chip {
@@ -957,46 +909,6 @@ md-dialog {
 
 :root[data-theme-resolved=light] #version-info-card .info-card__label, :root[data-theme-resolved=light] #version-info-card .info-card__value, :root[data-theme=light] #version-info-card .info-card__label, :root[data-theme=light] #version-info-card .info-card__value {
   color: var(--color-accent-50) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-ok, :root[data-theme=light] #keybox-card.keybox-ok {
-  background: var(--color-white) !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-ok #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-ok #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-ok #keybox-label, :root[data-theme=light] #keybox-card.keybox-ok #keybox-value, :root[data-theme=light] #keybox-card.keybox-ok #keybox-icon, :root[data-theme=light] #keybox-card.keybox-ok #keybox-label {
-  color: var(--color-black) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-revoked, :root[data-theme=light] #keybox-card.keybox-revoked {
-  background: var(--color-white) !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-revoked #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-revoked #keybox-label, :root[data-theme=light] #keybox-card.keybox-revoked #keybox-value, :root[data-theme=light] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme=light] #keybox-card.keybox-revoked #keybox-label {
-  color: var(--color-black) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-outdated, :root[data-theme=light] #keybox-card.keybox-outdated {
-  background: var(--color-white) !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-outdated #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-outdated #keybox-label, :root[data-theme=light] #keybox-card.keybox-outdated #keybox-value, :root[data-theme=light] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme=light] #keybox-card.keybox-outdated #keybox-label {
-  color: var(--color-black) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-unknown, :root[data-theme-resolved=light] #keybox-card.keybox-none, :root[data-theme=light] #keybox-card.keybox-unknown, :root[data-theme=light] #keybox-card.keybox-none {
-  background: var(--color-white) !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-}
-
-:root[data-theme-resolved=light] #keybox-card.keybox-unknown #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-unknown #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-unknown #keybox-label, :root[data-theme-resolved=light] #keybox-card.keybox-none #keybox-value, :root[data-theme-resolved=light] #keybox-card.keybox-none #keybox-icon, :root[data-theme-resolved=light] #keybox-card.keybox-none #keybox-label, :root[data-theme=light] #keybox-card.keybox-unknown #keybox-value, :root[data-theme=light] #keybox-card.keybox-unknown #keybox-icon, :root[data-theme=light] #keybox-card.keybox-unknown #keybox-label, :root[data-theme=light] #keybox-card.keybox-none #keybox-value, :root[data-theme=light] #keybox-card.keybox-none #keybox-icon, :root[data-theme=light] #keybox-card.keybox-none #keybox-label {
-  color: var(--color-black) !important;
 }
 
 :root[data-theme-resolved=light] .list-container, :root[data-theme=light] .list-container {
@@ -1236,14 +1148,13 @@ md-dialog {
 }
 
 :root[data-theme-resolved=dark] .app-top-bar, :root[data-theme=dark] .app-top-bar {
-  background: rgba(30,30,30,0.92) !important;
+  background: var(--color-gray-7) !important;
   border-bottom: 1px solid rgba(255,255,255,0.06) !important;
   box-shadow: 0 2px 20px rgba(0,0,0,0.70) !important;
 }
 
 :root[data-theme-resolved=dark] .app-title, :root[data-theme=dark] .app-title {
   color: var(--color-gray-96) !important;
-  font-weight: 700 !important;
 }
 
 :root[data-theme-resolved=dark] .network-chip, :root[data-theme=dark] .network-chip {
@@ -1252,51 +1163,6 @@ md-dialog {
 
 :root[data-theme-resolved=dark] .network-chip md-icon, :root[data-theme=dark] .network-chip md-icon {
   color: var(--color-accent-66) !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-ok, :root[data-theme=dark] #keybox-card.keybox-ok {
-  --md-filled-card-container-color: transparent !important;
-  background: var(--color-gray-12) !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
-  border-radius: 20px !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-ok #keybox-value, :root[data-theme-resolved=dark] #keybox-card.keybox-ok #keybox-icon, :root[data-theme-resolved=dark] #keybox-card.keybox-ok #keybox-label, :root[data-theme=dark] #keybox-card.keybox-ok #keybox-value, :root[data-theme=dark] #keybox-card.keybox-ok #keybox-icon, :root[data-theme=dark] #keybox-card.keybox-ok #keybox-label {
-  color: var(--color-gray-96) !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-revoked, :root[data-theme=dark] #keybox-card.keybox-revoked {
-  background: var(--color-gray-12) !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
-  border-radius: 20px !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-revoked #keybox-value, :root[data-theme-resolved=dark] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme-resolved=dark] #keybox-card.keybox-revoked #keybox-label, :root[data-theme=dark] #keybox-card.keybox-revoked #keybox-value, :root[data-theme=dark] #keybox-card.keybox-revoked #keybox-icon, :root[data-theme=dark] #keybox-card.keybox-revoked #keybox-label {
-  color: var(--color-gray-96) !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-outdated, :root[data-theme=dark] #keybox-card.keybox-outdated {
-  background: var(--color-gray-12) !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
-  border-radius: 20px !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-outdated #keybox-value, :root[data-theme-resolved=dark] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme-resolved=dark] #keybox-card.keybox-outdated #keybox-label, :root[data-theme=dark] #keybox-card.keybox-outdated #keybox-value, :root[data-theme=dark] #keybox-card.keybox-outdated #keybox-icon, :root[data-theme=dark] #keybox-card.keybox-outdated #keybox-label {
-  color: var(--color-gray-96) !important;
-}
-
-:root[data-theme-resolved=dark] #keybox-card.keybox-unknown, :root[data-theme-resolved=dark] #keybox-card.keybox-none, :root[data-theme=dark] #keybox-card.keybox-unknown, :root[data-theme=dark] #keybox-card.keybox-none {
-  background: var(--color-gray-12) !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.035) !important;
-  border-radius: 20px !important;
 }
 
 :root[data-theme-resolved=dark] md-filled-card, :root[data-theme=dark] md-filled-card {

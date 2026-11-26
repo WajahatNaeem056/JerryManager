@@ -67,8 +67,6 @@
 :root[data-ui-style][data-theme-resolved] md-elevated-card,
 :root[data-ui-style][data-theme-resolved] md-outlined-card { border-radius:28px !important; }
 
-:root[data-ui-style][data-theme-resolved] .jf-row-icon { border-radius:50% !important; }
-
 :root[data-ui-style][data-theme-resolved] .ctrl-card { border-radius:24px !important; }
 
 :root[data-ui-style][data-theme-resolved] .theme-btn { border-radius:22px !important; }
@@ -79,19 +77,16 @@
 :root[data-ui-style][data-theme-resolved] .pif-btn-row .pif-btn,
 :root[data-ui-style][data-theme-resolved] .at-apply-fab { border-radius:999px !important; }
 
-:root[data-ui-style][data-theme-resolved] #keybox-card.hero-card { border-radius:28px !important; }
+:root[data-ui-style][data-theme-resolved] #pages > section { padding-top:16px !important; }
 
-:root[data-ui-style][data-theme-resolved] #pages > section { padding-top:6px !important; }
-
+:root[data-ui-style][data-theme-resolved] #pages { padding-top:0 !important; }
 :root[data-ui-style][data-theme-resolved] header#top-bar.app-top-bar {
-  background:transparent !important; border:none !important; box-shadow:none !important;
-  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-  min-height:48px !important; padding-top:4px !important; padding-bottom:4px !important;
+  min-height:56px !important; padding-top:calc(6px + env(safe-area-inset-top,0px)) !important; padding-bottom:6px !important;
 }
 
-:root[data-ui-style][data-theme-resolved="dark"] header#top-bar .app-title { color:#fff !important; font-weight:700 !important; }
+:root[data-ui-style][data-theme-resolved="dark"] header#top-bar .app-title { color:#fff !important; }
 
-:root[data-ui-style][data-theme-resolved="light"] header#top-bar .app-title { color:#111 !important; font-weight:700 !important; }
+:root[data-ui-style][data-theme-resolved="light"] header#top-bar .app-title { color:#111 !important; }
 
 /* ---- Blue accent ---- */
 /* Blue accent for the default style, overriding the baseline purple Material roles.
@@ -130,7 +125,6 @@
   transition: color .2s ease, transform .2s ease, font-variation-settings .2s ease;
 }
 :root[data-theme-resolved=dark] .jerry-nav-icon.msr, :root[data-theme=dark] .jerry-nav-icon.msr { color: #ffffff99; }
-:root[data-theme-resolved=dark] .jerry-nav-label, :root[data-theme=dark] .jerry-nav-label { color: #ffffff99; }
 .jerry-nav-tab.active .jerry-nav-icon.msr,
 :root[data-theme-resolved=dark] .jerry-nav-tab.active .jerry-nav-icon.msr,
 :root[data-theme=dark] .jerry-nav-tab.active .jerry-nav-icon.msr {
@@ -191,15 +185,3 @@
   --md-switch-selected-pressed-icon-color: var(--color-blue-66);
   --md-switch-selected-focus-icon-color: var(--color-blue-66);
 }
-
-/* ---- Home info rows: stronger labels, clear results ---- */
-:root[data-theme-resolved] .jf-row-lbl { font-size:16px !important; font-weight:700 !important; }
-:root[data-theme-resolved] .jf-row-val {
-  font-size:17px !important; font-weight:400 !important; max-width:62%;
-  white-space:normal !important; overflow:visible !important; text-overflow:clip !important;
-  overflow-wrap:anywhere; line-height:1.25;
-}
-:root[data-theme-resolved=dark] .jf-row-lbl,
-:root[data-theme-resolved=dark] .jf-row-val { color:#ffffff !important; }
-:root[data-theme-resolved=light] .jf-row-lbl,
-:root[data-theme-resolved=light] .jf-row-val { color:#121c2b !important; }

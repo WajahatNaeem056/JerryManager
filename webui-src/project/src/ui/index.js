@@ -5,6 +5,7 @@ import './omk-panel.css';
 import './theme-accent.css';
 import './icons.css';
 import './rkp-panel.css';
+import './home-ui.css';
 
 import './icon-check.js';
 import './network-status.js';

@@ -42,16 +42,11 @@ md-icon.icon-chevron { --md-icon-size: var(--icon-inline); font-size: var(--icon
 :root[data-theme-resolved][data-ui-style] .list-item md-icon:first-child,
 :root[data-theme-resolved][data-ui-style] .ctrl-card md-icon:first-child,
 :root[data-theme-resolved][data-ui-style] .ctrl-row md-icon:first-child,
-:root[data-theme-resolved][data-ui-style] .pif-row > md-icon:first-child,
-:root[data-theme-resolved][data-ui-style] .jf-row-icon md-icon {
+:root[data-theme-resolved][data-ui-style] .pif-row > md-icon:first-child {
   color: var(--icon-inactive) !important; opacity: 1 !important;
 }
 :root[data-theme-resolved][data-ui-style] .list-item[data-destructive] md-icon:first-child { color: var(--icon-danger) !important; }
 :root[data-theme-resolved][data-ui-style] .ctrl-row md-icon:first-child { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
-:root[data-theme-resolved][data-ui-style][data-theme-resolved=light] .jf-row-icon { background: #0000000a !important; }
-
-/* Home info rows */
-.jf-row-icon md-icon { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }
 
 /* Headers, buttons, inputs */
 .at-back-btn md-icon { --md-icon-size: var(--icon-action); font-size: var(--icon-action); }

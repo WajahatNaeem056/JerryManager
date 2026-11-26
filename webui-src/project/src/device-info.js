@@ -78,6 +78,8 @@ function applyDeviceInfo(info) {
     setTextById(`android-value`, info.android || `—`);
     setTextById(`root-value`, info.root || `—`);
     setTextById(`rom-value`, info.rom || `—`);
+    // Module version is re-read from module.prop (via device-info.sh) on every refresh, not only at startup.
+    info.version && setTextById(`version-info-value`, info.version);
     let backendEl = document.getElementById(`keystore-backend-value`);
     backendEl && info.keystore_backend && (backendEl.textContent = info.keystore_backend);
 }
