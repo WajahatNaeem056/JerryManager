@@ -9,6 +9,15 @@
   var busy = false;
   var sel = null; // selected row
 
+  function tr(key, fallback, vars) {
+    var s = fallback;
+    try {
+      if (typeof window.__jerryGetTranslation === 'function') s = window.__jerryGetTranslation(key) || fallback;
+    } catch (e) {}
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  }
+
   function toast(m, err) { if (typeof window.jerryToast === 'function') window.jerryToast(m, err); }
 
   function $(id) { return document.getElementById(id); }
@@ -44,21 +53,21 @@
   }
 
   function errorText(r) {
-    if (r.code === 10) return 'The RKP catalog source is not available yet.';
-    if (r.code === 11) return 'Could not reach the RKP catalog. Check your connection.';
-    if (r.code === 12) return 'The RKP catalog is invalid.';
-    return 'Could not load the RKP catalog (exit ' + r.code + ').';
+    if (r.code === 10) return tr('rkp_err_unavailable', 'The RKP catalog source is not available yet.');
+    if (r.code === 11) return tr('rkp_err_unreachable_check', 'Could not reach the RKP catalog. Check your connection.');
+    if (r.code === 12) return tr('rkp_err_catalog_invalid', 'The RKP catalog is invalid.');
+    return tr('rkp_err_load_exit', 'Could not load the RKP catalog (exit {code}).', { code: r.code });
   }
 
   function installText(r) {
-    if (r.code === 0) return 'RKP keybox installed';
-    if (r.code === 11) return 'Could not reach the RKP catalog';
-    if (r.code === 20) return 'This RKP keybox is no longer available';
-    if (r.code === 21) return 'Keybox download failed';
-    if (r.code === 22) return 'The keybox file is invalid';
-    if (r.code === 23) return 'Keybox install failed';
-    if (r.code === 24) return 'No keystore found';
-    return 'Install failed (exit ' + r.code + ')';
+    if (r.code === 0) return tr('rkp_ok_installed', 'RKP keybox installed');
+    if (r.code === 11) return tr('rkp_err_unreachable', 'Could not reach the RKP catalog');
+    if (r.code === 20) return tr('rkp_err_gone', 'This RKP keybox is no longer available');
+    if (r.code === 21) return tr('rkp_err_download', 'Keybox download failed');
+    if (r.code === 22) return tr('rkp_err_file_invalid', 'The keybox file is invalid');
+    if (r.code === 23) return tr('rkp_err_install', 'Keybox install failed');
+    if (r.code === 24) return tr('rkp_err_no_keystore', 'No keystore found');
+    return tr('rkp_err_install_exit', 'Install failed (exit {code})', { code: r.code });
   }
 
   // "2026-11-29" -> "29 Nov 2026" in the device locale
@@ -79,7 +88,7 @@
     b.setAttribute('aria-busy', state === 'busy' ? 'true' : 'false');
     b.disabled = state === 'busy' || state === 'ok' || (state === 'idle' && !sel);
     b.querySelector('.rkp-btn-label').textContent =
-      state === 'busy' ? 'Installing\u2026' : state === 'ok' ? 'Installed' : state === 'err' ? 'Try again' : 'Install';
+      state === 'busy' ? tr('rkp_installing', 'Installing\u2026') : state === 'ok' ? tr('rkp_installed', 'Installed') : state === 'err' ? tr('rkp_try_again', 'Try again') : tr('rkp_install', 'Install');
     b.querySelector('.rkp-btn-icon').textContent =
       state === 'ok' ? 'check_circle' : state === 'err' ? 'refresh' : 'check';
   }
@@ -90,10 +99,12 @@
     row.setAttribute('data-state', state);
     meta.textContent = '';
     if (state === 'idle') {
-      meta.appendChild(document.createTextNode('Valid until '));
+      var parts = tr('rkp_valid_until', 'Valid until {date}').split('{date}');
+      meta.appendChild(document.createTextNode(parts[0]));
       meta.appendChild(mk('span', 'rkp-date', fmtDate(row._rkp.until)));
+      if (parts[1]) meta.appendChild(document.createTextNode(parts[1]));
     } else {
-      meta.textContent = state === 'busy' ? 'Installing\u2026' : state === 'ok' ? 'Installed' : msg;
+      meta.textContent = state === 'busy' ? tr('rkp_installing', 'Installing\u2026') : state === 'ok' ? tr('rkp_installed', 'Installed') : msg;
     }
   }
 
@@ -151,7 +162,7 @@
     box.classList.remove('is-busy');
     sel = null;
     entries.forEach(function (e) {
-      var name = e.name || ('RKP Keybox ' + e.id.slice(0, 8));
+      var name = e.name || tr('rkp_default_name', 'RKP Keybox {id}', { id: e.id.slice(0, 8) });
       var row = mk('div', 'list-item rkp-item');
       row._rkp = e;
       row.setAttribute('role', 'radio');

@@ -120,7 +120,13 @@ async function loadKeyboxCard() {
     catch {
     }
 }
+var lastKeyboxInfo = null;
+function kbT(key, fallback) {
+    return window.__jerryGetTranslation && window.__jerryGetTranslation(key) || fallback;
+}
+document.addEventListener(`languageChanged`, () => { lastKeyboxInfo && renderKeyboxCard(lastKeyboxInfo); });
 function renderKeyboxCard(info) {
+    lastKeyboxInfo = info;
     let card = document.getElementById(`keybox-card`);
     let icon = document.getElementById(`keybox-icon`);
     let valueEl = document.getElementById(`keybox-value`);
@@ -156,31 +162,31 @@ function renderKeyboxCard(info) {
             setExpiry(false);
             card.classList.add(`keybox-none`);
             icon.textContent = `vpn_key_off`;
-            setLabel(`Not Installed`);
+            setLabel(kbT(`keybox_not_installed`, `Not Installed`));
             return;
         }
         let num = info.by_jerry && info.version ? `/ v${info.version}` : info.by_rkp && info.rkp_id ? `/ ${info.rkp_id}` : `/ Generic`;
         let label, cls, ico;
         let expMs = Date.parse(info.expires_at || ``);
         if (info.revoked) {
-            label = `Revoked`, cls = `keybox-revoked`, ico = `gpp_bad`;
+            label = `revoked`, cls = `keybox-revoked`, ico = `gpp_bad`;
         }
         else if (info.expired || (!isNaN(expMs) && expMs <= Date.now())) {
-            label = `Expired`, cls = `keybox-revoked`, ico = `event_busy`;
+            label = `expired`, cls = `keybox-revoked`, ico = `event_busy`;
         }
         else if (info.softbanned) {
-            label = `Softbanned`, cls = `keybox-outdated`, ico = `warning`;
+            label = `softbanned`, cls = `keybox-outdated`, ico = `warning`;
         }
         else if (info.by_jerry && !info.up_to_date && info.latest_version) {
-            label = `Update Available`, cls = `keybox-outdated`, ico = `system_update`;
+            label = `update_available`, cls = `keybox-outdated`, ico = `system_update`;
         }
         else {
-            label = `Valid`, cls = `keybox-ok`, ico = `verified_user`;
+            label = `valid`, cls = `keybox-ok`, ico = `verified_user`;
         }
         card.classList.add(cls);
         icon.textContent = ico;
-        setLabel(label, num);
-        setExpiry(!isNaN(expMs) && (label === `Valid` || label === `Expired`), (info.expires_at || ``).slice(0, 10));
+        setLabel(kbT(`keybox_` + label, { revoked: `Revoked`, expired: `Expired`, softbanned: `Softbanned`, update_available: `Update Available`, valid: `Valid` }[label]), num);
+        setExpiry(!isNaN(expMs) && (label === `valid` || label === `expired`), (info.expires_at || ``).slice(0, 10));
     }
 }
 function setTextById(id, text) {

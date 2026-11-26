@@ -182,7 +182,7 @@
 
             <div class="jf-row">
               <div class="jf-row-icon" id="status-icon-wrap"><md-icon id="status-icon">wifi</md-icon></div>
-              <span class="jf-row-lbl">Status</span>
+              <span class="jf-row-lbl" data-i18n="home_status">Status</span>
               <span class="jf-row-val green" id="status-value">—</span>
             </div>
 
@@ -200,7 +200,7 @@
 
             <div class="jf-row">
               <div class="jf-row-icon"><md-icon>desktop_windows</md-icon></div>
-              <span class="jf-row-lbl">ROM</span>
+              <span class="jf-row-lbl" data-i18n="home_rom">ROM</span>
               <span class="jf-row-val" id="rom-value">—</span>
             </div>
 
@@ -791,7 +791,7 @@
           </div>
         </div>
 
-        <div class="list-title">Status</div>
+        <div class="list-title" data-i18n="home_status">Status</div>
         <div class="list-container">
           <div class="list-item" id="kb-clear-row" style="cursor:pointer">
             <md-icon>delete</md-icon>
@@ -829,7 +829,7 @@
         </button>
         <div class="rkp-head">
           <span class="at-title" data-i18n="menu_rkp_keybox">RKP Keyboxes</span>
-          <span id="rkp-sub" class="rkp-sub" style="display:none">Select a keybox, then tap Install</span>
+          <span id="rkp-sub" class="rkp-sub" data-i18n="rkp_sub" style="display:none">Select a keybox, then tap Install</span>
         </div>
       </div>
       <div class="pif-scroll">
@@ -837,7 +837,7 @@
           <div class="list-item">
             <span class="rkp-lead"><md-circular-progress indeterminate></md-circular-progress></span>
             <div class="list-item-content">
-              <div class="toggle-text">Loading catalog</div>
+              <div class="toggle-text" data-i18n="rkp_loading">Loading catalog</div>
             </div>
           </div>
         </div>
@@ -845,8 +845,8 @@
           <div class="list-item">
             <md-icon>key</md-icon>
             <div class="list-item-content">
-              <div class="toggle-text">No RKP entries available</div>
-              <span class="supporting-text">Check back later</span>
+              <div class="toggle-text" data-i18n="rkp_empty_title">No RKP entries available</div>
+              <span class="supporting-text" data-i18n="rkp_empty_desc">Check back later</span>
             </div>
           </div>
         </div>
@@ -860,7 +860,7 @@
           <div class="list-item" id="rkp-retry" role="button" tabindex="0" style="cursor:pointer">
             <md-icon>refresh</md-icon>
             <div class="list-item-content">
-              <div class="toggle-text">Retry</div>
+              <div class="toggle-text" data-i18n="rkp_retry">Retry</div>
             </div>
             <md-ripple></md-ripple>
           </div>
