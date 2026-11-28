@@ -20,62 +20,114 @@ unset _jm_ver
 
 mkdir -p "$JERRYMANAGER_CONFIG_DIR" 2>/dev/null
 
+if [ ! -d /data/adb/modules/JerryManager ]; then
+  for _ks_old in $TEESIM_MODULE_IDS $OMK_MODULE_IDS $TS_CONFLICT_IDS; do
+    for _ks_d in "/data/adb/modules/$_ks_old" "/data/adb/modules_update/$_ks_old"; do
+      [ -d "$_ks_d" ] || continue
+      touch "$_ks_d/remove" 2>/dev/null
+      ui_print "⚠ Existing keystore module $_ks_old found"
+      ui_print "Removal scheduled on reboot"
+    done
+  done
+  unset _ks_old _ks_d
+fi
+
 resolve_keystore_backend
+
+# ---------- Keystore ----------
+_jm_ts_fail() {
+  if [ "$KEYSTORE_BUILTIN" = "1" ]; then abort "$1"; fi
+  ui_print "⚠ Built-in Tricky Store OSS not prepared: $1"
+}
+
+_jm_install_ts() {
+  case "$ARCH" in
+    arm64) _ts_abi="arm64-v8a" ;;
+    arm)   _ts_abi="armeabi-v7a" ;;
+    x64)   _ts_abi="x86_64" ;;
+    x86)   _ts_abi="x86" ;;
+    *)     _jm_ts_fail "Unsupported architecture: $ARCH"; _ts_abi="" ;;
+  esac
+  if [ -n "$_ts_abi" ]; then
+    if [ "$API" -lt 29 ]; then
+      _jm_ts_fail "Unsupported SDK: $API (Tricky Store OSS needs Android 10+)"
+    elif [ "$KSU" = true ] && [ "$KSU_VER_CODE" -lt 10670 ]; then
+      _jm_ts_fail "Please update KernelSU and KernelSU Manager"
+    elif [ ! -f "$MODPATH/ts/lib/$_ts_abi/libTrickyStoreOSS.so" ] || [ ! -f "$MODPATH/ts/lib/$_ts_abi/libinject.so" ]; then
+      _jm_ts_fail "Tricky Store OSS files for $_ts_abi are missing from this zip"
+    else
+      [ "$KEYSTORE_BUILTIN" = "1" ] && ui_print "Built-in: Tricky Store OSS"
+      ui_print "Platform: $ARCH • SDK $API"
+      mv "$MODPATH/ts/lib/$_ts_abi/libTrickyStoreOSS.so" "$MODPATH/ts/libTrickyStoreOSS.so"
+      mv "$MODPATH/ts/lib/$_ts_abi/libinject.so" "$MODPATH/ts/inject"
+      rm -rf "$MODPATH/ts/lib"
+      chmod 755 "$MODPATH/ts/daemon" "$MODPATH/ts/inject" "$MODPATH/ts/supervisor.sh"
+    fi
+  fi
+  [ -f "$MODPATH/dex/duckd" ] && chmod 755 "$MODPATH/dex/duckd"
+
+  ensure_dir "$TRICKY_DIR"
+  [ -f "$TARGET_TXT" ] || touch "$TARGET_TXT"
+  unset _ts_abi
+}
+
+_jm_section "Keystore"
+_jm_install_ts
+ui_print "Backend: $KEYSTORE_NAME"
+if [ "$KEYSTORE_BUILTIN" != "1" ] && [ "$KEYSTORE_BACKEND" != "trickystore" ]; then
+  ui_print "Detected external $KEYSTORE_NAME — built-in Tricky Store OSS stays off"
+fi
 
 # ---------- Keybox ----------
 DECODE_FILE="$MODPATH/keybox_decode"
 TEMP_FILE="$MODPATH/keybox.tmp"
 
-_jm_keybox() {
-  _jm_section "Keybox"
-  if check_network; then
-    ui_print "Fetching remote keybox..."
-    download "$KEYBOX_URL" > "$TEMP_FILE"
+_jm_section "Keybox"
+if check_network; then
+  ui_print "Fetching remote keybox..."
+  download "$KEYBOX_URL" > "$TEMP_FILE"
 
-    if [ ! -f "$TEMP_FILE" ] || [ ! -s "$TEMP_FILE" ]; then
-        ui_print "✕ Keybox download failed"
-        ui_print "Upload one manually via WebUI"
-        rm -f "$TEMP_FILE"
-    else
-        ensure_dir "$KEYSTORE_DIR"
-
-        if ! base64 -d "$TEMP_FILE" > "$DECODE_FILE" 2>/dev/null; then
-            ui_print "✕ Downloaded keybox is corrupted or invalid"
-            ui_print "Try again later"
-            rm -f "$TEMP_FILE"
-        else
-            if [ -f "$KEYSTORE_KEYBOX" ]; then
-                if cmp -s "$KEYSTORE_KEYBOX" "$DECODE_FILE"; then
-                    ui_print "Status: up to date"
-                    rm -f "$TEMP_FILE" "$DECODE_FILE"
-                else
-                    if [ "$KEYSTORE_BACKEND" != "none" ] && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ] && ! keybox_is_jerry "$KEYSTORE_KEYBOX"; then
-                        ui_print "Previous keybox: not from Jerry"
-                        ui_print "Backup: created"
-                        cp "$KEYSTORE_KEYBOX" "$KEYSTORE_BACKUP"
-                    fi
-                    keystore_install_keybox "$DECODE_FILE"
-                    rm -f "$TEMP_FILE" "$DECODE_FILE"
-                    ui_print "Status: installed • $KEYSTORE_NAME"
-                fi
-            else
-                ui_print "No keybox found, creating new"
-                keystore_install_keybox "$DECODE_FILE"
-                rm -f "$TEMP_FILE" "$DECODE_FILE"
-                ui_print "Status: installed • $KEYSTORE_NAME"
-            fi
-        fi
-    fi
+  if [ ! -f "$TEMP_FILE" ] || [ ! -s "$TEMP_FILE" ]; then
+      ui_print "✕ Keybox download failed"
+      ui_print "Upload one manually via WebUI"
+      rm -f "$TEMP_FILE"
   else
-    ui_print "⚠ No internet connection"
-    ui_print "Keybox not installed"
-    ui_print "Install it later from the action button or WebUI"
+      ensure_dir "$KEYSTORE_DIR"
+
+      if ! base64 -d "$TEMP_FILE" > "$DECODE_FILE" 2>/dev/null; then
+          ui_print "✕ Downloaded keybox is corrupted or invalid"
+          ui_print "Try again later"
+          rm -f "$TEMP_FILE"
+      else
+          if [ -f "$KEYSTORE_KEYBOX" ]; then
+              if cmp -s "$KEYSTORE_KEYBOX" "$DECODE_FILE"; then
+                  ui_print "Status: up to date"
+                  rm -f "$TEMP_FILE" "$DECODE_FILE"
+              else
+                  if [ "$KEYSTORE_BACKEND" != "none" ] && [ -z "$(find_keybox_backup "$KEYSTORE_BACKEND")" ] && ! keybox_is_jerry "$KEYSTORE_KEYBOX"; then
+                      ui_print "Previous keybox: not from Jerry"
+                      ui_print "Backup: created"
+                      cp "$KEYSTORE_KEYBOX" "$KEYSTORE_BACKUP"
+                  fi
+                  keystore_install_keybox "$DECODE_FILE"
+                  rm -f "$TEMP_FILE" "$DECODE_FILE"
+                  ui_print "Status: installed • $KEYSTORE_NAME"
+              fi
+          else
+              ui_print "No keybox found, creating new"
+              keystore_install_keybox "$DECODE_FILE"
+              rm -f "$TEMP_FILE" "$DECODE_FILE"
+              ui_print "Status: installed • $KEYSTORE_NAME"
+          fi
+      fi
   fi
-}
+else
+  ui_print "⚠ No internet connection"
+  ui_print "Keybox not installed"
+  ui_print "Install it later from the action button or WebUI"
+fi
 
 # ---------- PIF ----------
-# Vol+ = yes, Vol- = no. Default is yes: no key within 5 seconds,
-# or no getevent/timeout, installs it.
 _jm_ask_pif() {
   if ! { command -v getevent >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; }; then
     ui_print "Key input unavailable, default Yes"
@@ -115,14 +167,12 @@ _jm_pif() {
     ui_print "⚠ Built-in PIF files missing from this zip"
   fi
 
-  # A standalone PIF/Fork would inject twice into GMS (pif.prop is shared and kept)
   if [ -d /data/adb/modules/playintegrityfix ]; then
     touch /data/adb/modules/playintegrityfix/remove 2>/dev/null
     ui_print "⚠ Standalone PIF/Fork found"
     ui_print "Removal scheduled on reboot"
   fi
 
-  # Leftovers from older PIF versions, and a script-only flag the UI can no longer clear
   for _dir in /data/user_de/0/com.google.android.gms /data/data/com.google.android.gms \
               /data/user_de/0/com.android.vending /data/data/com.android.vending; do
     rm -f "$_dir/libinject.so" "$_dir/classes.dex" "$_dir/pif.prop" 2>/dev/null
@@ -163,24 +213,6 @@ _jm_zygisk() {
   fi
 }
 
-# ---------- Keystore ----------
-_jm_section "Keystore"
-
-if [ ! -d "/data/adb/modules/tricky_store" ] && [ ! -d "/data/adb/modules_update/tricky_store" ] && \
-   [ ! -d "/data/adb/modules/oh_my_keymint" ] && [ ! -d "/data/adb/modules_update/oh_my_keymint" ] && \
-   [ ! -d "/data/adb/modules/teesim" ] && [ ! -d "/data/adb/modules_update/teesim" ]; then
-  ui_print "✕ No supported backend installed"
-  ui_print "Install Tricky Store, TEESimulator or OhMyKeymint first"
-  ui_print "Then install the keybox from the action button or WebUI"
-  _jm_pif
-  [ "$_jm_pif_on" = 1 ] && _jm_zygisk
-  ui_print ""
-  return 0
-fi
-
-ui_print "Backend: $KEYSTORE_NAME"
-
-_jm_keybox
 _jm_pif
 [ "$_jm_pif_on" = 1 ] && _jm_zygisk
 

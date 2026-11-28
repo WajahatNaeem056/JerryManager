@@ -2,7 +2,7 @@
 # RKP catalog filter: keeps entries with valid id, https url, future expires_at, rkp not false.
 # Input: catalog JSON on stdin. RKP_NOW (UTC ISO) overrides the clock for tests.
 
-# Entry id rule: 1-64 chars [A-Za-z0-9._-]
+# Entry id rule, shared by the catalog filter and "rkp_catalog.sh install <id>"
 rkp_valid_id() { printf '%s' "$1" | grep -Eq '^[A-Za-z0-9._-]{1,64}$'; }
 
 # One line, no blanks around ':' and ','

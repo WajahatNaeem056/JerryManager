@@ -256,6 +256,16 @@
               <md-icon class="icon-chevron">chevron_right</md-icon>
               <md-ripple></md-ripple>
             </div>
+            <div class="list-item" id="rkpd-open-btn" style="cursor:pointer" onclick="openRkpdPanel()">
+              <md-icon>smartphone</md-icon>
+              <div class="list-item-content">
+                <div class="toggle-text" data-i18n="rkpd_title">Generate RKP Keybox</div>
+                <span class="supporting-text" data-i18n="rkpd_menu_desc">Generate a keybox using this device's own KeyMint</span>
+              </div>
+              <div class="spacer"></div>
+              <md-icon class="icon-chevron">chevron_right</md-icon>
+              <md-ripple></md-ripple>
+            </div>
           </div>
 
           <div class="list-title" data-i18n="menu_pif_configs">PIF Configs</div>
@@ -876,6 +886,48 @@
       </div>
     </div>
 
+    <div id="rkpd-panel" class="at-panel pif-page">
+      <div class="at-header">
+        <button onclick="closeRkpdPanel()" class="at-back-btn" aria-label="Back">
+          <md-icon>arrow_back</md-icon>
+        </button>
+        <div class="rkp-head">
+          <span class="at-title" data-i18n="rkpd_title">Generate RKP Keybox</span>
+          <span id="rkpd-sub" class="rkp-sub" data-i18n="rkpd_subtitle">Generate a keybox using this device's KeyMint</span>
+        </div>
+      </div>
+      <div class="pif-scroll">
+        <div id="rkpd-summary" class="list-container" aria-live="polite" data-state="loading">
+          <div class="list-item rkpd-summary-row">
+            <md-icon id="rkpd-icon">schedule</md-icon>
+            <div class="list-item-content">
+              <div class="toggle-text" id="rkpd-status" data-i18n="rkpd_checking">Checking this device…</div>
+              <span class="supporting-text" id="rkpd-status-sub"></span>
+            </div>
+            <md-icon-button id="rkpd-refresh" aria-label="Check again" data-i18n-aria-label="rkpd_refresh"><md-icon>refresh</md-icon></md-icon-button>
+          </div>
+        </div>
+        <div id="rkpd-blockers" class="list-container" style="display:none"></div>
+        <div id="rkpd-diag" class="list-container" style="display:none">
+          <div class="list-item rkpd-row"><div class="list-item-content"><span class="supporting-text" data-i18n="rkpd_details">Details</span><pre class="rkpd-diag" id="rkpd-diag-text"></pre></div></div>
+        </div>
+        <div id="rkpd-methods-title" class="list-title" style="display:none" data-i18n="rkpd_protocol">Method</div>
+        <div id="rkpd-methods" class="list-container" style="display:none" role="radiogroup" aria-label="Method" data-i18n-aria-label="rkpd_protocol"></div>
+        <div id="rkpd-details-title" class="list-title" style="display:none" data-i18n="rkpd_section_device">Device</div>
+        <div id="rkpd-details" class="list-container" style="display:none"></div>
+        <div id="rkpd-notice" class="list-container" style="display:none">
+          <div class="list-item rkpd-row"><div class="list-item-content"><span class="supporting-text" data-i18n="rkpd_limits">Only some devices work, and only RKP certificates are issued. Native methods use a private Qualcomm KeyMint ABI that can differ across firmware.</span></div></div>
+        </div>
+      </div>
+      <div id="rkpd-bar" class="rkp-bar">
+        <button id="rkpd-issue" type="button" class="rkp-btn" data-state="idle" disabled>
+          <md-icon class="rkp-btn-icon">key</md-icon>
+          <md-circular-progress class="rkp-btn-spin" indeterminate></md-circular-progress>
+          <span class="rkp-btn-label" data-i18n="rkpd_issue">Issue from this device</span>
+        </button>
+      </div>
+    </div>
+
     <div id="hash-panel" class="at-panel pif-page">
       <div class="at-header">
         <button onclick="closeBootHash()" class="at-back-btn">
@@ -998,6 +1050,19 @@
     </nav>
 
   </div>
+
+  <md-dialog id="rkpd-confirm">
+    <div slot="headline" data-i18n="rkpd_confirm_title">Send a request to the KeyMint TA?</div>
+    <div slot="content">
+      <p data-i18n="rkpd_confirm_body">This runs RKP on this device's KeyMint trusted app and submits the result to Google. It only works on some devices and only RKP certificates can be issued.</p>
+      <p data-i18n="rkpd_confirm_replace">The issued keybox replaces your current one. A backup is kept if none exists yet.</p>
+      <p data-i18n="rkpd_confirm_risk">An incompatible firmware ABI can crash the worker or the trusted app.</p>
+    </div>
+    <div slot="actions">
+      <md-text-button id="rkpd-confirm-cancel" data-i18n="rkpd_cancel">Cancel</md-text-button>
+      <md-text-button id="rkpd-confirm-go" data-i18n="rkpd_continue">Continue</md-text-button>
+    </div>
+  </md-dialog>
 
   <md-dialog id="progress-dialog">
     <div slot="content" class="simple-progress">

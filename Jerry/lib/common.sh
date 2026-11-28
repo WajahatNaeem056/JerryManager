@@ -192,6 +192,7 @@ version_ge() {
     }'
 }
 
+# ===== Keybox decode =====
 # Serial number (lowercase hex, leading 00 stripped) of ONE base64 DER certificate passed as $1.
 # Walks the real X.509 structure (Certificate > TBSCertificate > [0] version > serial), so any serial
 # length works (e.g. 16 bytes + sign byte = 17 bytes, which the old pattern matching missed).

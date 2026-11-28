@@ -5,6 +5,11 @@ TARGET_TXT="$TRICKY_DIR/target.txt"
 SECURITY_PATCH_FILE="$TRICKY_DIR/security_patch.txt"
 TRICKY_CONFIG="$TRICKY_DIR/config.ini"
 TEE_STATUS="$TRICKY_DIR/tee_status"
+# Standalone Tricky Store modules: clash with the built-in Tricky Store OSS (only one may hook keystore2)
+TS_CONFLICT_IDS="tricky_store tricky_store_v2 TrickyStore"
+# Alternate engines Jerry drives instead of the built-in one when they are installed
+TEESIM_MODULE_IDS="teesim"
+OMK_MODULE_IDS="oh_my_keymint"
 # OhMyKeymint paths (alternate keystore backend, see lib/keystore.sh)
 # OMK live data dir: /data/adb/omk/omkdata (the old /data/misc/keystore/omk is only a fallback when omkdata does not exist)
 OMK_DIR="/data/adb/omk/omkdata"
@@ -24,6 +29,8 @@ KEYBOX_BACKUP_DIR="/data/adb/JerryManager/KeyBackup"
 mkdir -p "$KEYBOX_BACKUP_DIR" 2>/dev/null
 
 find_keybox_backup() {
+  # Built-in, external Tricky Store and TEESimulator-RS share /data/adb/tricky_store/keybox.xml
+  case "$1" in trickystore_ext|teesim_rs) set -- trickystore ;; esac
   find "$KEYBOX_BACKUP_DIR" -maxdepth 1 -type f -name "${1}_keybox_*.xml" 2>/dev/null | head -n1
 }
 

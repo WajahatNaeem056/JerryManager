@@ -1,7 +1,11 @@
-name: Build JerryManager module
+name: Build Test Module
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -10,11 +14,30 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Zip file name prefix. Change here if the test zip should be named differently.
+  MODULE_NAME: JerryManager
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history + tags, needed for git describe
+
+      # Same scheme as Specter: v<module version>-g<7-char commit hash>, e.g. v4.8-g8cc365e.
+      # The hash changes with every new commit, so each zip is unique.
+      - name: Compute build version
+        id: ver
+        run: |
+          set -e
+          MV=$(grep '^version=' Jerry/module.prop | cut -d= -f2)
+          MV="${MV#v}"
+          SHA=$(git rev-parse --short=7 HEAD)
+          V="v${MV}-g${SHA}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Build version: $V"
 
       - uses: actions/setup-node@v4
         with:
@@ -24,58 +47,93 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Stamp the version into module.prop (CI checkout only, nothing is committed),
+      # so the module manager app also shows it after install.
+      - name: Stamp version into module.prop
+        run: sed -i "s/^version=.*/version=${{ steps.ver.outputs.version }}/" Jerry/module.prop
+
       # "npm run build" (package.json) runs: vite build -> tools/inline-font.mjs ->
-      # tools/check-webroot.mjs -> tools/package.sh. That produces dist/webroot/ and
-      # copies it into the module as webroot/ inside dist/JerryManager-<version>.zip.
+      # tools/check-webroot.mjs -> tools/package.sh (which also runs sh -n on every .sh file).
+      # Output: dist/JerryManager-<version>.zip
       - name: Build WebUI and package module
         run: npm run build
 
-      - name: Locate module ZIP
+      - name: Name the ZIP
         id: zip
         run: |
           set -e
           count=$(ls dist/JerryManager-*.zip | wc -l)
           [ "$count" -eq 1 ] || { echo "Expected exactly one dist/JerryManager-*.zip, found $count" >&2; exit 1; }
-          f=$(ls dist/JerryManager-*.zip)
-          echo "path=$f" >> "$GITHUB_OUTPUT"
-          echo "Built $f"
+          OUT="dist/${MODULE_NAME}-${{ steps.ver.outputs.version }}.zip"
+          [ "$(ls dist/JerryManager-*.zip)" = "$OUT" ] || mv dist/JerryManager-*.zip "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+          echo "Built $OUT"
 
+      # Every check is logged as PASS/FAIL into a report. The step fails at the end if any check failed.
       - name: Verify ZIP structure
         run: |
-          set -e
           ZIP="${{ steps.zip.outputs.path }}"
-          unzip -tq "$ZIP"
+          REPORT=/tmp/report.md
+          FAILS=0
+          : > "$REPORT"
+
+          check() { # check "description" command...
+            desc="$1"; shift
+            if "$@" >/tmp/check.out 2>&1; then
+              echo "| ✅ PASS | $desc |" >> "$REPORT"
+            else
+              echo "| ❌ FAIL | $desc |" >> "$REPORT"
+              sed 's/^/    /' /tmp/check.out >&2
+              FAILS=$((FAILS+1))
+            fi
+          }
+
           unzip -Z1 "$ZIP" | grep -v '/$' | sort > /tmp/zip-files.txt
+          (cd Jerry && find . -type f | sed 's|^\./||' | sort) > /tmp/jerry-files.txt
 
           # Module files must sit at the ZIP root (no parent folder).
           for f in module.prop customize.sh service.sh post-fs-data.sh uninstall.sh \
                    META-INF/com/google/android/update-binary \
                    META-INF/com/google/android/updater-script \
                    webroot/index.html; do
-            grep -qx "$f" /tmp/zip-files.txt || { echo "Missing from ZIP root: $f" >&2; exit 1; }
+            check "Root file present: $f" grep -qx "$f" /tmp/zip-files.txt
           done
 
-          # Every file shipped in Jerry/ must be in the ZIP at the same relative path.
-          (cd Jerry && find . -type f | sed 's|^\./||' | sort) > /tmp/jerry-files.txt
-          missing=$(comm -23 /tmp/jerry-files.txt /tmp/zip-files.txt)
-          [ -z "$missing" ] || { echo "Files missing from ZIP:" >&2; echo "$missing" >&2; exit 1; }
+          check "ZIP integrity (unzip -t)" unzip -tq "$ZIP"
+          check "Every file from Jerry/ is in the ZIP" test -z "$(comm -23 /tmp/jerry-files.txt /tmp/zip-files.txt)"
+          check "Only webroot/ added on top of Jerry/" test -z "$(comm -13 /tmp/jerry-files.txt /tmp/zip-files.txt | grep -v '^webroot/' || true)"
+          check "No nested zip / node_modules / dist/ / Jerry/ parent folder" sh -c '! grep -Eiq "\.zip$|node_modules|^dist/|^Jerry/" /tmp/zip-files.txt'
+          check "WebUI JS bundle present" grep -Eq '^webroot/assets/index-.*\.js$' /tmp/zip-files.txt
+          check "WebUI CSS bundle present" grep -Eq '^webroot/assets/index-.*\.css$' /tmp/zip-files.txt
+          check "module.prop inside ZIP has version ${{ steps.ver.outputs.version }}" sh -c "unzip -p '$ZIP' module.prop | grep -qx 'version=${{ steps.ver.outputs.version }}'"
 
-          # Only webroot/ may be added on top of Jerry/.
-          extra=$(comm -13 /tmp/jerry-files.txt /tmp/zip-files.txt | grep -v '^webroot/' || true)
-          [ -z "$extra" ] || { echo "Unexpected files in ZIP:" >&2; echo "$extra" >&2; exit 1; }
+          {
+            echo "## 🧪 Test report: ${MODULE_NAME} ${{ steps.ver.outputs.version }}"
+            echo
+            echo "| Result | Check |"
+            echo "|---|---|"
+            cat "$REPORT"
+            echo
+            echo "**File:** \`$(basename "$ZIP")\`  "
+            echo "**Size:** $(du -h "$ZIP" | cut -f1)  "
+            echo "**Files in ZIP:** $(wc -l < /tmp/zip-files.txt)  "
+            echo "**SHA-256:** \`$(sha256sum "$ZIP" | cut -d' ' -f1)\`  "
+            echo "**Commit:** \`${GITHUB_SHA::7}\`"
+            echo
+            [ "$FAILS" -eq 0 ] && echo "### ✅ All checks passed" || echo "### ❌ $FAILS check(s) failed"
+          } > /tmp/summary.md
 
-          # No nested archives or build junk.
-          if grep -Eiq '\.zip$|node_modules|^dist/|^Jerry/' /tmp/zip-files.txt; then
-            echo "ZIP contains nested archive, node_modules, dist/ or a Jerry/ parent folder" >&2
-            exit 1
+          [ "$FAILS" -eq 0 ]
+
+      # Shows the report on the run's Summary page, even when a step above failed.
+      - name: Publish test report
+        if: always()
+        run: |
+          if [ -f /tmp/summary.md ]; then
+            cat /tmp/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ❌ Build failed before the ZIP checks ran. See the failed step in the log." >> "$GITHUB_STEP_SUMMARY"
           fi
-
-          # WebUI build output present.
-          grep -Eq '^webroot/assets/index-.*\.js$'  /tmp/zip-files.txt
-          grep -Eq '^webroot/assets/index-.*\.css$' /tmp/zip-files.txt
-
-          echo "ZIP OK: $(wc -l < /tmp/zip-files.txt) files"
-          unzip -l "$ZIP" | head -40
 
       # archive: false uploads the ZIP as-is (artifact name = file name), so the
       # download is the flashable ZIP itself and not a ZIP wrapped in another ZIP.
@@ -85,3 +143,4 @@ jobs:
           path: ${{ steps.zip.outputs.path }}
           archive: false
           if-no-files-found: error
+          

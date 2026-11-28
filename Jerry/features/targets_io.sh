@@ -17,6 +17,8 @@ resolve_keystore_backend >/dev/null 2>&1
 case "${1:-}" in
     --backend)
         _b="$KEYSTORE_BACKEND"
+        # Flat-file Tricky Store family: the WebUI knows these as "trickystore"
+        case "$_b" in trickystore_ext|teesim_rs) _b="trickystore" ;; esac
         [ "$_b" = "trickystore" ] && [ "$KEYSTORE_FORMAT" = "ini" ] && _b="trickystore-ini"
         echo "__BACKEND__:$_b"
         ;;

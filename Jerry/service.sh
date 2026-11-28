@@ -3,6 +3,7 @@ MODDIR=${0%/*}
 . "$MODDIR/lib/common.sh"
 . "$MODDIR/lib/paths.sh"
 . "$MODDIR/lib/config_env.sh"
+. "$MODDIR/lib/keystore.sh"
 . "$MODDIR/lib/package_list.sh"
 . "$MODDIR/lib/toggle_seed.sh"
 . "$MODDIR/lib/root_detect.sh"
@@ -13,6 +14,19 @@ resolve_conflicts
 if _feature_enabled toggle_boot_props; then
     log "SERVICE" "Setting boot properties"
     apply_boot_props
+fi
+
+resolve_keystore_backend
+log "SERVICE" "Keystore backend: $KEYSTORE_NAME ($KEYSTORE_BACKEND)"
+
+if [ "$KEYSTORE_BACKEND" = "trickystore" ] && [ "$KEYSTORE_BUILTIN" = "1" ]; then
+    # Built-in Tricky Store: start before boot_completed, after boot props
+    if [ -f "$MODDIR/ts/supervisor.sh" ]; then
+        log "SERVICE" "Starting built-in Tricky Store OSS"
+        sh "$MODDIR/ts/supervisor.sh" 2>/dev/null
+    fi
+else
+    log "SERVICE" "Built-in Tricky Store OSS not started ($KEYSTORE_NAME is active)"
 fi
 
 # SELinux permissive: hide state from apps
@@ -40,7 +54,6 @@ migrate_config_keys
 
 seed_toggle_defaults
 
-# New boot: drop cached ROM/root so the WebUI re-detects them once
 cfg_delete "cached_rom_status"
 cfg_delete "cached_root_type"
 

@@ -120,7 +120,6 @@ async function loadKeyboxCard() {
     catch {
     }
 }
-var lastKeyboxInfo = null;
 function kbT(key, fallback) {
     return window.__jerryGetTranslation && window.__jerryGetTranslation(key) || fallback;
 }
@@ -165,7 +164,7 @@ function renderKeyboxCard(info) {
             setLabel(kbT(`keybox_not_installed`, `Not Installed`));
             return;
         }
-        let num = info.by_jerry && info.version ? `/ v${info.version}` : info.by_rkp && info.rkp_id ? `/ ${info.rkp_id}` : `/ Generic`;
+        let num = info.by_jerry && info.version ? `/ v${info.version}` : info.by_rkp && info.rkp_id ? `/ ${info.rkp_id === `device` ? (window.__jerryGetTranslation && window.__jerryGetTranslation(`keybox_rkp_device`) || `RKP Device`) : info.rkp_id}` : `/ Generic`;
         let label, cls, ico;
         let expMs = Date.parse(info.expires_at || ``);
         if (info.revoked) {

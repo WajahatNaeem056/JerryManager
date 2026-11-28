@@ -8,60 +8,121 @@ for _ks_lib in inplace teesim omk ini; do
 done
 unset _ks_dir _ks_lib
 
+# Prints the module name if any of the given module ids is installed and enabled
 _module_enabled() {
-    _me_id="$1"
-    for _me_dir in "/data/adb/modules/$_me_id" "/data/adb/modules_update/$_me_id"; do
-        [ -d "$_me_dir" ] || continue
-        [ -f "$_me_dir/disable" ] && continue
-        _me_name=$(grep "^name=" "$_me_dir/module.prop" 2>/dev/null | cut -d= -f2-)
-        printf '%s\n' "$_me_name"
-        unset _me_id _me_dir _me_name
-        return 0
+    for _me_id in "$@"; do
+        for _me_dir in "/data/adb/modules/$_me_id" "/data/adb/modules_update/$_me_id"; do
+            [ -d "$_me_dir" ] || continue
+            [ -f "$_me_dir/disable" ] && continue
+            [ -f "$_me_dir/remove" ] && continue
+            _me_name=$(grep "^name=" "$_me_dir/module.prop" 2>/dev/null | cut -d= -f2-)
+            [ -n "$_me_name" ] || _me_name="$_me_id"
+            printf '%s\n' "$_me_name"
+            unset _me_id _me_dir _me_name
+            return 0
+        done
     done
     unset _me_id _me_dir
     return 1
 }
 
+# Tricky-Store-family modules (Tricky Store, Tricky Store OSS, TEESimulator-RS) all ship module id
+# "tricky_store"; only module.prop name tells them apart. Prints "rs" for TEESimulator-RS, "ext"
+# for any other enabled one, nothing when none is enabled.
+_tricky_family_flavor() {
+    _tff_name=$(_module_enabled $TS_CONFLICT_IDS) || return 1
+    case "$_tff_name" in
+        *TEESimulator-RS*) echo rs ;;
+        *)                 echo ext ;;
+    esac
+    unset _tff_name
+}
+
+# Backend detection:
+#   config keystore_backend = trickystore | trickystore_ext | teesim | teesim_rs | omk  -> forced
+#   config keystore_backend = auto (default) -> TEESimulator, else OhMyKeymint, else an installed
+#                                               Tricky Store / TEESimulator-RS module, else the
+#                                               built-in Tricky Store OSS
+# trickystore     = built-in Tricky Store OSS     teesim    = JingMatrix TEESimulator (id teesim)
+# trickystore_ext = external Tricky Store         teesim_rs = TEESimulator-RS (id tricky_store)
+# The built-in engine only runs when the resolved backend is "trickystore" (see service.sh), so it
+# never hooks keystore2 together with an external backend. An external module is never disabled.
 resolve_keystore_backend() {
     _rkb_pref=$(cfg_get keystore_backend auto 2>/dev/null)
+    KEYSTORE_BUILTIN=0
 
     case "$_rkb_pref" in
-        trickystore) KEYSTORE_BACKEND="trickystore" ;;
-        omk)         KEYSTORE_BACKEND="omk" ;;
-        teesim)      KEYSTORE_BACKEND="teesim" ;;
+        trickystore)     KEYSTORE_BACKEND="trickystore" ;;
+        trickystore_ext) KEYSTORE_BACKEND="trickystore_ext" ;;
+        omk)             KEYSTORE_BACKEND="omk" ;;
+        teesim)          KEYSTORE_BACKEND="teesim" ;;
+        teesim_rs)       KEYSTORE_BACKEND="teesim_rs" ;;
         *)
-            if _module_enabled "teesim" >/dev/null; then
+            if _module_enabled $TEESIM_MODULE_IDS >/dev/null; then
                 KEYSTORE_BACKEND="teesim"
-            elif _module_enabled "tricky_store" >/dev/null; then
-                KEYSTORE_BACKEND="trickystore"
-            elif _module_enabled "oh_my_keymint" >/dev/null; then
+            elif _module_enabled $OMK_MODULE_IDS >/dev/null; then
                 KEYSTORE_BACKEND="omk"
             else
-                KEYSTORE_BACKEND="none"
-                log "KEYSTORE" "Error: Tricky Store, OhMyKeymint or TEESimulator is not installed"
+                case "$(_tricky_family_flavor)" in
+                    rs)  KEYSTORE_BACKEND="teesim_rs" ;;
+                    ext) KEYSTORE_BACKEND="trickystore_ext" ;;
+                    *)   KEYSTORE_BACKEND="trickystore" ;;
+                esac
             fi
             ;;
     esac
 
+    # Forced backend without its module installed: fall back to the built-in engine
+    if [ "$KEYSTORE_BACKEND" = "omk" ] && ! _module_enabled $OMK_MODULE_IDS >/dev/null; then
+        log "KEYSTORE" "OhMyKeymint selected but not installed — using built-in Tricky Store OSS"
+        KEYSTORE_BACKEND="trickystore"
+    fi
+    if [ "$KEYSTORE_BACKEND" = "teesim" ] && ! _module_enabled $TEESIM_MODULE_IDS >/dev/null; then
+        log "KEYSTORE" "TEESimulator selected but not installed — using built-in Tricky Store OSS"
+        KEYSTORE_BACKEND="trickystore"
+    fi
+    if [ "$KEYSTORE_BACKEND" = "teesim_rs" ] && [ "$(_tricky_family_flavor)" != "rs" ]; then
+        log "KEYSTORE" "TEESimulator-RS selected but not installed — using built-in Tricky Store OSS"
+        KEYSTORE_BACKEND="trickystore"
+    fi
+    if [ "$KEYSTORE_BACKEND" = "trickystore_ext" ] && [ "$(_tricky_family_flavor)" != "ext" ]; then
+        log "KEYSTORE" "External Tricky Store selected but not installed — using built-in Tricky Store OSS"
+        KEYSTORE_BACKEND="trickystore"
+    fi
+
     case "$KEYSTORE_BACKEND" in
-        trickystore)
-            KEYSTORE_NAME=$(_module_enabled "tricky_store")
-            [ -n "$KEYSTORE_NAME" ] || KEYSTORE_NAME="Tricky Store"
+        trickystore|trickystore_ext|teesim_rs)
+            if [ "$KEYSTORE_BACKEND" = "trickystore" ]; then
+                if [ -f "${MODDIR:-.}/ts/supervisor.sh" ] || [ -f "${MODPATH:-/nonexistent}/ts/supervisor.sh" ]; then
+                    KEYSTORE_BUILTIN=1
+                    KEYSTORE_NAME="TrickyStore OSS"
+                else
+                    KEYSTORE_NAME=$(_module_enabled $TS_CONFLICT_IDS)
+                    [ -n "$KEYSTORE_NAME" ] || KEYSTORE_NAME="Tricky Store"
+                fi
+            else
+                KEYSTORE_NAME=$(_module_enabled $TS_CONFLICT_IDS)
+                if [ -z "$KEYSTORE_NAME" ]; then
+                    KEYSTORE_NAME="Tricky Store"
+                    [ "$KEYSTORE_BACKEND" = "teesim_rs" ] && KEYSTORE_NAME="TEESimulator-RS"
+                fi
+            fi
             KEYSTORE_DIR="$TRICKY_DIR"
             KEYSTORE_KEYBOX="$TARGET_FILE"
             KEYSTORE_BACKUP="$BACKUP_FILE"
             KEYSTORE_TARGETS="$TARGET_TXT"
             KEYSTORE_SECURITY="$SECURITY_PATCH_FILE"
             KEYSTORE_FORMAT="flat"
-            # Newer Tricky Store keeps targets and patch levels in config.ini
-            if [ -f "$TRICKY_CONFIG" ] && ini_has_sections "$TRICKY_CONFIG"; then
+            # Newer Tricky Store keeps targets and patch levels in config.ini.
+            # TEESimulator-RS reads only target.txt / security_patch.txt, so it stays flat.
+            if [ "$KEYSTORE_BACKEND" != "teesim_rs" ] && [ -f "$TRICKY_CONFIG" ] && ini_has_sections "$TRICKY_CONFIG"; then
                 KEYSTORE_TARGETS="$TRICKY_CONFIG"
                 KEYSTORE_SECURITY="$TRICKY_CONFIG"
                 KEYSTORE_FORMAT="ini"
             fi
             ;;
         omk)
-            KEYSTORE_NAME=$(_module_enabled "oh_my_keymint")
+            KEYSTORE_NAME=$(_module_enabled $OMK_MODULE_IDS)
             [ -n "$KEYSTORE_NAME" ] || KEYSTORE_NAME="OhMyKeymint"
             KEYSTORE_DIR="$OMK_DIR"
             KEYSTORE_KEYBOX="$OMK_KEYBOX"
@@ -71,7 +132,7 @@ resolve_keystore_backend() {
             KEYSTORE_FORMAT="toml"
             ;;
         teesim)
-            KEYSTORE_NAME=$(_module_enabled "teesim")
+            KEYSTORE_NAME=$(_module_enabled $TEESIM_MODULE_IDS)
             [ -n "$KEYSTORE_NAME" ] || KEYSTORE_NAME="TEESimulator"
             KEYSTORE_DIR="$TEESIM_DIR"
             KEYSTORE_KEYBOX="$TEESIM_KEYBOX"
@@ -91,7 +152,7 @@ resolve_keystore_backend() {
             ;;
     esac
 
-    export KEYSTORE_BACKEND KEYSTORE_NAME KEYSTORE_DIR KEYSTORE_KEYBOX \
+    export KEYSTORE_BUILTIN KEYSTORE_BACKEND KEYSTORE_NAME KEYSTORE_DIR KEYSTORE_KEYBOX \
            KEYSTORE_TARGETS KEYSTORE_SECURITY KEYSTORE_FORMAT
     unset _rkb_pref
 }
@@ -346,9 +407,14 @@ keystore_install_keybox() {
     return "$_kik_status"
 }
 
-# Per-app patch overrides (Tricky Store only — OMK has no per-package field)
+# Per-app patch overrides ([package] sections in security_patch.txt): built-in Tricky Store OSS,
+# any external Tricky Store and TEESimulator-RS. OMK / TEESimulator have no per-package field.
 keystore_per_app_patch_supported() {
-    [ "$KEYSTORE_BACKEND" = "trickystore" ] && [ "$KEYSTORE_FORMAT" = "flat" ]
+    [ "$KEYSTORE_FORMAT" = "flat" ] || return 1
+    case "$KEYSTORE_BACKEND" in
+        trickystore|trickystore_ext|teesim_rs) return 0 ;;
+    esac
+    return 1
 }
 
 keystore_read_per_app_patches() {
@@ -628,7 +694,7 @@ keystore_set_targets() {
 # The disable flag takes effect after the next reboot.
 keystore_enforce_singleton() {
     case "$KEYSTORE_BACKEND" in
-        trickystore) _kes_keep="tricky_store" ;;
+        trickystore|trickystore_ext|teesim_rs) _kes_keep="tricky_store" ;;
         omk)         _kes_keep="oh_my_keymint" ;;
         teesim)      _kes_keep="teesim" ;;
         *) return 0 ;;

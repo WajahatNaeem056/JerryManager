@@ -5,6 +5,7 @@ import './omk-panel.css';
 import './theme-accent.css';
 import './icons.css';
 import './rkp-panel.css';
+import './rkpd-panel.css';
 import './home-ui.css';
 
 import './icon-check.js';
@@ -21,5 +22,6 @@ import './pif-panel.js';
 import './patch-hash-panel.js';
 import './keybox-panel.js';
 import './rkp-panel.js';
+import './rkpd-panel.js';
 import './omk-panel.js';
 import './ui-style.js';
