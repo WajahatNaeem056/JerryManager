@@ -93,7 +93,7 @@ resolve_keystore_backend() {
     case "$KEYSTORE_BACKEND" in
         trickystore|trickystore_ext|teesim_rs)
             if [ "$KEYSTORE_BACKEND" = "trickystore" ]; then
-                if [ -f "${MODDIR:-.}/ts/supervisor.sh" ] || [ -f "${MODPATH:-/nonexistent}/ts/supervisor.sh" ]; then
+                if [ -f "${MODDIR:-.}/ts/supervisor.sh" ] || [ -f "${MODDIR:-.}/../ts/supervisor.sh" ] || [ -f "${MODPATH:-/nonexistent}/ts/supervisor.sh" ]; then
                     KEYSTORE_BUILTIN=1
                     KEYSTORE_NAME="TrickyStore OSS"
                 else
