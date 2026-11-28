@@ -1,4 +1,32 @@
 # Changelog
+## What's New in v4.8
+
+### Backend
+- Tricky Store OSS is now built into the module and is the default keystore backend.
+- If you install TEESimulator, TEESimulator-RS, OhMyKeymint (OMK) or another Tricky Store module, Jerry detects it and uses it instead. The built-in one then stays off.
+- On a fresh install, existing keystore modules are removed on reboot, so only the built-in Tricky Store OSS runs.
+
+### Keybox
+- Added a new RKP Keybox Catalog page to browse and install available RKP keyboxes.
+- Added Generate RKP Keybox, for supported devices.
+- Keybox status is now detected in real time.
+- Added keybox expiry date with time left, and key types (ECDSA / RSA).
+- Google revocation check now covers the full certificate chain, not only the leaf.
+
+### WebUI
+- Redesigned homepage and navbar.
+- Updated languages and translations (zh, ar, tr).
+
+### Detection
+- Improved Root detection and Rom detection  logic 
+
+### Boot & Props
+- Missing vbmeta values (avb_version, hash_alg, size) are filled automatically.
+- Boot props now run from scripts instead of system.prop, and are applied again after 120 s.
+
+### Fixes
+- Force-stopping GMS no longer closes the Magisk app.
+
 ## What's New in v4.7
 
 This update brings a redesigned WebUI, backend improvements and several new configuration options. A lot of work has gone into making things easier to manage and improving compatibility between different backends.
